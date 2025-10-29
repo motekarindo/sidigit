@@ -13,7 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withProviders([ // <-- Cari atau tambahkan method ini
         // ... provider lain jika ada
         App\Providers\ViewServiceProvider::class, // <-- Daftarkan di sini
-        App\Providers\AuthServiceProvider::class
+        App\Providers\AuthServiceProvider::class,
+        RichanFongdasen\EloquentBlameable\ServiceProvider::class,
+
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         //

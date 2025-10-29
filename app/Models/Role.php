@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\Menu;
 use App\Traits\LogsAllActivity;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use RichanFongdasen\EloquentBlameable\BlameableTrait;
 
 class Role extends Model
 {
-    use HasFactory, LogsAllActivity;
+    use HasFactory, LogsAllActivity, BlameableTrait, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
