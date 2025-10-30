@@ -36,40 +36,72 @@ class CustomerController extends Controller
     public function store(CustomerRequest $request)
     {
         $this->authorize('customer.create');
-        $customer = $this->service->store($request->validated());
+        try {
+            $customer = $this->service->store($request->validated());
 
-        return redirect()
-            ->route('customers.index')
-            ->with('success', "Pelanggan {$customer->name} berhasil ditambahkan.");
+            return redirect()
+                ->route('customers.index')
+                ->with('success', "Pelanggan {$customer->name} berhasil ditambahkan.");
+        } catch (\Throwable $th) {
+            report($th);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat menambahkan pelanggan. Silakan coba lagi.');
+        }
     }
 
     public function edit(int $customer)
     {
         $this->authorize('customer.edit');
-        $customer = $this->service->find($customer);
-        $memberTypes = $this->service->memberTypes();
+        try {
+            $customer = $this->service->find($customer);
+            $memberTypes = $this->service->memberTypes();
 
-        return view('admin.customer.edit', compact('customer', 'memberTypes'));
+            return view('admin.customer.edit', compact('customer', 'memberTypes'));
+        } catch (\Throwable $th) {
+            report($th);
+
+            return redirect()
+                ->route('customers.index')
+                ->with('error', 'Data pelanggan tidak ditemukan atau tidak dapat diakses.');
+        }
     }
 
     public function update(CustomerRequest $request, int $customer)
     {
         $this->authorize('customer.edit');
-        $customerModel = $this->service->update($customer, $request->validated());
+        try {
+            $customerModel = $this->service->update($customer, $request->validated());
 
-        return redirect()
-            ->route('customers.index')
-            ->with('success', "Pelanggan {$customerModel->name} berhasil diperbarui.");
+            return redirect()
+                ->route('customers.index')
+                ->with('success', "Pelanggan {$customerModel->name} berhasil diperbarui.");
+        } catch (\Throwable $th) {
+            report($th);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat memperbarui data pelanggan. Silakan coba lagi.');
+        }
     }
 
     public function destroy(int $customer)
     {
         $this->authorize('customer.delete');
-        $customerModel = $this->service->find($customer);
-        $this->service->destroy($customer);
+        try {
+            $customerModel = $this->service->find($customer);
+            $this->service->destroy($customer);
 
-        return redirect()
-            ->route('customers.index')
-            ->with('success', "Pelanggan {$customerModel->name} berhasil dihapus.");
+            return redirect()
+                ->route('customers.index')
+                ->with('success', "Pelanggan {$customerModel->name} berhasil dihapus.");
+        } catch (\Throwable $th) {
+            report($th);
+
+            return redirect()
+                ->route('customers.index')
+                ->with('error', 'Terjadi kesalahan saat menghapus data pelanggan. Silakan coba lagi.');
+        }
     }
 }
