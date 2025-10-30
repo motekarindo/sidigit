@@ -34,40 +34,71 @@ class BankAccountController extends Controller
     {
         $this->authorize('bank-account.create');
 
-        $bankAccount = $this->service->store($request->validated());
+        try {
+            $bankAccount = $this->service->store($request->validated());
 
-        return redirect()
-            ->route('bank-accounts.index')
-            ->with('success', "Rekening {$bankAccount->account_name} berhasil ditambahkan.");
+            return redirect()
+                ->route('bank-accounts.index')
+                ->with('success', "Rekening {$bankAccount->account_name} berhasil ditambahkan.");
+        } catch (\Throwable $th) {
+            report($th);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat menambahkan rekening. Silakan coba lagi.');
+        }
     }
 
     public function edit(int $bankAccount)
     {
         $this->authorize('bank-account.edit');
+        try {
+            $bankAccount = $this->service->find($bankAccount);
 
-        $bankAccount = $this->service->find($bankAccount);
+            return view('admin.bank-account.edit', compact('bankAccount'));
+        } catch (\Throwable $th) {
+            report($th);
 
-        return view('admin.bank-account.edit', compact('bankAccount'));
+            return redirect()
+                ->route('bank-accounts.index')
+                ->with('error', 'Data rekening tidak ditemukan atau tidak dapat diakses.');
+        }
     }
 
     public function update(BankAccountRequest $request, int $bankAccount)
     {
         $this->authorize('bank-account.edit');
-        $bankAccountModel = $this->service->update($bankAccount, $request->validated());
+        try {
+            $bankAccountModel = $this->service->update($bankAccount, $request->validated());
 
-        return redirect()
-            ->route('bank-accounts.index')
-            ->with('success', "Rekening {$bankAccountModel->account_name} berhasil diperbarui.");
+            return redirect()
+                ->route('bank-accounts.index')
+                ->with('success', "Rekening {$bankAccountModel->account_name} berhasil diperbarui.");
+        } catch (\Throwable $th) {
+            report($th);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat memperbarui data rekening. Silakan coba lagi.');
+        }
     }
 
     public function destroy(int $bankAccount)
     {
         $this->authorize('bank-account.delete');
-        $bankAccountModel = $this->service->find($bankAccount);
-        $this->service->destroy($bankAccount);
+        try {
+            $bankAccountModel = $this->service->find($bankAccount);
+            $this->service->destroy($bankAccount);
 
-        return redirect()
-            ->route('bank-accounts.index')
-            ->with('success', "Rekening {$bankAccountModel->account_name} berhasil dihapus.");
+            return redirect()
+                ->route('bank-accounts.index')
+                ->with('success', "Rekening {$bankAccountModel->account_name} berhasil dihapus.");
+        } catch (\Throwable $th) {
+            report($th);
+
+            return redirect()
+                ->route('bank-accounts.index')
+                ->with('error', 'Terjadi kesalahan saat menghapus data rekening. Silakan coba lagi.');
+        }
     }
 }

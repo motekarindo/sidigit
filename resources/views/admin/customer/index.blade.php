@@ -28,6 +28,13 @@
             </div>
         @endif
 
+        @if (session('error'))
+            <div
+                class="rounded-2xl border border-error-200 bg-error-50 px-4 py-3 text-sm font-medium text-error-700 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-200">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <div class="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-950/70">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">

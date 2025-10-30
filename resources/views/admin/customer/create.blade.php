@@ -18,6 +18,13 @@
         </div>
 
         <div class="space-y-8 rounded-3xl border border-gray-200 bg-white p-8 shadow-theme-sm dark:border-gray-800 dark:bg-gray-950/70">
+            @if (session('error'))
+                <div
+                    class="rounded-2xl border border-error-200 bg-error-50 px-4 py-3 text-sm font-medium text-error-700 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-200">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <form action="{{ route('customers.store') }}" method="POST" class="space-y-8">
                 @csrf
 
