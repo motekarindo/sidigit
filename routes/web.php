@@ -2,14 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
-use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\MenuController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\BankAccountController;
 
 
 
@@ -34,6 +35,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
+
+    Route::resource('bank-accounts', BankAccountController::class)->except('show');
 
 
     // --- RUTE BARU UNTUK MANAJEMEN AKSES ---
