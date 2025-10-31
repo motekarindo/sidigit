@@ -122,9 +122,7 @@
                                                                     </div>
                                                                     <div class="max-h-80 overflow-auto bg-gray-950">
                                                                         <pre
-                                                                            class="whitespace-pre-wrap px-4 py-4 text-xs font-mono leading-6 text-gray-100">
-                                                                            {{ json_encode($activity->properties['old'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}
-                                                                        </pre>
+                                                                            class="whitespace-pre-wrap px-4 py-4 text-xs font-mono leading-6 text-gray-100">{{ trim(json_encode($activity->properties['old'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) }}</pre>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -147,9 +145,7 @@
                                                                     </div>
                                                                     <div class="max-h-80 overflow-auto bg-gray-950">
                                                                         <pre
-                                                                            class="whitespace-pre-wrap px-4 py-4 text-xs font-mono leading-6 text-gray-100">
-                                                                            {{ json_encode($activity->properties['attributes'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}
-                                                                        </pre>
+                                                                            class="whitespace-pre-wrap px-4 py-4 text-xs font-mono leading-6 text-gray-100">{{ trim(json_encode($activity->properties['attributes'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) }}</pre>
                                                                     </div>
                                                                 </div>
                                                             </div>

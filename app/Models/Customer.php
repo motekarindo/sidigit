@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CustomerMemberType;
 use App\Traits\LogsAllActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,8 +13,6 @@ class Customer extends Model
 {
     use HasFactory, LogsAllActivity, BlameableTrait, SoftDeletes;
 
-    public const MEMBER_TYPES = ['umum', 'reseller', 'sekolah', 'pemerintah', 'swasta'];
-
     protected $table = 'mst_customers';
 
     protected $fillable = [
@@ -22,5 +21,9 @@ class Customer extends Model
         'phone_number',
         'email',
         'member_type',
+    ];
+
+    protected $casts = [
+        'member_type' => CustomerMemberType::class,
     ];
 }

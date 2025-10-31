@@ -32,12 +32,12 @@
                     'mt-2 block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
                     'border-error-500 focus:border-error-500 focus:ring-error-500/10 dark:border-error-400' => $errors->has('member_type'),
                 ])>
-                <option value="" disabled {{ old('member_type', $customer->member_type ?? null) === null ? 'selected' : '' }}>
+                <option value="" disabled {{ old('member_type', $customer?->member_type?->value) === null ? 'selected' : '' }}>
                     Pilih tipe anggota…
                 </option>
                 @foreach ($memberTypes as $type)
                     <option value="{{ $type }}"
-                        {{ old('member_type', $customer->member_type ?? null) === $type ? 'selected' : '' }}>
+                        {{ old('member_type', $customer?->member_type?->value) === $type ? 'selected' : '' }}>
                         {{ Str::title($type) }}
                     </option>
                 @endforeach

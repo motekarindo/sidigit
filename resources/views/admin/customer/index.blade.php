@@ -78,7 +78,7 @@
                                 <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                                     <span
                                         class="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-200">
-                                        {{ \Illuminate\Support\Str::title($customer->member_type) }}
+                                        {{ $customer->member_type ? \Illuminate\Support\Str::title($customer->member_type->value) : '-' }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">

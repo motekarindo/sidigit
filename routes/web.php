@@ -30,15 +30,16 @@ Route::middleware('guest')->group(function () {
 
 // Grup untuk Rute yang Membutuhkan Autentikasi
 Route::middleware('auth')->group(function () {
-    Route::get('/orders', function(){
-        echo "test";
-    })->name('orders.index');
+
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
 
     Route::resource('bank-accounts', BankAccountController::class)->except('show');
     Route::resource('customers', CustomerController::class)->except('show');
+    Route::controller('/customers', CustomerController::class)->name('customers.')->group(function() {
+
+    });
 
 
     // --- RUTE BARU UNTUK MANAJEMEN AKSES ---

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CustomerMemberType;
 use App\Models\Customer;
 use App\Repositories\CustomerRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -21,12 +22,16 @@ class CustomerService
 
     public function store(array $data): Customer
     {
+        $data['member_type'] = CustomerMemberType::from($data['member_type']);
+
         return $this->repository->create($data);
     }
 
     public function update(int $id, array $data): Customer
     {
         $customer = $this->repository->findOrFail($id);
+
+        $data['member_type'] = CustomerMemberType::from($data['member_type']);
 
         return $this->repository->update($customer, $data);
     }
@@ -45,6 +50,9 @@ class CustomerService
 
     public function memberTypes(): array
     {
-        return Customer::MEMBER_TYPES;
+        return array_map(
+            static fn (CustomerMemberType $type) => $type->value,
+            CustomerMemberType::cases()
+        );
     }
 }
