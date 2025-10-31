@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Models\Customer;
+use App\Enums\CustomerMemberType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -27,7 +27,7 @@ class CustomerRequest extends FormRequest
                 'max:64',
                 Rule::unique('mst_customers', 'email')->ignore($customerId),
             ],
-            'member_type' => ['required', Rule::in(Customer::MEMBER_TYPES)],
+            'member_type' => ['required', Rule::enum(CustomerMemberType::class)],
         ];
     }
 
