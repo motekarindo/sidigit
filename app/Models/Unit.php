@@ -17,4 +17,9 @@ class Unit extends Model
     protected $fillable = [
         'name',
     ];
+
+    public function materials()
+    {
+        return $this->hasMany(Material::class, 'unit_id');
+    }
 }
