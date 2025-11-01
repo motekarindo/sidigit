@@ -100,6 +100,7 @@
                                         <span>HPP: <span class="text-gray-900 dark:text-white">Rp {{ number_format($product->base_price, 0, ',', '.') }}</span></span>
                                         <span>Harga Jual: <span class="text-brand-600 dark:text-brand-300">Rp {{ number_format($product->sale_price, 0, ',', '.') }}</span></span>
                                         <span>Ukuran: <span class="text-gray-900 dark:text-white">{{ number_format($product->length_cm, 2, ',', '.') }}</span> cm × <span class="text-gray-900 dark:text-white">{{ number_format($product->width_cm, 2, ',', '.') }}</span> cm</span>
+                                        <span>Satuan: <span class="text-gray-900 dark:text-white">{{ $product->unit->name ?? '-' }}</span></span>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3">
