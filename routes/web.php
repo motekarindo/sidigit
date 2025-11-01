@@ -53,7 +53,7 @@ Route::middleware('auth')->group(function () {
     // -----------------------------------------
 
     // --- RUTE BARU UNTUK MANAJEMEN Barang ---
-    Route::resource('products', ProductController::class);
+    Route::resource('products', ProductController::class)->except('show');
     Route::resource('categories', CategoryController::class);
     Route::resource('units', UnitController::class)->except('show');
     Route::resource('suppliers', SupplierController::class)->except('show');
