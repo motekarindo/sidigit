@@ -16,6 +16,7 @@ return new class extends Migration
             $table->decimal('sale_price', 14, 2)->nullable(true);
             $table->decimal('length_cm', 10, 2)->nullable(true);
             $table->decimal('width_cm', 10, 2)->nullable(true);
+            $table->foreignId('unit_id')->constrained('mst_units')->cascadeOnDelete();
             $table->foreignId('category_id')->constrained('mst_categories')->cascadeOnDelete();
             $table->text('description')->nullable();
             $table->timestamps();

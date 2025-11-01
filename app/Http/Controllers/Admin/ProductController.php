@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ProductRequest;
 use App\Models\Category;
 use App\Models\Material;
+use App\Models\Unit;
 use App\Services\ProductService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -35,8 +36,9 @@ class ProductController extends Controller
 
         $categories = Category::orderBy('name')->get();
         $materialsByCategory = $this->getMaterialsByCategory();
+        $units = Unit::orderBy('name')->get();
 
-        return view('admin.product.create', compact('categories', 'materialsByCategory'));
+        return view('admin.product.create', compact('categories', 'materialsByCategory', 'units'));
     }
 
     public function store(ProductRequest $request)
@@ -66,11 +68,13 @@ class ProductController extends Controller
             $productModel = $this->service->find($product);
             $categories = Category::orderBy('name')->get();
             $materialsByCategory = $this->getMaterialsByCategory();
+            $units = Unit::orderBy('name')->get();
 
             return view('admin.product.edit', [
                 'product' => $productModel,
                 'categories' => $categories,
                 'materialsByCategory' => $materialsByCategory,
+                'units' => $units,
             ]);
         } catch (\Throwable $th) {
             report($th);
