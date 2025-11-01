@@ -21,6 +21,7 @@ class Product extends Model
         'sale_price',
         'length_cm',
         'width_cm',
+        'unit_id',
         'category_id',
         'description',
     ];
@@ -35,6 +36,11 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class, 'unit_id');
     }
 
     public function productMaterials()

@@ -11,7 +11,7 @@ class ProductRepository
     public function paginate(int $perPage = 10): LengthAwarePaginator
     {
         return Product::query()
-            ->with(['category', 'productMaterials.material.unit'])
+            ->with(['category', 'unit', 'productMaterials.material.unit'])
             ->latest()
             ->paginate($perPage)
             ->withQueryString();
@@ -20,7 +20,7 @@ class ProductRepository
     public function findOrFail(int $id): Product
     {
         return Product::query()
-            ->with(['category', 'productMaterials.material.unit'])
+            ->with(['category', 'unit', 'productMaterials.material.unit'])
             ->findOrFail($id);
     }
 

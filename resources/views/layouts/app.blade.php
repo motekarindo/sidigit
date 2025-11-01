@@ -7,6 +7,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'TailAdmin'))</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script>
+        window.deferLoadingAlpine = function (callback) {
+            window.addEventListener('DOMContentLoaded', () => callback());
+        };
+    </script>
     @livewireStyles
     @stack('styles')
 </head>
