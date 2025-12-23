@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Unit;
 use App\Repositories\UnitRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class UnitService
 {
@@ -17,6 +18,11 @@ class UnitService
     public function getPaginated(): LengthAwarePaginator
     {
         return $this->repository->paginate();
+    }
+
+    public function query(): Builder
+    {
+        return $this->repository->query();
     }
 
     public function store(array $data): Unit
@@ -36,6 +42,16 @@ class UnitService
         $unit = $this->repository->findOrFail($id);
 
         $this->repository->delete($unit);
+    }
+
+    public function destroyMany(array $ids): void
+    {
+        $ids = array_values(array_filter($ids));
+        if (empty($ids)) {
+            return;
+        }
+
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 
     public function find(int $id): Unit

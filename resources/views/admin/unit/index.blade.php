@@ -37,7 +37,8 @@
             </div>
         @endif
 
-        <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-950/60">
+        <div
+            class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-theme-sm dark:border-gray-800 dark:bg-gray-950/60">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
                     <thead class="bg-gray-50 dark:bg-gray-900/50">
@@ -90,7 +91,8 @@
 
                                                 <div x-cloak x-show="isConfirmOpen" x-transition.opacity
                                                     class="fixed inset-0 z-[100000] flex items-center justify-center bg-gray-950/90 px-4"
-                                                    role="dialog" aria-modal="true" aria-labelledby="deleteUnitTitle{{ $unit->id }}"
+                                                    role="dialog" aria-modal="true"
+                                                    aria-labelledby="deleteUnitTitle{{ $unit->id }}"
                                                     @click.self="isConfirmOpen = false">
                                                     <div x-show="isConfirmOpen" x-transition.scale
                                                         class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900">
@@ -110,7 +112,8 @@
                                                                 </h3>
                                                                 <p class="text-sm text-gray-600 dark:text-gray-400">
                                                                     Tindakan ini akan menghapus satuan
-                                                                    <span class="font-semibold text-gray-900 dark:text-white">{{ $unit->name }}</span>
+                                                                    <span
+                                                                        class="font-semibold text-gray-900 dark:text-white">{{ $unit->name }}</span>
                                                                     secara permanen.
                                                                 </p>
                                                             </div>

@@ -2,10 +2,16 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
-use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\BankAccountController;
+use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\MaterialController;
+use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\UnitController;
+use App\Http\Controllers\Admin\WarehouseController;
 use App\Livewire\Auth\ForgotPasswordPage;
 use App\Livewire\Auth\LoginPage;
 use App\Livewire\Auth\RegisterPage;
@@ -22,9 +28,10 @@ use App\Livewire\Admin\Permissions\PermissionsEdit;
 use App\Livewire\Admin\Menus\MenusIndex;
 use App\Livewire\Admin\Menus\MenusCreate;
 use App\Livewire\Admin\Menus\MenusEdit;
-
-
-
+use App\Livewire\Admin\Product\Index as ProductsIndex;
+use App\Livewire\Admin\Product\Create as ProductsCreate;
+use App\Livewire\Admin\Product\Edit as ProductsEdit;
+use App\Livewire\Admin\Unit\Index as UnitIndex;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -82,9 +89,15 @@ Route::middleware('auth')->group(function () {
     // -----------------------------------------
 
     // --- RUTE BARU UNTUK MANAJEMEN Barang ---
-    Route::resource('products', ProductController::class)->except('show');
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', ProductsIndex::class)->name('index');
+        Route::get('/create', ProductsCreate::class)->name('create');
+        Route::get('/{product}/edit', ProductsEdit::class)->name('edit');
+    });
+
+    Route::get('units', UnitIndex::class)->name('units.index');
+
     Route::resource('categories', CategoryController::class);
-    Route::resource('units', UnitController::class)->except('show');
     Route::resource('suppliers', SupplierController::class)->except('show');
     Route::resource('materials', MaterialController::class)->except('show');
     Route::resource('warehouses', WarehouseController::class)->except('show');
