@@ -1,5 +1,5 @@
 <div class="space-y-4">
-    @include('livewire.components.table.toolbar')
+    @include('livewire.components.table.toolbar', ['filtersView' => $filtersView])
 
     @include('livewire.components.table.table')
 
