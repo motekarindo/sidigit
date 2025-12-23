@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Unit;
 
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\UnitForm;
+use App\Models\Unit;
 use App\Services\UnitService;
 
 class Table extends BaseTable
@@ -100,7 +101,7 @@ class Table extends BaseTable
         }
     }
 
-    protected function formView(): string
+    protected function formView(): ?string
     {
         return 'livewire.admin.unit.form';
     }

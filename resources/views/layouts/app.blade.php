@@ -60,6 +60,16 @@
 
     <x-toast />
 
+    @if (session('toast'))
+        <script>
+            window.addEventListener('DOMContentLoaded', () => {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: @js(session('toast')),
+                }));
+            });
+        </script>
+    @endif
+
     @stack('scripts')
     @livewireScripts
 </body>

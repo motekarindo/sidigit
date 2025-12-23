@@ -22,7 +22,7 @@ abstract class BaseTable extends Component
     abstract protected function columns(): array;
     abstract protected function resetForm(): void;
     abstract protected function loadForm(int $id): void;
-    abstract protected function formView(): string;
+    abstract protected function formView(): ?string;
 
     protected $paginationTheme = 'tailwind';
 
@@ -68,6 +68,7 @@ abstract class BaseTable extends Component
             'tableActions' => $this->tableActions(),
             'rowActions' => $this->rowActions(),
             'bulkActions' => $this->bulkActions(),
+            'formView' => $this->formView(),
         ]);
     }
 }
