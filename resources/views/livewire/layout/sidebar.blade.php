@@ -1,76 +1,13 @@
 @php
     use Illuminate\Support\Facades\Route;
     use Illuminate\Support\Str;
-
-    $menus = ($sidebarMenus ?? collect())->filter();
-    if (! $menus instanceof \Illuminate\Support\Collection) {
-        $menus = collect($menus);
-    }
-
-    $hasDynamicMenus = $menus->count() > 0;
-
-    if (! $hasDynamicMenus) {
-        $fallbackData = collect([
-            ['name' => 'Dashboard', 'route_name' => Route::has('dashboard') ? 'dashboard' : null],
-            ['name' => 'Orders', 'route_name' => Route::has('orders.index') ? 'orders.index' : null],
-            ['name' => 'Users', 'route_name' => Route::has('users.index') ? 'users.index' : null],
-            ['name' => 'Roles', 'route_name' => Route::has('roles.index') ? 'roles.index' : null],
-            ['name' => 'Permissions', 'route_name' => Route::has('permissions.index') ? 'permissions.index' : null],
-            ['name' => 'Menus', 'route_name' => Route::has('menus.index') ? 'menus.index' : null],
-            ['name' => 'Products', 'route_name' => Route::has('products.index') ? 'products.index' : null],
-            ['name' => 'Categories', 'route_name' => Route::has('categories.index') ? 'categories.index' : null],
-            ['name' => 'Audit Logs', 'route_name' => Route::has('audit-logs.index') ? 'audit-logs.index' : null],
-        ])->filter(fn ($item) => filled($item['route_name']));
-
-        $menus = $fallbackData->values()->map(function ($item, $index) {
-            return (object) [
-                'name' => $item['name'],
-                'route_name' => $item['route_name'],
-                'icon' => null,
-                'children' => collect(),
-                'order' => $index,
-            ];
-        });
-    }
-
-    $iconLibrary = [
-        'dashboard' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11L12 2l9 9" /><path d="M5 13v8h4v-6h6v6h4v-8" /></svg>',
-        'orders' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10a2 2 0 0 1 2 2v16l-7-3l-7 3V5a2 2 0 0 1 2-2Z" /><path d="M9 9h6M9 13h3" /></svg>',
-        'users' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-2a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v2" /><circle cx="8" cy="7" r="4" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /><path d="M20 21v-2a4 4 0 0 0-3-3.87" /></svg>',
-        'roles' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 5-3 8-7 9c-4-1-7-4-7-9V7l7-4Z" /><path d="m7 7l5 3l5-3" /><path d="M7 12c2.3 1.3 4.7 1.3 7 0" /></svg>',
-        'permissions' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4" /><path d="M5 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2" /><path d="M15 11h6v6" /><path d="M15 17l6-6" /></svg>',
-        'menus' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>',
-        'products' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" /><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2Z" /><path d="M12 3v18" /></svg>',
-        'categories' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>',
-        'audit-logs' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>',
-        'profile' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4" /><path d="M5.5 21a6.5 6.5 0 0 1 13 0" /></svg>',
-        'logout' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><path d="M10 17l5-5l-5-5" /><path d="M15 12H3" /></svg>',
-        'default' => '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 21V9" /></svg>',
-    ];
-
-    $resolveIcon = static function ($menu, $baseRoute, $iconLibrary) {
-        $rawIcon = $menu->icon ?? null;
-
-        if (filled($rawIcon)) {
-            if (Str::contains($rawIcon, '<svg')) {
-                return $rawIcon;
-            }
-
-            if (isset($iconLibrary[$rawIcon])) {
-                return $iconLibrary[$rawIcon];
-            }
-        }
-
-        $key = $baseRoute ?? Str::slug($menu->name ?? 'menu');
-
-        return $iconLibrary[$key] ?? $iconLibrary['default'];
-    };
 @endphp
+
+
 
 <aside :class="sidebarToggle ? 'translate-x-0 lg:w-[90px]' : '-translate-x-full'"
     class="sidebar fixed left-0 top-0 z-[9999] flex h-screen w-[290px] flex-col overflow-hidden border-r border-gray-200 bg-white px-5 transition-transform duration-300 ease-in-out dark:border-gray-800 dark:bg-black lg:static lg:translate-x-0">
-    <div :class="sidebarToggle ? 'justify-center' : 'justify-between'"
-        class="flex items-center gap-2 pt-8 pb-7">
+    <div :class="sidebarToggle ? 'justify-center' : 'justify-between'" class="flex items-center gap-2 pt-8 pb-7">
         <a href="{{ Route::has('dashboard') ? route('dashboard') : '#' }}" class="flex items-center gap-3">
             <span class="logo" :class="sidebarToggle ? 'lg:hidden' : ''">
                 <img class="h-8 dark:hidden" src="{{ asset('assets/tailadmin/images/logo/logo.svg') }}" alt="Logo">
@@ -97,39 +34,33 @@
                 </h3>
 
                 <ul class="flex flex-col gap-2">
-                    @foreach ($menus as $menu)
-                        @php
-                            $menuChildren = $menu->children instanceof \Illuminate\Support\Collection ? $menu->children->sortBy('order') : collect();
-                            $hasChildren = $menuChildren->isNotEmpty();
-                            $baseRoute = filled($menu->route_name ?? null) ? Str::before($menu->route_name, '.') : null;
-                            $childRoutes = $menuChildren->pluck('route_name')->filter();
-                            $patterns = collect([$menu->route_name ?? null, $baseRoute ? "{$baseRoute}.*" : null])
-                                ->merge($childRoutes)
-                                ->merge($childRoutes->map(fn ($child) => Str::before($child, '.') . '.*'))
-                                ->filter()
-                                ->unique()
-                                ->values()
-                                ->all();
-                            $isActive = ! empty($patterns) ? Route::is($patterns) : false;
-                            $menuLink = filled($menu->route_name ?? null) && Route::has($menu->route_name)
-                                ? route($menu->route_name)
-                                : '#';
-                            $menuIcon = $resolveIcon($menu, $baseRoute, $iconLibrary);
-                        @endphp
-
-                        @if ($hasChildren)
-                            <li x-data="{ open: {{ $isActive ? 'true' : 'false' }} }">
+                    @foreach ($sidebarMenus as $menu)
+                        @if ($menu->children->isNotEmpty())
+                            <li x-data="{ open: {{ $menu->active ? 'true' : 'false' }} }">
                                 <button type="button"
-                                    class="menu-item group w-full text-left {{ $isActive ? 'menu-item-active' : 'menu-item-inactive' }}"
+                                    class="menu-item group w-full text-left {{ $menu->active ? 'menu-item-active' : 'menu-item-inactive' }}"
                                     @click="open = !open">
                                     <span
-                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
-                                        {!! $menuIcon !!}
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200
+                                            text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500
+                                            dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
+                                        @if (!empty($menu->icon))
+                                            @if (Str::contains($menu->icon, '<svg'))
+                                                {!! $menu->icon !!}
+                                            @else
+                                                <i class="{{ $menu->icon }}"></i>
+                                            @endif
+                                        @else
+                                            <span class="text-sm font-semibold uppercase">
+                                                {{ Str::substr($menu->name, 0, 1) }}
+                                            </span>
+                                        @endif
                                     </span>
+
                                     <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">
                                         {{ $menu->name }}
                                     </span>
-                                    <svg class="menu-item-arrow {{ $isActive ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive' }}"
+                                    <svg class="menu-item-arrow {{ $menu->active ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive' }}"
                                         :class="open ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive'"
                                         width="20" height="20" viewBox="0 0 20 20" fill="none"
                                         xmlns="http://www.w3.org/2000/svg">
@@ -137,21 +68,12 @@
                                             stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
                                 </button>
-                                <ul x-show="open" x-transition
-                                    class="menu-dropdown flex-col gap-1 pl-12"
+                                <ul x-show="open" x-transition class="menu-dropdown flex-col gap-1 pl-12"
                                     :class="sidebarToggle ? 'lg:hidden flex' : 'flex'">
-                                    @foreach ($menuChildren as $child)
-                                        @php
-                                            $childBase = filled($child->route_name ?? null) ? Str::before($child->route_name, '.') : null;
-                                            $childPatterns = collect([$child->route_name ?? null, $childBase ? "{$childBase}.*" : null])->filter()->all();
-                                            $childActive = ! empty($childPatterns) ? Route::is($childPatterns) : false;
-                                            $childLink = filled($child->route_name ?? null) && Route::has($child->route_name)
-                                                ? route($child->route_name)
-                                                : '#';
-                                        @endphp
+                                    @foreach ($menu->children as $child)
                                         <li>
-                                            <a href="{{ $childLink }}"
-                                                class="menu-dropdown-item {{ $childActive ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive' }}">
+                                            <a href="{{ $child->route_url ?? '#' }}"
+                                                class="menu-dropdown-item {{ $child->active ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive' }}">
                                                 {{ $child->name }}
                                             </a>
                                         </li>
@@ -160,11 +82,15 @@
                             </li>
                         @else
                             <li>
-                                <a href="{{ $menuLink }}"
-                                    class="menu-item group {{ $isActive ? 'menu-item-active' : 'menu-item-inactive' }}">
+                                <a href="{{ $menu->route_url ?? '#' }}"
+                                    class="menu-item group {{ $menu->active ? 'menu-item-active' : '' }}">
                                     <span
                                         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
-                                        {!! $menuIcon !!}
+                                        @if (Str::contains($menu->icon, '<svg'))
+                                            {!! $menu->icon !!}
+                                        @else
+                                            <i class="{{ $menu->icon }}"></i>
+                                        @endif
                                     </span>
                                     <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">
                                         {{ $menu->name }}
@@ -187,7 +113,7 @@
                                 class="menu-item group {{ Route::is('profile.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
                                 <span
                                     class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
-                                    {!! $iconLibrary['profile'] !!}
+                                    P
                                 </span>
                                 <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Profile</span>
                             </a>
@@ -201,9 +127,10 @@
                                 <button type="submit" class="flex w-full items-center gap-3">
                                     <span
                                         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
-                                        {!! $iconLibrary['logout'] !!}
+                                        L
                                     </span>
-                                    <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Logout</span>
+                                    <span class="menu-item-text"
+                                        :class="sidebarToggle ? 'lg:hidden' : ''">Logout</span>
                                 </button>
                             </form>
                         </li>
