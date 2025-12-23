@@ -58,6 +58,8 @@
         </div>
     </div>
 
+    <x-toast />
+
     @stack('scripts')
     @livewireScripts
 </body>

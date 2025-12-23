@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Livewire\Admin\Product;
+
+use App\Livewire\Admin\Product\Concerns\HandlesProductForm;
+use App\Services\ProductService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+#[Layout('layouts.app')]
+#[Title('Tambah Produk')]
+class Create extends Component
+{
+    use AuthorizesRequests;
+    use HandlesProductForm;
+
+    public string $sku = '';
+    public string $name = '';
+    public $base_price = null;
+    public $sale_price = null;
+    public $length_cm = null;
+    public $width_cm = null;
+    public ?int $unit_id = null;
+    public ?int $category_id = null;
+    public ?string $description = null;
+    public array $materials = [];
+
+    protected ProductService $service;
+
+    protected array $messages = [
+        'materials.required' => 'Pilih minimal satu material untuk produk ini.',
+        'materials.min' => 'Pilih minimal satu material untuk produk ini.',
+    ];
+
+    protected array $validationAttributes = [
+        'sku' => 'SKU',
+        'name' => 'Nama Produk',
+        'base_price' => 'Harga Pokok',
+        'sale_price' => 'Harga Jual',
+        'length_cm' => 'Panjang (cm)',
+        'width_cm' => 'Lebar (cm)',
+        'unit_id' => 'Satuan',
+        'category_id' => 'Kategori Produk',
+        'description' => 'Deskripsi',
+        'materials' => 'Material Produk',
+        'materials.*' => 'Material Produk',
+    ];
+
+    public function mount(ProductService $service): void
+    {
+        $this->authorize('product.create');
+
+        $this->service = $service;
+
+        $this->loadReferenceData();
+        $this->refreshMaterialsForCategory();
+        $this->syncDimensionFields();
+    }
+
+    public function updatedCategoryId($value): void
+    {
+        $this->materials = [];
+        $this->refreshMaterialsForCategory($value ? (int) $value : null);
+    }
+
+    public function updatedUnitId($value): void
+    {
+        $this->syncDimensionFields(true);
+    }
+
+    protected function rules(): array
+    {
+        return $this->rulesFor(null);
+    }
+
+    protected function rulesFor(?int $productId): array
+    {
+        $categoryId = $this->category_id;
+
+        return [
+            'sku' => [
+                'required',
+                'string',
+                'max:64',
+                Rule::unique('mst_products', 'sku')->ignore($productId),
+            ],
+            'name' => ['required', 'string', 'max:128'],
+            'base_price' => ['required', 'numeric', 'min:0'],
+            'sale_price' => ['required', 'numeric', 'min:0'],
+            'length_cm' => ['nullable', 'numeric', 'min:0'],
+            'width_cm' => ['nullable', 'numeric', 'min:0'],
+            'unit_id' => ['required', 'exists:mst_units,id'],
+            'category_id' => ['required', 'exists:mst_categories,id'],
+            'description' => ['nullable', 'string'],
+            'materials' => ['required', 'array', 'min:1'],
+            'materials.*' => [
+                'integer',
+                Rule::exists('mst_materials', 'id')->where(function ($query) use ($categoryId) {
+                    if ($categoryId) {
+                        $query->where('category_id', $categoryId);
+                    }
+                }),
+            ],
+        ];
+    }
+
+    public function save(): void
+    {
+        $data = $this->validate();
+
+        try {
+            $product = $this->service->store($data);
+
+            session()->flash('success', "Produk {$product->name} berhasil ditambahkan.");
+
+            $this->redirectRoute('products.index', navigate: true);
+        } catch (\Throwable $th) {
+            report($th);
+
+            session()->flash('error', 'Terjadi kesalahan saat menambahkan produk. Silakan coba lagi.');
+        }
+    }
+
+    public function render()
+    {
+        return view('livewire.admin.product.create')->layoutData([
+            'title' => 'Tambah Produk',
+        ]);
+    }
+}
