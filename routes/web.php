@@ -23,8 +23,6 @@ use App\Livewire\Admin\Roles\RolesIndex;
 use App\Livewire\Admin\Roles\RolesCreate;
 use App\Livewire\Admin\Roles\RolesEdit;
 use App\Livewire\Admin\Permissions\PermissionsIndex;
-use App\Livewire\Admin\Permissions\PermissionsCreate;
-use App\Livewire\Admin\Permissions\PermissionsEdit;
 use App\Livewire\Admin\Menus\MenusIndex;
 use App\Livewire\Admin\Menus\MenusCreate;
 use App\Livewire\Admin\Menus\MenusEdit;
@@ -76,8 +74,6 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('permissions')->name('permissions.')->group(function () {
         Route::get('/', PermissionsIndex::class)->name('index');
-        Route::get('/create', PermissionsCreate::class)->name('create');
-        Route::get('/{permission}/edit', PermissionsEdit::class)->name('edit');
     });
 
     Route::prefix('menus')->name('menus.')->group(function () {

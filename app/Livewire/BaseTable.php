@@ -24,6 +24,11 @@ abstract class BaseTable extends Component
     abstract protected function loadForm(int $id): void;
     abstract protected function formView(): ?string;
 
+    protected function filtersView(): ?string
+    {
+        return null;
+    }
+
     protected $paginationTheme = 'tailwind';
 
     #[Url(except: '', history: true)]
@@ -69,6 +74,7 @@ abstract class BaseTable extends Component
             'rowActions' => $this->rowActions(),
             'bulkActions' => $this->bulkActions(),
             'formView' => $this->formView(),
+            'filtersView' => $this->filtersView(),
         ]);
     }
 }
