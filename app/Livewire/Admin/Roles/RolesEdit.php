@@ -4,7 +4,9 @@ namespace App\Livewire\Admin\Roles;
 
 use App\Models\Menu;
 use App\Models\Role;
+use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -15,12 +17,18 @@ use Livewire\Component;
 class RolesEdit extends Component
 {
     use AuthorizesRequests;
+    use WithPageMeta;
 
     public Role $role;
     public string $name = '';
-    public string $slug = '';
     public array $permissions = [];
     public array $menus = [];
+    public bool $menuOptionsReady = false;
+    public array $menuPermissions = [];
+    public array $childPermissions = [];
+    public array $menuPermissionsLoaded = [];
+    public bool $selectAllMenus = false;
+    public bool $selectAllPermissions = false;
 
     public function mount(Role $role): void
     {
@@ -29,16 +37,24 @@ class RolesEdit extends Component
         $this->role = $role->load(['permissions', 'menus']);
 
         $this->name = $this->role->name;
-        $this->slug = $this->role->slug;
-        $this->permissions = $this->role->permissions->pluck('id')->map(fn ($id) => (int) $id)->toArray();
-        $this->menus = $this->role->menus->pluck('id')->map(fn ($id) => (int) $id)->toArray();
+        $this->permissions = $this->role->permissions->pluck('id')->map(fn($id) => (int) $id)->toArray();
+        $this->menus = $this->role->menus->pluck('id')->map(fn($id) => (int) $id)->toArray();
+
+        $this->setPageMeta(
+            'Edit Role',
+            'Perbarui nama, slug, menu, dan izin role.',
+            [
+                ['label' => 'Dashboard', 'url' => route('dashboard'), 'icon' => true],
+                ['label' => 'Role', 'url' => route('roles.index')],
+                ['label' => $this->role->name, 'current' => true],
+            ]
+        );
     }
 
     protected function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique(Role::class, 'name')->ignore($this->role->id)],
-            'slug' => ['required', 'string', 'max:255', Rule::unique(Role::class, 'slug')->ignore($this->role->id)],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['exists:permissions,id'],
             'menus' => ['nullable', 'array'],
@@ -48,10 +64,155 @@ class RolesEdit extends Component
 
     protected function loadMenus()
     {
-        return Menu::whereNull('parent_id')
-            ->with(['children.permissions', 'permissions'])
-            ->orderBy('order')
-            ->get();
+        return Cache::remember('roles.menu-options', 600, function () {
+            return Menu::whereNull('parent_id')
+                ->with(['children'])
+                ->orderBy('order')
+                ->get();
+        });
+    }
+
+    public function loadMenuOptions(): void
+    {
+        $this->menuOptionsReady = true;
+    }
+
+    protected function loadMenusWithPermissions()
+    {
+        return Cache::remember('roles.menu-options-with-permissions', 600, function () {
+            return Menu::whereNull('parent_id')
+                ->with(['children.permissions', 'permissions'])
+                ->orderBy('order')
+                ->get();
+        });
+    }
+
+    public function loadMenuPermissions(int $menuId): void
+    {
+        if ($this->menuPermissionsLoaded[$menuId] ?? false) {
+            return;
+        }
+
+        $menu = Menu::with(['permissions', 'children.permissions'])->find($menuId);
+        if (! $menu) {
+            return;
+        }
+
+        $this->menuPermissions[$menuId] = $menu->permissions
+            ->map(fn($permission) => [
+                'id' => $permission->id,
+                'name' => $permission->name,
+            ])
+            ->values()
+            ->all();
+
+        foreach ($menu->children as $child) {
+            $this->childPermissions[$child->id] = $child->permissions
+                ->map(fn($permission) => [
+                    'id' => $permission->id,
+                    'name' => $permission->name,
+                ])
+                ->values()
+                ->all();
+        }
+
+        $this->menuPermissionsLoaded[$menuId] = true;
+    }
+
+    public function updatedSelectAllMenus(bool $value): void
+    {
+        if (! $this->menuOptionsReady) {
+            return;
+        }
+
+        if ($value) {
+            $ids = $this->loadMenus()
+                ->flatMap(fn($menu) => collect([$menu->id])->merge($menu->children->pluck('id')))
+                ->values()
+                ->all();
+            $this->menus = $ids;
+        } else {
+            $this->menus = [];
+        }
+    }
+
+    public function updatedSelectAllPermissions(bool $value): void
+    {
+        if (! $this->menuOptionsReady) {
+            return;
+        }
+
+        if ($value) {
+            $menus = $this->loadMenusWithPermissions();
+
+            $ids = $menus->flatMap(function ($menu) {
+                return $menu->permissions->pluck('id')
+                    ->merge($menu->children->flatMap(fn($child) => $child->permissions->pluck('id')));
+            })
+                ->unique()
+                ->values()
+                ->all();
+
+            $this->menuPermissionsLoaded = [];
+            $this->menuPermissions = [];
+            $this->childPermissions = [];
+            foreach ($menus as $menu) {
+                $this->menuPermissions[$menu->id] = $menu->permissions
+                    ->map(fn($permission) => [
+                        'id' => $permission->id,
+                        'name' => $permission->name,
+                    ])
+                    ->values()
+                    ->all();
+
+                foreach ($menu->children as $child) {
+                    $this->childPermissions[$child->id] = $child->permissions
+                        ->map(fn($permission) => [
+                            'id' => $permission->id,
+                            'name' => $permission->name,
+                        ])
+                        ->values()
+                        ->all();
+                }
+
+                $this->menuPermissionsLoaded[$menu->id] = true;
+            }
+
+            $this->permissions = $ids;
+        } else {
+            $this->permissions = [];
+        }
+    }
+
+    public function updatedMenus(): void
+    {
+        if (! $this->menuOptionsReady) {
+            return;
+        }
+
+        $total = $this->loadMenus()
+            ->flatMap(fn($menu) => collect([$menu->id])->merge($menu->children->pluck('id')))
+            ->unique()
+            ->count();
+
+        $this->selectAllMenus = $total > 0 && count(array_unique($this->menus)) === $total;
+    }
+
+    public function updatedPermissions(): void
+    {
+        if (! $this->menuOptionsReady) {
+            return;
+        }
+
+        $total = $this->loadMenusWithPermissions()
+            ->flatMap(function ($menu) {
+                return $menu->permissions->pluck('id')
+                    ->merge($menu->children->flatMap(fn($child) => $child->permissions->pluck('id')));
+            })
+            ->unique()
+            ->count();
+
+        $this->selectAllPermissions = $total > 0 && count(array_unique($this->permissions)) === $total;
     }
 
     public function update(): void
@@ -60,23 +221,23 @@ class RolesEdit extends Component
 
         $this->role->update([
             'name' => $data['name'],
-            'slug' => $data['slug'],
         ]);
 
         $this->role->permissions()->sync($this->permissions);
         $this->role->menus()->sync($this->menus);
 
-        session()->flash('success', 'Role berhasil diperbarui.');
+        session()->flash('toast', [
+            'message' => 'Role berhasil diperbarui.',
+            'type' => 'success',
+        ]);
 
-        $this->redirectRoute('roles.index', navigate: true);
+        $this->redirectRoute('roles.index');
     }
 
     public function render()
     {
         return view('livewire.admin.roles.edit', [
-            'menus' => $this->loadMenus(),
-        ])->layoutData([
-            'title' => 'Edit Role',
+            'menuOptions' => $this->menuOptionsReady ? $this->loadMenus() : collect(),
         ]);
     }
 }

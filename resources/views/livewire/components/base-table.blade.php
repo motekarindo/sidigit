@@ -5,7 +5,9 @@
 
     @include('livewire.components.table.pagination', ['paginator' => $rows])
 
-    @include('livewire.components.modal.form')
+    @if (!empty($formView))
+        @include('livewire.components.modal.form')
+    @endif
 
     @include('livewire.components.modal.delete')
 

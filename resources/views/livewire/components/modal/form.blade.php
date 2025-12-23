@@ -4,7 +4,9 @@
         {{ $modalTitle }}
     </x-slot>
 
-    @include($this->formView())
+    @if (!empty($formView))
+        @include($formView)
+    @endif
 
     <x-slot name="footer">
         <button wire:click="closeModal" class="btn btn-secondary">
