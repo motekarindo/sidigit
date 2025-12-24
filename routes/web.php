@@ -17,8 +17,6 @@ use App\Livewire\Auth\LoginPage;
 use App\Livewire\Auth\RegisterPage;
 use App\Livewire\Auth\ResetPasswordPage;
 use App\Livewire\Admin\Users\UsersIndex;
-use App\Livewire\Admin\Users\UsersCreate;
-use App\Livewire\Admin\Users\UsersEdit;
 use App\Livewire\Admin\Roles\RolesIndex;
 use App\Livewire\Admin\Roles\RolesCreate;
 use App\Livewire\Admin\Roles\RolesEdit;
@@ -60,8 +58,6 @@ Route::middleware('auth')->group(function () {
     // --- RUTE BARU UNTUK MANAJEMEN AKSES ---
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', UsersIndex::class)->name('index');
-        Route::get('/create', UsersCreate::class)->name('create');
-        Route::get('/{user}/edit', UsersEdit::class)->name('edit');
     });
 
     Route::prefix('roles')->name('roles.')->group(function () {
