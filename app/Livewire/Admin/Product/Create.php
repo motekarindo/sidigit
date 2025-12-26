@@ -6,6 +6,7 @@ use App\Livewire\Admin\Product\Concerns\HandlesProductForm;
 use App\Services\ProductService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -115,8 +116,9 @@ class Create extends Component
             $product = $this->service->store($data);
 
             session()->flash('success', "Produk {$product->name} berhasil ditambahkan.");
-
-            $this->redirectRoute('products.index', navigate: true);
+            $this->redirectRoute('products.index');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $th) {
             report($th);
 

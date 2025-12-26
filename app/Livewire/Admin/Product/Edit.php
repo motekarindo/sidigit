@@ -6,6 +6,7 @@ use App\Livewire\Admin\Product\Concerns\HandlesProductForm;
 use App\Services\ProductService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -81,7 +82,7 @@ class Edit extends Component
         $this->description = $productModel->description;
         $this->materials = $productModel->productMaterials
             ->pluck('material_id')
-            ->map(fn ($id) => (int) $id)
+            ->map(fn($id) => (int) $id)
             ->toArray();
 
         $this->refreshMaterialsForCategory($this->category_id);
@@ -143,8 +144,9 @@ class Edit extends Component
             $product = $this->service->update($this->productId, $data);
 
             session()->flash('success', "Produk {$product->name} berhasil diperbarui.");
-
-            $this->redirectRoute('products.index', navigate: true);
+            $this->redirectRoute('products.index');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $th) {
             report($th);
 

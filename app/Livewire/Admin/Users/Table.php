@@ -6,6 +6,7 @@ use App\Livewire\BaseTable;
 use App\Livewire\Forms\UserForm;
 use App\Models\Role;
 use App\Services\UserService;
+use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
 {
@@ -48,6 +49,8 @@ class Table extends BaseTable
             $this->form->store($this->service);
             $this->closeModal();
             $this->dispatch('toast', message: 'User berhasil dibuat.', type: 'success');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             report($e);
             $this->dispatch('toast', message: 'Gagal membuat user.', type: 'error');
@@ -60,6 +63,8 @@ class Table extends BaseTable
             $this->form->update($this->service);
             $this->closeModal();
             $this->dispatch('toast', message: 'User berhasil diperbarui.', type: 'success');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             report($e);
             $this->dispatch('toast', message: 'Gagal memperbarui user.', type: 'error');
@@ -91,7 +96,7 @@ class Table extends BaseTable
         }
 
         $currentId = auth()->id();
-        $ids = array_values(array_filter($this->selected, fn ($id) => (int) $id !== (int) $currentId));
+        $ids = array_values(array_filter($this->selected, fn($id) => (int) $id !== (int) $currentId));
 
         if (empty($ids)) {
             $this->dispatch('toast', message: 'Tidak ada user lain yang bisa dihapus.', type: 'warning');
