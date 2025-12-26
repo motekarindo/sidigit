@@ -23,7 +23,8 @@
 
             @if (!empty($filtersView))
                 <button type="button" @click="showFilters = !showFilters"
-                    class="inline-flex items-center gap-2 rounded border border-brand-500 px-3 py-2 text-sm text-brand-600 bg-white hover:bg-brand-50 dark:bg-gray-900 dark:text-brand-400 dark:border-brand-400 dark:hover:bg-gray-800">
+                    class="inline-flex items-center gap-2 rounded border border-brand-500 px-3 py-2 text-sm text-brand-600  hover:bg-brand-100  dark:text-brand-400 dark:border-brand-400 dark:hover:bg-gray-800"
+                    :class="showFilters ? 'bg-brand-100 dark:bg-gray-800' : 'bg-white dark:bg-gray-900'">
                     <x-lucide-funnel-plus x-show="!showFilters" class="w-4 h-4" />
                     <x-lucide-funnel-x x-show="showFilters" class="w-4 h-4" />
                     <span>Filter</span>

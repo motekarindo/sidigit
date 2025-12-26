@@ -2,8 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Livewire\Auth\ForgotPasswordPage;
 use App\Livewire\Auth\LoginPage;
@@ -15,6 +13,8 @@ use App\Livewire\Admin\Roles\RolesCreate;
 use App\Livewire\Admin\Roles\RolesEdit;
 use App\Livewire\Admin\Permissions\PermissionsIndex;
 use App\Livewire\Admin\Menus\MenusIndex;
+use App\Livewire\Admin\AuditLogs\AuditLogsIndex;
+use App\Livewire\Profile\Edit as ProfileEdit;
 use App\Livewire\Admin\Suppliers\SuppliersIndex;
 use App\Livewire\Admin\Suppliers\SuppliersCreate;
 use App\Livewire\Admin\Suppliers\SuppliersEdit;
@@ -116,10 +116,9 @@ Route::middleware('auth')->group(function () {
     // -----------------------------------------
 
     // --- RUTE UNTUK PROFILE ---
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile', ProfileEdit::class)->name('profile.edit');
 
-    Route::get('audit-logs', [ActivityLogController::class, 'index'])->name('audit-logs.index');
+    Route::get('audit-logs', AuditLogsIndex::class)->name('audit-logs.index');
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });
