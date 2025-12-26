@@ -6,6 +6,7 @@ use App\Livewire\BaseTable;
 use App\Livewire\Forms\UnitForm;
 use App\Models\Unit;
 use App\Services\UnitService;
+use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
 {
@@ -48,6 +49,8 @@ class Table extends BaseTable
 
             $this->closeModal();
             $this->dispatch('toast', message: 'Unit berhasil dibuat.', type: 'success');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             report($e);
             $this->dispatch('toast', message: 'Gagal membuat unit.', type: 'error');
@@ -61,6 +64,8 @@ class Table extends BaseTable
 
             $this->closeModal();
             $this->dispatch('toast', message: 'Unit berhasil diperbarui.', type: 'success');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             report($e);
             $this->dispatch('toast', message: 'Gagal memperbarui unit.', type: 'error');

@@ -7,6 +7,7 @@ use App\Livewire\BaseTable;
 use App\Livewire\Forms\MenuForm;
 use App\Models\Menu;
 use App\Services\MenuService;
+use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
 {
@@ -54,6 +55,8 @@ class Table extends BaseTable
             $this->form->store($this->service);
             $this->closeModal();
             $this->dispatch('toast', message: 'Menu berhasil dibuat.', type: 'success');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             report($e);
             $this->dispatch('toast', message: 'Gagal membuat menu.', type: 'error');
@@ -66,6 +69,8 @@ class Table extends BaseTable
             $this->form->update($this->service);
             $this->closeModal();
             $this->dispatch('toast', message: 'Menu berhasil diperbarui.', type: 'success');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             report($e);
             $this->dispatch('toast', message: 'Gagal memperbarui menu.', type: 'error');
