@@ -2,16 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
-use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\ActivityLogController;
-use App\Http\Controllers\Admin\BankAccountController;
-use App\Http\Controllers\Admin\CustomerController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\MaterialController;
-use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\UnitController;
-use App\Http\Controllers\Admin\WarehouseController;
 use App\Livewire\Auth\ForgotPasswordPage;
 use App\Livewire\Auth\LoginPage;
 use App\Livewire\Auth\RegisterPage;
@@ -22,6 +15,21 @@ use App\Livewire\Admin\Roles\RolesCreate;
 use App\Livewire\Admin\Roles\RolesEdit;
 use App\Livewire\Admin\Permissions\PermissionsIndex;
 use App\Livewire\Admin\Menus\MenusIndex;
+use App\Livewire\Admin\Suppliers\SuppliersIndex;
+use App\Livewire\Admin\Suppliers\SuppliersCreate;
+use App\Livewire\Admin\Suppliers\SuppliersEdit;
+use App\Livewire\Admin\Warehouses\WarehousesIndex;
+use App\Livewire\Admin\Warehouses\WarehousesCreate;
+use App\Livewire\Admin\Warehouses\WarehousesEdit;
+use App\Livewire\Admin\Employees\EmployeesIndex;
+use App\Livewire\Admin\Employees\EmployeesCreate;
+use App\Livewire\Admin\Employees\EmployeesEdit;
+use App\Livewire\Admin\Customers\CustomersIndex;
+use App\Livewire\Admin\Customers\CustomersCreate;
+use App\Livewire\Admin\Customers\CustomersEdit;
+use App\Livewire\Admin\BankAccounts\BankAccountsIndex;
+use App\Livewire\Admin\Categories\CategoriesIndex;
+use App\Livewire\Admin\Materials\MaterialsIndex;
 use App\Livewire\Admin\Product\Index as ProductsIndex;
 use App\Livewire\Admin\Product\Create as ProductsCreate;
 use App\Livewire\Admin\Product\Edit as ProductsEdit;
@@ -50,9 +58,17 @@ Route::middleware('auth')->group(function () {
         return view('dashboard');
     })->name('dashboard');
 
-    Route::resource('bank-accounts', BankAccountController::class)->except('show');
-    Route::resource('customers', CustomerController::class)->except('show');
-    Route::resource('employees', EmployeeController::class)->except('show');
+    Route::get('bank-accounts', BankAccountsIndex::class)->name('bank-accounts.index');
+    Route::prefix('customers')->name('customers.')->group(function () {
+        Route::get('/', CustomersIndex::class)->name('index');
+        Route::get('/create', CustomersCreate::class)->name('create');
+        Route::get('/{customer}/edit', CustomersEdit::class)->name('edit');
+    });
+    Route::prefix('employees')->name('employees.')->group(function () {
+        Route::get('/', EmployeesIndex::class)->name('index');
+        Route::get('/create', EmployeesCreate::class)->name('create');
+        Route::get('/{employee}/edit', EmployeesEdit::class)->name('edit');
+    });
 
 
     // --- RUTE BARU UNTUK MANAJEMEN AKSES ---
@@ -85,10 +101,18 @@ Route::middleware('auth')->group(function () {
 
     Route::get('units', UnitIndex::class)->name('units.index');
 
-    Route::resource('categories', CategoryController::class);
-    Route::resource('suppliers', SupplierController::class)->except('show');
-    Route::resource('materials', MaterialController::class)->except('show');
-    Route::resource('warehouses', WarehouseController::class)->except('show');
+    Route::get('categories', CategoriesIndex::class)->name('categories.index');
+    Route::prefix('suppliers')->name('suppliers.')->group(function () {
+        Route::get('/', SuppliersIndex::class)->name('index');
+        Route::get('/create', SuppliersCreate::class)->name('create');
+        Route::get('/{supplier}/edit', SuppliersEdit::class)->name('edit');
+    });
+    Route::get('materials', MaterialsIndex::class)->name('materials.index');
+    Route::prefix('warehouses')->name('warehouses.')->group(function () {
+        Route::get('/', WarehousesIndex::class)->name('index');
+        Route::get('/create', WarehousesCreate::class)->name('create');
+        Route::get('/{warehouse}/edit', WarehousesEdit::class)->name('edit');
+    });
     // -----------------------------------------
 
     // --- RUTE UNTUK PROFILE ---
