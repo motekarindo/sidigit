@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Menu;
 use App\Traits\LogsAllActivity;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use RichanFongdasen\EloquentBlameable\BlameableTrait;
 
 class Role extends Model
@@ -23,6 +24,15 @@ class Role extends Model
         'name',
         'slug',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Role $role) {
+            if (filled($role->name)) {
+                $role->slug = Str::slug($role->name);
+            }
+        });
+    }
 
     public function users()
     {

@@ -6,6 +6,7 @@ use App\Enums\EmployeeStatus;
 use App\Models\Employee;
 use App\Repositories\EmployeeRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -20,6 +21,11 @@ class EmployeeService
     public function getPaginated(): LengthAwarePaginator
     {
         return $this->repository->paginate();
+    }
+
+    public function query(): Builder
+    {
+        return Employee::query();
     }
 
     public function store(array $data): Employee
@@ -42,10 +48,29 @@ class EmployeeService
         $employee = $this->repository->findOrFail($id);
 
         if ($employee->photo) {
-            Storage::disk('public')->delete($employee->photo);
+            $disk = config('filesystems.default', 'public');
+            Storage::disk($disk)->delete($employee->photo);
         }
 
         $this->repository->delete($employee);
+    }
+
+    public function destroyMany(array $ids): void
+    {
+        $ids = array_values(array_filter($ids));
+        if (empty($ids)) {
+            return;
+        }
+
+        $employees = Employee::query()->whereIn('id', $ids)->get();
+        foreach ($employees as $employee) {
+            if ($employee->photo) {
+                $disk = config('filesystems.default', 'public');
+                Storage::disk($disk)->delete($employee->photo);
+            }
+        }
+
+        Employee::query()->whereIn('id', $ids)->delete();
     }
 
     public function find(int $id): Employee
@@ -64,10 +89,11 @@ class EmployeeService
     protected function preparePayload(array $data, ?Employee $employee = null): array
     {
         if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
-            $data['photo'] = $data['photo']->store('employee-photos', 'public');
+            $disk = config('filesystems.default', 'public');
+            $data['photo'] = $data['photo']->store('employee-photos', $disk);
 
             if ($employee && $employee->photo) {
-                Storage::disk('public')->delete($employee->photo);
+                Storage::disk($disk)->delete($employee->photo);
             }
         } else {
             unset($data['photo']);

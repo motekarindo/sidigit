@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Supplier;
 use App\Repositories\SupplierRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class SupplierService
 {
@@ -17,6 +18,11 @@ class SupplierService
     public function getPaginated(): LengthAwarePaginator
     {
         return $this->repository->paginate();
+    }
+
+    public function query(): Builder
+    {
+        return Supplier::query();
     }
 
     public function store(array $data): Supplier
@@ -36,6 +42,16 @@ class SupplierService
         $supplier = $this->repository->findOrFail($id);
 
         $this->repository->delete($supplier);
+    }
+
+    public function destroyMany(array $ids): void
+    {
+        $ids = array_values(array_filter($ids));
+        if (empty($ids)) {
+            return;
+        }
+
+        Supplier::query()->whereIn('id', $ids)->delete();
     }
 
     public function find(int $id): Supplier
