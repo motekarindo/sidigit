@@ -6,6 +6,7 @@ use App\Enums\CustomerMemberType;
 use App\Models\Customer;
 use App\Repositories\CustomerRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class CustomerService
 {
@@ -18,6 +19,11 @@ class CustomerService
     public function getPaginated(): LengthAwarePaginator
     {
         return $this->repository->paginate();
+    }
+
+    public function query(): Builder
+    {
+        return Customer::query();
     }
 
     public function store(array $data): Customer
@@ -41,6 +47,16 @@ class CustomerService
         $customer = $this->repository->findOrFail($id);
 
         $this->repository->delete($customer);
+    }
+
+    public function destroyMany(array $ids): void
+    {
+        $ids = array_values(array_filter($ids));
+        if (empty($ids)) {
+            return;
+        }
+
+        Customer::query()->whereIn('id', $ids)->delete();
     }
 
     public function find(int $id): Customer

@@ -45,4 +45,11 @@ class Menu extends Model
     {
         return $this->hasMany(Permission::class);
     }
+
+    protected static function booted()
+    {
+        static::saved(fn () => cache()->flush());
+        static::deleted(fn () => cache()->flush());
+    }
+
 }
