@@ -45,4 +45,48 @@ class MenuService
 
         Menu::query()->whereIn('id', $ids)->delete();
     }
+
+    public function moveUp(int $id): void
+    {
+        $menu = $this->find($id);
+        
+        // Find the menu with the previous order (same parent)
+        $previousMenu = Menu::query()
+            ->where('parent_id', $menu->parent_id)
+            ->where('order', '<', $menu->order)
+            ->orderBy('order', 'desc')
+            ->first();
+            
+        if ($previousMenu) {
+            // Swap orders
+            $tempOrder = $menu->order;
+            $menu->order = $previousMenu->order;
+            $previousMenu->order = $tempOrder;
+            
+            $menu->save();
+            $previousMenu->save();
+        }
+    }
+
+    public function moveDown(int $id): void
+    {
+        $menu = $this->find($id);
+        
+        // Find the menu with the next order (same parent)
+        $nextMenu = Menu::query()
+            ->where('parent_id', $menu->parent_id)
+            ->where('order', '>', $menu->order)
+            ->orderBy('order', 'asc')
+            ->first();
+            
+        if ($nextMenu) {
+            // Swap orders
+            $tempOrder = $menu->order;
+            $menu->order = $nextMenu->order;
+            $nextMenu->order = $tempOrder;
+            
+            $menu->save();
+            $nextMenu->save();
+        }
+    }
 }

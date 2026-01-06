@@ -28,7 +28,7 @@ class Menu extends Model
 
     public function roles()
     {
-        return $this->belongsToMany(Role::class, 'menu_role')->withTimestamps();;
+        return $this->belongsToMany(Role::class, 'menu_role')->withTimestamps();
     }
 
     public function parent()
@@ -46,7 +46,7 @@ class Menu extends Model
         return $this->hasMany(Permission::class);
     }
 
-    protected static function booted()
+protected static function booted()
     {
         static::saved(fn () => cache()->flush());
         static::deleted(fn () => cache()->flush());

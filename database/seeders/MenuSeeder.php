@@ -10,17 +10,17 @@ class MenuSeeder extends Seeder
     public function run(): void
     {
         // Dashboard
-        Menu::updateOrCreate(['route_name' => 'dashboard'], ['name' => 'Dashboard', 'icon' => 'bi bi-grid-fill', 'order' => 1]);
+        Menu::updateOrCreate(['route_name' => 'dashboard'], ['name' => 'Dashboard', 'icon' => 'home', 'order' => 1]);
 
         // --- RBAC ---
-        $rbac = Menu::updateOrCreate(['name' => 'RBAC'], ['icon' => 'bi bi-shield-shaded', 'order' => 2]);
-        Menu::updateOrCreate(['route_name' => 'roles.index'], ['parent_id' => $rbac->id, 'name' => 'Manajemen Role', 'order' => 1]);
-        Menu::updateOrCreate(['route_name' => 'permissions.index'], ['parent_id' => $rbac->id, 'name' => 'Manajemen Permission', 'order' => 2]);
-        Menu::updateOrCreate(['route_name' => 'menus.index'], ['parent_id' => $rbac->id, 'name' => 'Manajemen Menu', 'order' => 3]);
+        $rbac = Menu::updateOrCreate(['name' => 'RBAC'], ['icon' => 'shield', 'order' => 2]);
+        Menu::updateOrCreate(['route_name' => 'roles.index'], ['parent_id' => $rbac->id, 'name' => 'Manajemen Role', 'icon' => 'users', 'order' => 1]);
+        Menu::updateOrCreate(['route_name' => 'permissions.index'], ['parent_id' => $rbac->id, 'name' => 'Manajemen Permission', 'icon' => 'shield-check', 'order' => 2]);
+        Menu::updateOrCreate(['route_name' => 'menus.index'], ['parent_id' => $rbac->id, 'name' => 'Manajemen Menu', 'icon' => 'menu', 'order' => 3]);
 
         // --- MANAJEMEN BARANG ---
-        $itemManagement = Menu::updateOrCreate(['name' => 'Manajemen Barang'], ['icon' => 'bi bi-box-seam-fill', 'order' => 3]);
-        Menu::updateOrCreate(['route_name' => 'products.index'], ['parent_id' => $itemManagement->id, 'name' => 'Produk', 'order' => 1]);
-        Menu::updateOrCreate(['route_name' => 'categories.index'], ['parent_id' => $itemManagement->id, 'name' => 'Kategori', 'order' => 2]);
+        $itemManagement = Menu::updateOrCreate(['name' => 'Manajemen Barang'], ['icon' => 'package', 'order' => 3]);
+        Menu::updateOrCreate(['route_name' => 'products.index'], ['parent_id' => $itemManagement->id, 'name' => 'Produk', 'icon' => 'box', 'order' => 1]);
+        Menu::updateOrCreate(['route_name' => 'categories.index'], ['parent_id' => $itemManagement->id, 'name' => 'Kategori', 'icon' => 'layers', 'order' => 2]);
     }
 }

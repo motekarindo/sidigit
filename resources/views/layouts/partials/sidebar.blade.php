@@ -120,7 +120,10 @@
                                         @endphp
                                         <li>
                                             <a href="{{ $childLink }}"
-                                                class="menu-dropdown-item {{ $childActive ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive' }}">
+                                                class="menu-dropdown-item {{ $childActive ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive' }} flex items-center gap-2">
+                                                @if (!empty($child->icon))
+                                                    <x-dynamic-component :component="'lucide-icon-' . $child->icon" class="w-4 h-4" />
+                                                @endif
                                                 {{ $child->name }}
                                             </a>
                                         </li>
@@ -154,10 +157,28 @@
                         <li>
                             <a href="{{ route('profile.edit') }}"
                                 class="menu-item group {{ Route::is('profile.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
-                                <span
-                                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-xs font-semibold uppercase text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
-                                    PR
-                                </span>
+@if (!empty($menu->icon))
+                                        <span
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
+                                            @if (!empty($menu->icon))
+                                        @include('svg.lucide', ['icon' => $menu->icon, 'class' => 'w-5 h-5'])
+                                    @endif
+                                        </span>
+                                    @else
+@if (!empty($menu->icon))
+                                        <span
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
+                                            @if (!empty($menu->icon))
+                                        @include('svg.lucide', ['icon' => $menu->icon, 'class' => 'w-5 h-5'])
+                                    @endif
+                                        </span>
+                                    @else
+                                        <span
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-xs font-semibold uppercase text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
+                                            {{ $menuInitials }}
+                                        </span>
+                                    @endif
+                                    @endif
                                 <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Profile</span>
                             </a>
                         </li>

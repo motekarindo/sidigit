@@ -14,6 +14,8 @@ class Table extends BaseTable
     protected MenuService $service;
 
     public MenuForm $form;
+    
+    public string $iconSearch = '';
 
     public function boot(MenuService $service): void
     {
@@ -22,7 +24,11 @@ class Table extends BaseTable
 
     protected function query()
     {
-        return $this->applySearch($this->service->query(), ['name', 'route_name']);
+        // Get only parent menus (where parent_id is null)
+        return $this->applySearch(
+            Menu::query()->whereNull('parent_id')->with('children'),
+            ['name', 'route_name']
+        )->orderBy('order');
     }
 
     public function getParentMenuOptionsProperty()
@@ -36,6 +42,30 @@ class Table extends BaseTable
     public function getIconOptionsProperty(): array
     {
         return IconHelper::getIcons();
+    }
+
+    public function getFilteredIconOptionsProperty(): array
+    {
+        $icons = $this->iconOptions;
+        $search = strtolower($this->iconSearch ?? '');
+        
+        if (empty($search)) {
+            return array_slice($icons, 0, 50);
+        }
+        
+        $filtered = [];
+        foreach ($icons as $key => $label) {
+            if (str_contains(strtolower($key), $search) || str_contains(strtolower($label), $search)) {
+                $filtered[$key] = $label;
+            }
+        }
+        
+        return array_slice($filtered, 0, 50);
+    }
+
+    public function selectIcon(string $iconName): void
+    {
+        $this->form->icon = $iconName;
     }
 
     protected function resetForm(): void
@@ -108,6 +138,28 @@ class Table extends BaseTable
         }
     }
 
+    public function moveUp(int $id): void
+    {
+        try {
+            $this->service->moveUp($id);
+            $this->dispatch('toast', message: 'Urutan menu berhasil dinaikkan.', type: 'success');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('toast', message: 'Gagal mengubah urutan menu.', type: 'error');
+        }
+    }
+
+    public function moveDown(int $id): void
+    {
+        try {
+            $this->service->moveDown($id);
+            $this->dispatch('toast', message: 'Urutan menu berhasil diturunkan.', type: 'success');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->dispatch('toast', message: 'Gagal mengubah urutan menu.', type: 'error');
+        }
+    }
+
     protected function formView(): ?string
     {
         return 'livewire.admin.menus.form';
@@ -139,9 +191,10 @@ class Table extends BaseTable
     {
         return [
             ['label' => 'Name', 'field' => 'name', 'sortable' => true],
-            ['label' => 'Parent', 'field' => 'parent.name', 'sortable' => false],
+            ['label' => 'Icon', 'field' => 'icon', 'sortable' => false],
             ['label' => 'Route', 'field' => 'route_name', 'sortable' => false],
-            ['label' => 'Urutan', 'field' => 'order', 'sortable' => false],
+            ['label' => 'Urutan', 'field' => 'order', 'sortable' => true],
+            ['label' => '', 'field' => 'actions', 'sortable' => false, 'view' => 'livewire.admin.menus.columns.actions'],
         ];
     }
 
@@ -173,5 +226,20 @@ class Table extends BaseTable
     protected function editModalTitle(): string
     {
         return 'Edit Menu';
+    }
+
+    public function render()
+    {
+        $rows = $this->applySorting($this->query())->paginate($this->perPage);
+
+        return view('livewire.admin.menus.hierarchical-table', [
+            'rows' => $rows,
+            'columns' => $this->columns(),
+            'tableActions' => $this->tableActions(),
+            'rowActions' => $this->rowActions(),
+            'bulkActions' => $this->bulkActions(),
+            'formView' => $this->formView(),
+            'filtersView' => $this->filtersView(),
+        ]);
     }
 }

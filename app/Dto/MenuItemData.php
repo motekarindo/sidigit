@@ -51,16 +51,10 @@ class MenuItemData extends Data
 
     protected static function resolveIcon($menu, ?string $base): string
     {
-        $icons = config('menu.icons');
-        if (! is_array($icons)) {
-            $icons = [];
-        }
-        $default = $icons['default'] ?? '';
-
         if (filled($menu->icon)) {
-            return str_contains($menu->icon, '<svg') ? $menu->icon : ($icons[$menu->icon] ?? $default);
+            return $menu->icon;
         }
 
-        return $icons[$base] ?? $default;
+        return '';
     }
 }

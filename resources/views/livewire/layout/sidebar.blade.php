@@ -45,11 +45,9 @@
                                             text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500
                                             dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
                                         @if (!empty($menu->icon))
-                                            @if (Str::contains($menu->icon, '<svg'))
-                                                {!! $menu->icon !!}
-                                            @else
-                                                <i class="{{ $menu->icon }}"></i>
-                                            @endif
+@if (!empty($menu->icon))
+                                            @include('svg.lucide', ['icon' => $menu->icon, 'class' => 'w-5 h-5'])
+                                        @endif
                                         @else
                                             <span class="text-sm font-semibold uppercase">
                                                 {{ Str::substr($menu->name, 0, 1) }}
@@ -73,7 +71,12 @@
                                     @foreach ($menu->children as $child)
                                         <li>
                                             <a href="{{ $child->route_url ?? '#' }}"
-                                                class="menu-dropdown-item {{ $child->active ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive' }}">
+                                                class="menu-dropdown-item {{ $child->active ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive' }} flex items-center gap-2">
+                                                @if (!empty($child->icon))
+                                                    @if (!empty($child->icon))
+                                                    @include('svg.lucide', ['icon' => $child->icon, 'class' => 'w-4 h-4'])
+                                                @endif
+                                                @endif
                                                 {{ $child->name }}
                                             </a>
                                         </li>
@@ -86,10 +89,8 @@
                                     class="menu-item group {{ $menu->active ? 'menu-item-active' : '' }}">
                                     <span
                                         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
-                                        @if (Str::contains($menu->icon, '<svg'))
-                                            {!! $menu->icon !!}
-                                        @else
-                                            <i class="{{ $menu->icon }}"></i>
+@if (!empty($menu->icon))
+                                            @include('svg.lucide', ['icon' => $menu->icon, 'class' => 'w-5 h-5'])
                                         @endif
                                     </span>
                                     <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">
