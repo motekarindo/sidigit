@@ -20,7 +20,7 @@ class EmployeeLoanForm extends Form
     {
         return [
             'employee_id' => ['required', 'integer', 'exists:mst_employees,id'],
-            'amount' => ['required', 'numeric', 'min:0'],
+            'amount' => ['required', 'integer', 'min:0'],
             'loan_date' => ['required', 'date'],
             'status' => ['required', 'string', 'max:16'],
             'paid_at' => ['nullable', 'date'],

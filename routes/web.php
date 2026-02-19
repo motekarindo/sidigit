@@ -69,10 +69,10 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('stocks')->group(function () {
-        Route::get('/in', StockInIndex::class)->name('stock-ins.index');
-        Route::get('/out', StockOutIndex::class)->name('stock-outs.index');
-        Route::get('/opname', StockOpnameIndex::class)->name('stock-opnames.index');
-        Route::get('/balances', StockBalanceIndex::class)->name('stock-balances.index');
+        Route::get('/in', StockInIndex::class)->name('stocks.in');
+        Route::get('/out', StockOutIndex::class)->name('stocks.out');
+        Route::get('/opname', StockOpnameIndex::class)->name('stocks.opname');
+        Route::get('/balances', StockBalanceIndex::class)->name('stocks.balances');
     });
 
     Route::get('expenses/materials', MaterialExpenseIndex::class)->name('expenses.materials.index');

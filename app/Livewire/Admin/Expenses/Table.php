@@ -6,6 +6,7 @@ use App\Livewire\BaseTable;
 use App\Livewire\Forms\ExpenseForm;
 use App\Models\Material;
 use App\Models\Supplier;
+use App\Models\Unit;
 use App\Services\ExpenseService;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
@@ -51,11 +52,43 @@ class Table extends BaseTable
         return Supplier::orderBy('name')->get();
     }
 
+    public function getUnitOptionsProperty()
+    {
+        $materialId = $this->form->material_id;
+        if (!$materialId) {
+            return Unit::orderBy('name')->get();
+        }
+
+        $material = Material::find($materialId);
+        if (!$material) {
+            return Unit::orderBy('name')->get();
+        }
+
+        $ids = array_filter([$material->unit_id, $material->purchase_unit_id]);
+        if (empty($ids)) {
+            return Unit::orderBy('name')->get();
+        }
+
+        return Unit::query()->whereIn('id', $ids)->orderBy('name')->get();
+    }
+
     protected function resetForm(): void
     {
         $this->form->reset();
         $this->form->type = $this->type;
         $this->form->expense_date = now()->format('Y-m-d');
+    }
+
+    public function updatedFormMaterialId($value): void
+    {
+        if ($this->type !== 'material') {
+            return;
+        }
+
+        $material = Material::find($value);
+        if ($material) {
+            $this->form->unit_id = $material->purchase_unit_id ?: $material->unit_id;
+        }
     }
 
     protected function loadForm(int $id): void
@@ -192,6 +225,16 @@ class Table extends BaseTable
     protected function selectionColumnCheckbox(): bool
     {
         return true;
+    }
+
+    protected function createModalWidth(): string
+    {
+        return '3xl';
+    }
+
+    protected function editModalWidth(): string
+    {
+        return '3xl';
     }
 
     protected function createModalTitle(): string

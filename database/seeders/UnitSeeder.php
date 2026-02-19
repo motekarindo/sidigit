@@ -15,6 +15,7 @@ class UnitSeeder extends Seeder
             ['name' => 'M', 'is_dimension' => true],
             ['name' => 'MM', 'is_dimension' => true],
             ['name' => 'PCS', 'is_dimension' => false],
+            ['name' => 'RIM', 'is_dimension' => false],
             ['name' => 'SET', 'is_dimension' => false],
         ];
 

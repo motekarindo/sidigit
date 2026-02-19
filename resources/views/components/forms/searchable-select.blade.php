@@ -5,7 +5,44 @@
     'optionLabel' => 'name',
     'placeholder' => 'Pilih...',
     'required' => false,
+    'name' => null,
+    'selected' => null,
+    'compact' => false,
+    'searchPlaceholder' => 'Cari...',
+    'emptyText' => 'Tidak ada data.',
+    'buttonClass' => null,
 ])
+
+@php
+    $wireModel = $attributes->wire('model');
+    $hasWireModel = filled($wireModel->value());
+    $initialValue = $hasWireModel ? null : ($name ? old($name, $selected) : $selected);
+    $defaultButtonClass = $compact ? 'form-input' : 'form-input mt-2';
+    $resolvedButtonClass = $buttonClass ?: $defaultButtonClass;
+    $normalizedOptions = collect($options)
+        ->map(function ($opt, $key) use ($optionValue, $optionLabel) {
+            $value = data_get($opt, $optionValue);
+            $label = data_get($opt, $optionLabel);
+
+            if ($value === null) {
+                if (is_scalar($opt)) {
+                    $value = is_int($key) ? $opt : $key;
+                } else {
+                    $value = $key;
+                }
+            }
+
+            if ($label === null) {
+                $label = is_scalar($opt) ? $opt : $value;
+            }
+
+            return [
+                'value' => $value,
+                'label' => $label,
+            ];
+        })
+        ->values();
+@endphp
 
 <div x-data="{
     open: false,
@@ -13,21 +50,12 @@
     top: 0,
     left: 0,
     width: 0,
-    value: @entangle($attributes->wire('model')),
+    value: @if ($hasWireModel) @entangle($wireModel) @else @js($initialValue) @endif,
     get filtered() {
         const term = this.search.toLowerCase();
         return this.options.filter(o => String(o.label).toLowerCase().includes(term));
     },
-    options: @js(
-    collect($options)
-        ->map(
-            fn($opt) => [
-                'value' => data_get($opt, $optionValue),
-                'label' => data_get($opt, $optionLabel),
-            ],
-        )
-        ->values(),
-),
+    options: @js($normalizedOptions),
     labelFor(value) {
         const found = this.options.find(o => String(o.value) === String(value));
         return found ? found.label : '';
@@ -49,10 +77,10 @@ window.addEventListener('resize', onScroll);" class="relative">
                 <span class="text-red-500">*</span>
             @endif
         </label>
-    @endif
+@endif
 
     <button type="button" x-ref="trigger" @click="open = !open; if (open) { $nextTick(() => updatePosition()); }"
-        class="form-input mt-2 flex items-center justify-between gap-2 text-left">
+        class="{{ $resolvedButtonClass }} flex items-center justify-between gap-2 text-left">
         <span x-text="value ? labelFor(value) : '{{ $placeholder }}'"
             :class="value ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'"></span>
         <span class="shrink-0 text-gray-500 dark:text-gray-400">
@@ -61,12 +89,16 @@ window.addEventListener('resize', onScroll);" class="relative">
         </span>
     </button>
 
+    @if (!$hasWireModel && $name)
+        <input type="hidden" name="{{ $name }}" x-model="value">
+    @endif
+
     <template x-teleport="body">
         <div x-show="open" x-cloak @click.outside="open = false" @keydown.escape.window="open = false"
             :style="`position: absolute; top: ${top}px; left: ${left}px; width: ${width}px;`"
             class="z-[999999] mt-2 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900">
             <div class="p-2">
-                <input type="text" x-model="search" placeholder="Cari..." class="form-input" />
+                <input type="text" x-model="search" placeholder="{{ $searchPlaceholder }}" class="form-input" />
             </div>
             <ul class="max-h-56 overflow-auto py-1">
                 <template x-for="opt in filtered" :key="opt.value">
@@ -81,7 +113,7 @@ window.addEventListener('resize', onScroll);" class="relative">
                     </li>
                 </template>
                 <template x-if="filtered.length === 0">
-                    <li class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">Tidak ada data.</li>
+                    <li class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">{{ $emptyText }}</li>
                 </template>
             </ul>
         </div>

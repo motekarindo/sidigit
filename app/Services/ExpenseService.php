@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Expense;
+use App\Models\Material;
 use App\Models\StockMovement;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -95,8 +96,8 @@ class ExpenseService
             return;
         }
 
-        $qty = (float) ($payload['qty'] ?? 0);
-        if ($qty <= 0) {
+        $qtyBase = (float) ($payload['qty_base'] ?? 0);
+        if ($qtyBase <= 0) {
             return;
         }
 
@@ -107,11 +108,13 @@ class ExpenseService
         StockMovement::create([
             'material_id' => $payload['material_id'],
             'type' => 'in',
-            'qty' => $qty,
+            'qty' => $qtyBase,
             'ref_type' => 'expense',
             'ref_id' => $expense->id,
             'notes' => $payload['notes'] ?? 'Pembelian bahan',
         ]);
+
+        $this->updateMaterialCost($payload['material_id'], $qtyBase, (float) ($payload['unit_cost_base'] ?? 0));
     }
 
     protected function normalize(array $data): array
@@ -128,20 +131,89 @@ class ExpenseService
         if ($type !== 'material') {
             $data['material_id'] = null;
             $data['supplier_id'] = null;
+            $data['unit_id'] = null;
             $data['qty'] = null;
             $data['unit_cost'] = null;
+            $data['qty_base'] = null;
+            $data['unit_cost_base'] = null;
+        }
+
+        $material = null;
+        $qtyBase = null;
+        $unitCostBase = null;
+        if ($type === 'material' && !empty($data['material_id'])) {
+            $material = Material::find($data['material_id']);
+            if ($material && empty($data['unit_id'])) {
+                $data['unit_id'] = $material->purchase_unit_id ?: $material->unit_id;
+            }
+            $conversion = $this->resolveConversion($material, $data['unit_id'] ?? null);
+            $qtyBase = $qty !== null ? (float) $qty * $conversion : null;
+            $unitCostBase = $qtyBase && $amount !== null ? (float) $amount / $qtyBase : null;
         }
 
         return [
             'type' => $type,
             'material_id' => $data['material_id'] ?? null,
             'supplier_id' => $data['supplier_id'] ?? null,
+            'unit_id' => $data['unit_id'] ?? null,
             'qty' => $data['qty'] ?? null,
             'unit_cost' => $data['unit_cost'] ?? null,
+            'qty_base' => $qtyBase,
+            'unit_cost_base' => $unitCostBase,
             'amount' => $amount ?? 0,
             'payment_method' => $data['payment_method'] ?? 'cash',
             'expense_date' => $data['expense_date'] ?? now()->format('Y-m-d'),
             'notes' => $data['notes'] ?? null,
         ];
+    }
+
+    protected function resolveConversion(?Material $material, ?int $unitId): float
+    {
+        if (!$material) {
+            return 1;
+        }
+
+        if ($unitId && $unitId === $material->unit_id) {
+            return 1;
+        }
+
+        if ($unitId && $material->purchase_unit_id && $unitId === $material->purchase_unit_id) {
+            return max(1, (float) $material->conversion_qty);
+        }
+
+        return 1;
+    }
+
+    protected function updateMaterialCost(int $materialId, float $qtyBase, float $unitCostBase): void
+    {
+        if ($qtyBase <= 0 || $unitCostBase <= 0) {
+            return;
+        }
+
+        $material = Material::find($materialId);
+        if (!$material) {
+            return;
+        }
+
+        $currentQty = $this->currentStock($materialId);
+        $currentCost = (float) ($material->cost_price ?? 0);
+        $denom = $currentQty + $qtyBase;
+        if ($denom <= 0) {
+            return;
+        }
+
+        $newAvg = (($currentQty * $currentCost) + ($qtyBase * $unitCostBase)) / $denom;
+        $material->update(['cost_price' => $newAvg]);
+    }
+
+    protected function currentStock(int $materialId): float
+    {
+        $rows = StockMovement::query()
+            ->where('material_id', $materialId)
+            ->whereNull('deleted_at')
+            ->selectRaw('COALESCE(SUM(CASE WHEN type = \"in\" THEN qty WHEN type = \"out\" THEN -qty WHEN type = \"opname\" THEN qty ELSE 0 END), 0) as saldo')
+            ->value('saldo');
+
+        return (float) ($rows ?? 0);
     }
 }

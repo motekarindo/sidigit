@@ -55,14 +55,14 @@
                             class="mt-2 block w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" />
                     </div>
                     <div>
-                        <label for="roles" class="text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
-                        <select id="roles" multiple wire:model="roles"
-                            class="mt-2 block w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-                            @foreach ($availableRoles as $role)
-                                <option value="{{ $role->id }}">{{ $role->name }}</option>
-                            @endforeach
-                        </select>
-                        <p class="mt-1 text-xs text-gray-400">Tekan Ctrl/Cmd untuk memilih lebih dari satu peran.</p>
+                        <x-forms.searchable-multiselect
+                            label="Role"
+                            :options="$availableRoles"
+                            placeholder="Pilih role"
+                            wire:model="roles"
+                            required
+                        />
+                        <p class="mt-1 text-xs text-gray-400">Klik untuk memilih lebih dari satu peran.</p>
                         @error('roles')
                             <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
                         @enderror

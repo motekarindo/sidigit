@@ -112,6 +112,18 @@ trait HandlesOrderForm
         $this->items[] = $this->newItem();
     }
 
+    public function updatedItems($value, $name): void
+    {
+        if (!is_string($name) || !str_contains($name, '.')) {
+            return;
+        }
+
+        [$index, $field] = explode('.', $name, 2);
+        if ($field === 'product_id') {
+            $this->handleProductChange((int) $index, $value);
+        }
+    }
+
     public function removeItem(int $index): void
     {
         unset($this->items[$index]);

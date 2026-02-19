@@ -25,10 +25,22 @@ class MenuSeeder extends Seeder
 
         // --- STOK ---
         $stockMenu = Menu::updateOrCreate(['name' => 'Stok'], ['icon' => 'bi bi-boxes', 'order' => 4]);
-        Menu::updateOrCreate(['route_name' => 'stock-ins.index'], ['parent_id' => $stockMenu->id, 'name' => 'Stok Masuk', 'order' => 1]);
-        Menu::updateOrCreate(['route_name' => 'stock-outs.index'], ['parent_id' => $stockMenu->id, 'name' => 'Stok Keluar', 'order' => 2]);
-        Menu::updateOrCreate(['route_name' => 'stock-opnames.index'], ['parent_id' => $stockMenu->id, 'name' => 'Stok Opname', 'order' => 3]);
-        Menu::updateOrCreate(['route_name' => 'stock-balances.index'], ['parent_id' => $stockMenu->id, 'name' => 'Saldo Stok', 'order' => 4]);
+        Menu::updateOrCreate(
+            ['parent_id' => $stockMenu->id, 'name' => 'Stok Masuk'],
+            ['route_name' => 'stocks.in', 'order' => 1]
+        );
+        Menu::updateOrCreate(
+            ['parent_id' => $stockMenu->id, 'name' => 'Stok Keluar'],
+            ['route_name' => 'stocks.out', 'order' => 2]
+        );
+        Menu::updateOrCreate(
+            ['parent_id' => $stockMenu->id, 'name' => 'Stok Opname'],
+            ['route_name' => 'stocks.opname', 'order' => 3]
+        );
+        Menu::updateOrCreate(
+            ['parent_id' => $stockMenu->id, 'name' => 'Saldo Stok'],
+            ['route_name' => 'stocks.balances', 'order' => 4]
+        );
 
         // --- PENGELUARAN ---
         $expenseMenu = Menu::updateOrCreate(['name' => 'Pengeluaran'], ['icon' => 'bi bi-wallet2', 'order' => 5]);

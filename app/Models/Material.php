@@ -18,13 +18,16 @@ class Material extends Model
         'name',
         'category_id',
         'unit_id',
+        'purchase_unit_id',
         'description',
         'cost_price',
+        'conversion_qty',
         'reorder_level',
     ];
 
     protected $casts = [
         'cost_price' => 'decimal:2',
+        'conversion_qty' => 'decimal:2',
         'reorder_level' => 'decimal:2',
     ];
 
@@ -36,5 +39,10 @@ class Material extends Model
     public function unit()
     {
         return $this->belongsTo(Unit::class, 'unit_id');
+    }
+
+    public function purchaseUnit()
+    {
+        return $this->belongsTo(Unit::class, 'purchase_unit_id');
     }
 }

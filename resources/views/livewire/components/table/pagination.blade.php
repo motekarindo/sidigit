@@ -77,11 +77,17 @@
     @endif
     <div class="flex items-center gap-2">
         <span class="text-sm text-gray-600 dark:text-gray-300">Per page</span>
-        <select wire:model.change="perPage"
-            class="px-3 py-2 border rounded-lg text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 dark:focus:ring-gray-600">
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="25">25</option>
-        </select>
+        <div class="w-24">
+            <x-forms.searchable-select
+                :options="[
+                    ['id' => 5, 'name' => '5'],
+                    ['id' => 10, 'name' => '10'],
+                    ['id' => 25, 'name' => '25'],
+                ]"
+                placeholder="Pilih"
+                wire:model="perPage"
+                :compact="true"
+            />
+        </div>
     </div>
 </div>

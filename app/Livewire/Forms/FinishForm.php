@@ -14,7 +14,7 @@ class FinishForm extends Form
     #[Validate('required|string|max:128')]
     public string $name = '';
 
-    #[Validate('nullable|numeric|min:0')]
+    #[Validate('nullable|integer|min:0')]
     public ?string $price = null;
 
     #[Validate('nullable|integer|exists:mst_units,id')]

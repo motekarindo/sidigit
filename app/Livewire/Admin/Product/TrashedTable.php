@@ -103,13 +103,13 @@ class TrashedTable extends BaseTable
                 'label' => 'Harga Pokok',
                 'field' => 'base_price',
                 'sortable' => false,
-                'format' => fn ($row) => number_format((float) $row->base_price, 2, ',', '.'),
+                'format' => fn ($row) => number_format((float) $row->base_price, 0, ',', '.'),
             ],
             [
                 'label' => 'Harga Jual',
                 'field' => 'sale_price',
                 'sortable' => false,
-                'format' => fn ($row) => number_format((float) $row->sale_price, 2, ',', '.'),
+                'format' => fn ($row) => number_format((float) $row->sale_price, 0, ',', '.'),
             ],
             ['label' => 'Dihapus pada', 'field' => 'deleted_at', 'sortable' => false],
         ];

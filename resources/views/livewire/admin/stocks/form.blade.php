@@ -12,13 +12,38 @@
         @enderror
     </div>
 
+    <div>
+        <x-forms.searchable-select
+            label="Satuan Input"
+            :options="$this->unitOptions"
+            placeholder="Pilih satuan"
+            wire:model="form.unit_id"
+            required
+        />
+        @error('form.unit_id')
+            <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+        @enderror
+        @php
+            $material = $form->material_id ? \App\Models\Material::with(['unit', 'purchaseUnit'])->find($form->material_id) : null;
+            $baseUnit = $material?->unit?->name;
+            $purchaseUnit = $material?->purchaseUnit?->name;
+            $conversion = $material?->conversion_qty ?? null;
+        @endphp
+        @if ($material && $purchaseUnit && $baseUnit && $conversion)
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Konversi: 1 {{ $purchaseUnit }} = {{ $conversion }} {{ $baseUnit }}.
+            </p>
+        @endif
+    </div>
+
     <x-forms.input
         :label="$type === 'opname' ? 'Selisih Stok (+/-)' : 'Qty'"
         name="form.qty"
         placeholder="0"
         wire:model.blur="form.qty"
         type="number"
-        step="0.01"
+        step="1"
+        inputmode="numeric"
     />
 
     @if ($type === 'opname')

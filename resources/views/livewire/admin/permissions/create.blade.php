@@ -31,14 +31,12 @@
             </div>
 
             <div>
-                <label for="menu_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Menu</label>
-                <select id="menu_id" wire:model="menu_id"
-                    class="mt-2 block w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-                    <option value="">Pilih menu</option>
-                    @foreach ($menus as $menu)
-                        <option value="{{ $menu->id }}">{{ $menu->name }}</option>
-                    @endforeach
-                </select>
+                <x-forms.searchable-select
+                    label="Menu"
+                    :options="$menus"
+                    placeholder="Pilih menu"
+                    wire:model="menu_id"
+                />
                 @error('menu_id')
                     <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
                 @enderror

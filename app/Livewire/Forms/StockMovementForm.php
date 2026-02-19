@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\StockMovement;
+use App\Models\Material;
 use App\Services\StockMovementService;
 use Livewire\Form;
 
@@ -10,6 +11,7 @@ class StockMovementForm extends Form
 {
     public ?int $id = null;
     public ?int $material_id = null;
+    public ?int $unit_id = null;
     public string $type = 'in';
     public $qty = null;
     public ?string $notes = null;
@@ -18,8 +20,9 @@ class StockMovementForm extends Form
     {
         return [
             'material_id' => ['required', 'integer', 'exists:mst_materials,id'],
+            'unit_id' => ['required', 'integer', 'exists:mst_units,id'],
             'type' => ['required', 'string', 'in:in,out,opname'],
-            'qty' => ['required', 'numeric'],
+            'qty' => ['required', 'integer'],
             'notes' => ['nullable', 'string'],
         ];
     }
@@ -28,6 +31,7 @@ class StockMovementForm extends Form
     {
         $this->id = $movement->id;
         $this->material_id = $movement->material_id;
+        $this->unit_id = Material::find($movement->material_id)?->unit_id;
         $this->type = $movement->type;
         $this->qty = $movement->qty;
         $this->notes = $movement->notes;
@@ -51,6 +55,7 @@ class StockMovementForm extends Form
     {
         return [
             'material_id' => $this->material_id,
+            'unit_id' => $this->unit_id,
             'type' => $this->type,
             'qty' => $this->qty,
             'notes' => $this->notes,

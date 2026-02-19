@@ -24,24 +24,14 @@
         </div>
 
         <div>
-            <label for="member_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Tipe Anggota
-            </label>
-            <select id="member_type" name="member_type" required
-                @class([
-                    'mt-2 block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
-                    'border-error-500 focus:border-error-500 focus:ring-error-500/10 dark:border-error-400' => $errors->has('member_type'),
-                ])>
-                <option value="" disabled {{ old('member_type', $customer?->member_type?->value) === null ? 'selected' : '' }}>
-                    Pilih tipe anggota…
-                </option>
-                @foreach ($memberTypes as $type)
-                    <option value="{{ $type }}"
-                        {{ old('member_type', $customer?->member_type?->value) === $type ? 'selected' : '' }}>
-                        {{ Str::title($type) }}
-                    </option>
-                @endforeach
-            </select>
+            <x-forms.searchable-select
+                label="Tipe Anggota"
+                name="member_type"
+                :options="collect($memberTypes)->mapWithKeys(fn ($type) => [$type => Str::title($type)])->all()"
+                placeholder="Pilih tipe anggota"
+                :selected="old('member_type', $customer?->member_type?->value)"
+                required
+            />
             @error('member_type')
                 <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
             @enderror

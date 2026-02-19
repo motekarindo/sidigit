@@ -14,8 +14,15 @@
             @enderror
         </div>
 
-        <x-forms.input label="Gaji (Rp)" name="form.salary" placeholder="0" wire:model.blur="form.salary" type="number"
-            min="0" />
+        <div>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Gaji (Rp)</label>
+            <div class="mt-2" x-data="rupiahField(@entangle('form.salary').live)">
+                <input type="text" inputmode="numeric" x-model="display" @input="onInput" class="form-input" />
+            </div>
+            @error('form.salary')
+                <p class="text-sm text-red-600 dark:text-red-400 mt-2">{{ $message }}</p>
+            @enderror
+        </div>
     </div>
 
     <div class="space-y-4">

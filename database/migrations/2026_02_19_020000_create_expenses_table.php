@@ -13,8 +13,11 @@ return new class extends Migration
             $table->string('type', 16); // material | general
             $table->foreignId('material_id')->nullable()->constrained('mst_materials')->nullOnDelete();
             $table->foreignId('supplier_id')->nullable()->constrained('mst_suppliers')->nullOnDelete();
+            $table->foreignId('unit_id')->nullable()->constrained('mst_units')->nullOnDelete();
             $table->decimal('qty', 12, 2)->nullable();
             $table->decimal('unit_cost', 14, 2)->nullable();
+            $table->decimal('qty_base', 12, 2)->nullable();
+            $table->decimal('unit_cost_base', 14, 2)->nullable();
             $table->decimal('amount', 14, 2)->default(0);
             $table->string('payment_method', 32)->default('cash');
             $table->date('expense_date');

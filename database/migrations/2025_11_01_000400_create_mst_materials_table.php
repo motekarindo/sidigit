@@ -13,8 +13,10 @@ return new class extends Migration
             $table->string('name', 128);
             $table->foreignId('category_id')->constrained('mst_categories')->cascadeOnDelete();
             $table->foreignId('unit_id')->constrained('mst_units')->cascadeOnDelete();
+            $table->foreignId('purchase_unit_id')->nullable()->constrained('mst_units')->nullOnDelete();
             $table->text('description')->nullable();
             $table->decimal('cost_price', 14, 2)->default(0);
+            $table->decimal('conversion_qty', 12, 2)->default(1);
             $table->decimal('reorder_level', 12, 2)->default(0);
             $table->timestamps();
             $table->softDeletes();

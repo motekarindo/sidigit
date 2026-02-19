@@ -6,11 +6,15 @@
         </div>
 
         <div class="w-full md:flex-1">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Urutkan berdasarkan: </label>
-            <select wire:model.change="filters.created_at" class="form-input mt-2">
-                <option value="desc">Terbaru</option>
-                <option value="asc">Terlama</option>
-            </select>
+            <x-forms.searchable-select
+                label="Urutkan berdasarkan"
+                :options="[
+                    ['id' => 'desc', 'name' => 'Terbaru'],
+                    ['id' => 'asc', 'name' => 'Terlama'],
+                ]"
+                placeholder="Pilih urutan"
+                wire:model.live="filters.created_at"
+            />
         </div>
 
         <div class="flex items-end">

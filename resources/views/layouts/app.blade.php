@@ -101,6 +101,40 @@
             document.documentElement.removeAttribute('data-theme-preload');
         });
     </script>
+    <script>
+        (function() {
+            function registerRupiahField() {
+                if (!window.Alpine || window.__rupiahFieldRegistered) return;
+                window.__rupiahFieldRegistered = true;
+                Alpine.data('rupiahField', (model) => ({
+                    value: model,
+                    display: '',
+                    init() {
+                        this.display = this.format(this.value);
+                        this.$watch('value', (val) => {
+                            this.display = this.format(val);
+                        });
+                    },
+                    onInput() {
+                        const raw = (this.display || '').replace(/[^\d]/g, '');
+                        this.value = raw ? parseInt(raw, 10) : null;
+                        this.display = raw ? this.format(raw) : '';
+                    },
+                    format(val) {
+                        if (val === null || val === undefined || val === '') return '';
+                        const num = typeof val === 'string' ? parseInt(val, 10) : Number(val);
+                        if (!Number.isFinite(num)) return '';
+                        return new Intl.NumberFormat('id-ID').format(num);
+                    },
+                }));
+            }
+
+            document.addEventListener('alpine:init', registerRupiahField);
+            if (window.Alpine) {
+                registerRupiahField();
+            }
+        })();
+    </script>
 
     @stack('scripts')
     @livewireScripts

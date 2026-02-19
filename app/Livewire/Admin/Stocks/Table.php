@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Stocks;
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\StockMovementForm;
 use App\Models\Material;
+use App\Models\Unit;
 use App\Services\StockMovementService;
 use Illuminate\Validation\ValidationException;
 
@@ -49,10 +50,38 @@ class Table extends BaseTable
         return Material::orderBy('name')->get();
     }
 
+    public function getUnitOptionsProperty()
+    {
+        $materialId = $this->form->material_id;
+        if (!$materialId) {
+            return Unit::orderBy('name')->get();
+        }
+
+        $material = Material::find($materialId);
+        if (!$material) {
+            return Unit::orderBy('name')->get();
+        }
+
+        $ids = array_filter([$material->unit_id, $material->purchase_unit_id]);
+        if (empty($ids)) {
+            return Unit::orderBy('name')->get();
+        }
+
+        return Unit::query()->whereIn('id', $ids)->orderBy('name')->get();
+    }
+
     protected function resetForm(): void
     {
         $this->form->reset();
         $this->form->type = $this->type;
+    }
+
+    public function updatedFormMaterialId($value): void
+    {
+        $material = Material::find($value);
+        if ($material) {
+            $this->form->unit_id = $material->purchase_unit_id ?: $material->unit_id;
+        }
     }
 
     protected function loadForm(int $id): void

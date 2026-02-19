@@ -12,6 +12,7 @@ class ExpenseForm extends Form
     public string $type = 'general';
     public ?int $material_id = null;
     public ?int $supplier_id = null;
+    public ?int $unit_id = null;
     public $qty = null;
     public $unit_cost = null;
     public $amount = null;
@@ -31,11 +32,12 @@ class ExpenseForm extends Form
         if ($this->type === 'material') {
             $rules['material_id'] = ['required', 'integer', 'exists:mst_materials,id'];
             $rules['supplier_id'] = ['nullable', 'integer', 'exists:mst_suppliers,id'];
-            $rules['qty'] = ['required', 'numeric', 'min:0.01'];
-            $rules['unit_cost'] = ['required', 'numeric', 'min:0'];
-            $rules['amount'] = ['nullable', 'numeric', 'min:0'];
+            $rules['unit_id'] = ['required', 'integer', 'exists:mst_units,id'];
+            $rules['qty'] = ['required', 'integer', 'min:1'];
+            $rules['unit_cost'] = ['required', 'integer', 'min:0'];
+            $rules['amount'] = ['nullable', 'integer', 'min:0'];
         } else {
-            $rules['amount'] = ['required', 'numeric', 'min:0'];
+            $rules['amount'] = ['required', 'integer', 'min:0'];
         }
 
         return $rules;
@@ -47,6 +49,7 @@ class ExpenseForm extends Form
         $this->type = $expense->type;
         $this->material_id = $expense->material_id;
         $this->supplier_id = $expense->supplier_id;
+        $this->unit_id = $expense->unit_id;
         $this->qty = $expense->qty;
         $this->unit_cost = $expense->unit_cost;
         $this->amount = $expense->amount;
@@ -75,6 +78,7 @@ class ExpenseForm extends Form
             'type' => $this->type,
             'material_id' => $this->material_id,
             'supplier_id' => $this->supplier_id,
+            'unit_id' => $this->unit_id,
             'qty' => $this->qty,
             'unit_cost' => $this->unit_cost,
             'amount' => $this->amount,
