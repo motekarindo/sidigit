@@ -26,6 +26,11 @@ class CustomerService
         return Customer::query();
     }
 
+    public function queryTrashed(): Builder
+    {
+        return Customer::onlyTrashed();
+    }
+
     public function store(array $data): Customer
     {
         $data['member_type'] = CustomerMemberType::from($data['member_type']);
@@ -57,6 +62,22 @@ class CustomerService
         }
 
         Customer::query()->whereIn('id', $ids)->delete();
+    }
+
+    public function restore(int $id): void
+    {
+        $customer = Customer::withTrashed()->findOrFail($id);
+        $customer->restore();
+    }
+
+    public function restoreMany(array $ids): void
+    {
+        $ids = array_values(array_filter($ids));
+        if (empty($ids)) {
+            return;
+        }
+
+        Customer::withTrashed()->whereIn('id', $ids)->restore();
     }
 
     public function find(int $id): Customer

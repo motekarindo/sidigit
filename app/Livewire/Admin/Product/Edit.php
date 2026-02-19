@@ -36,8 +36,26 @@ class Edit extends Component
     protected ProductService $service;
 
     protected array $messages = [
+        'sku.required' => 'SKU wajib diisi.',
+        'sku.unique' => 'SKU sudah digunakan. Gunakan SKU lain.',
+        'name.required' => 'Nama produk wajib diisi.',
+        'base_price.required' => 'Harga pokok wajib diisi.',
+        'base_price.numeric' => 'Harga pokok harus berupa angka.',
+        'base_price.min' => 'Harga pokok tidak boleh kurang dari 0.',
+        'sale_price.required' => 'Harga jual wajib diisi.',
+        'sale_price.numeric' => 'Harga jual harus berupa angka.',
+        'sale_price.min' => 'Harga jual tidak boleh kurang dari 0.',
+        'unit_id.required' => 'Satuan wajib dipilih.',
+        'unit_id.exists' => 'Satuan yang dipilih tidak valid.',
+        'category_id.required' => 'Kategori produk wajib dipilih.',
+        'category_id.exists' => 'Kategori yang dipilih tidak valid.',
+        'length_cm.numeric' => 'Panjang harus berupa angka.',
+        'length_cm.min' => 'Panjang tidak boleh kurang dari 0.',
+        'width_cm.numeric' => 'Lebar harus berupa angka.',
+        'width_cm.min' => 'Lebar tidak boleh kurang dari 0.',
         'materials.required' => 'Pilih minimal satu material untuk produk ini.',
         'materials.min' => 'Pilih minimal satu material untuk produk ini.',
+        'materials.*.exists' => 'Material yang dipilih tidak valid.',
     ];
 
     protected array $validationAttributes = [

@@ -25,6 +25,11 @@ class MaterialService
         return Material::query()->with(['category', 'unit']);
     }
 
+    public function queryTrashed(): Builder
+    {
+        return Material::onlyTrashed()->with(['category', 'unit']);
+    }
+
     public function store(array $data): Material
     {
         $data['reorder_level'] = isset($data['reorder_level']) && $data['reorder_level'] !== null
@@ -60,6 +65,22 @@ class MaterialService
         }
 
         Material::query()->whereIn('id', $ids)->delete();
+    }
+
+    public function restore(int $id): void
+    {
+        $material = Material::withTrashed()->findOrFail($id);
+        $material->restore();
+    }
+
+    public function restoreMany(array $ids): void
+    {
+        $ids = array_values(array_filter($ids));
+        if (empty($ids)) {
+            return;
+        }
+
+        Material::withTrashed()->whereIn('id', $ids)->restore();
     }
 
     public function find(int $id): Material

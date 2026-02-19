@@ -10,6 +10,33 @@
         $pageTitle = $title ?? ($pageTitleSection !== '' ? $pageTitleSection : null);
     @endphp
     <title>{{ $pageTitle ?? config('app.name', 'TailAdmin') }}</title>
+    <script>
+        (function() {
+            try {
+                var isDark = localStorage.getItem('darkMode') === 'true';
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.setAttribute('data-theme-preload', '');
+                }
+                document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            } catch (e) {}
+        })();
+    </script>
+    <style>
+        [data-theme-preload] *,
+        [data-theme-preload] *::before,
+        [data-theme-preload] *::after {
+            transition: none !important;
+        }
+        [data-theme="dark"][data-theme-preload] body {
+            background-color: #111827;
+        }
+        [data-theme="dark"][data-theme-preload] .bg-white,
+        [data-theme="dark"][data-theme-preload] .bg-gray-50 {
+            background-color: #111827 !important;
+        }
+    </style>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @livewireStyles
@@ -76,6 +103,11 @@
 
     @livewireScripts
     @stack('scripts')
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            document.documentElement.removeAttribute('data-theme-preload');
+        });
+    </script>
 </body>
 
 </html>

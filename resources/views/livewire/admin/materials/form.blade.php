@@ -18,6 +18,9 @@
 
         <x-forms.input label="Batas Minimum (Reorder Level)" name="form.reorder_level" placeholder="0"
             wire:model.blur="form.reorder_level" type="number" step="0.01" min="0" />
+
+        <x-forms.input label="Harga Pokok per Unit" name="form.cost_price" placeholder="0"
+            wire:model.blur="form.cost_price" type="number" step="0.01" min="0" />
     </div>
 
     <div class="space-y-4">

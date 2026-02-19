@@ -83,7 +83,7 @@
                         @else
                             <li>
                                 <a href="{{ $menu->route_url ?? '#' }}"
-                                    class="menu-item group {{ $menu->active ? 'menu-item-active' : '' }}">
+                                    class="menu-item group {{ $menu->active ? 'menu-item-active' : 'menu-item-inactive' }}">
                                     <span
                                         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
                                         @if (Str::contains($menu->icon, '<svg'))

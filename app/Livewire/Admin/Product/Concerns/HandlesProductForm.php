@@ -26,17 +26,18 @@ trait HandlesProductForm
             ->toArray();
 
         $this->units = Unit::orderBy('name')
-            ->get(['id', 'name'])
+            ->get(['id', 'name', 'is_dimension'])
             ->map(fn ($unit) => [
                 'id' => $unit->id,
                 'name' => $unit->name,
+                'is_dimension' => (bool) $unit->is_dimension,
             ])
             ->toArray();
 
         $this->materialsByCategory = $this->getMaterialsByCategory();
 
         $this->dimensionUnitIds = collect($this->units)
-            ->filter(fn ($unit) => in_array(strtolower($unit['name']), ['cm'], true))
+            ->filter(fn ($unit) => !empty($unit['is_dimension']))
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->values()
@@ -46,11 +47,18 @@ trait HandlesProductForm
     protected function refreshMaterialsForCategory(?int $categoryId = null): void
     {
         $categoryKey = $categoryId ?? $this->category_id;
-        $categoryKey = $categoryKey ? (string) $categoryKey : null;
+        $categoryKey = $categoryKey ? 'cat_' . (string) $categoryKey : null;
 
         $this->materialsForSelectedCategory = $categoryKey && isset($this->materialsByCategory[$categoryKey])
             ? $this->materialsByCategory[$categoryKey]
             : [];
+    }
+
+    public function reloadMaterials(): void
+    {
+        $this->materialsByCategory = $this->getMaterialsByCategory();
+        $this->materials = [];
+        $this->refreshMaterialsForCategory($this->category_id ? (int) $this->category_id : null);
     }
 
     protected function syncDimensionFields(bool $resetValues = false): void
@@ -66,6 +74,12 @@ trait HandlesProductForm
         }
     }
 
+    public function handleUnitChange($value): void
+    {
+        $this->unit_id = $value ? (int) $value : null;
+        $this->syncDimensionFields(true);
+    }
+
     protected function getMaterialsByCategory(): array
     {
         return Material::query()
@@ -75,7 +89,7 @@ trait HandlesProductForm
             ->groupBy('category_id')
             ->mapWithKeys(function ($materials, $categoryId) {
                 return [
-                    (string) $categoryId => $materials->map(function (Material $material) {
+                    'cat_' . (string) $categoryId => $materials->map(function (Material $material) {
                         return [
                             'id' => (string) $material->id,
                             'name' => $material->name,

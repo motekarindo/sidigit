@@ -12,6 +12,11 @@ class UserService
         return User::query()->with('roles');
     }
 
+    public function queryTrashed(): Builder
+    {
+        return User::onlyTrashed()->with('roles');
+    }
+
     public function find(int $id): User
     {
         return User::findOrFail($id);
@@ -44,5 +49,21 @@ class UserService
         }
 
         User::query()->whereIn('id', $ids)->delete();
+    }
+
+    public function restore(int $id): void
+    {
+        $user = User::withTrashed()->findOrFail($id);
+        $user->restore();
+    }
+
+    public function restoreMany(array $ids): void
+    {
+        $ids = array_values(array_filter($ids));
+        if (empty($ids)) {
+            return;
+        }
+
+        User::withTrashed()->whereIn('id', $ids)->restore();
     }
 }

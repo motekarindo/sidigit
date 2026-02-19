@@ -30,10 +30,7 @@ class MenuItemData extends Data
         $patterns = collect([$menu->route_name])
             ->merge($menu->children?->pluck('route_name') ?? collect())
             ->filter()
-            ->flatMap(fn($name) => [
-                $name,
-                Str::before($name, '.') . '.*',
-            ])
+            ->flatMap(fn($name) => self::buildRoutePatterns($name))
             ->unique()
             ->values()
             ->all();
@@ -62,5 +59,22 @@ class MenuItemData extends Data
         }
 
         return $icons[$base] ?? $default;
+    }
+
+    protected static function buildRoutePatterns(?string $routeName): array
+    {
+        if (!filled($routeName)) {
+            return [];
+        }
+
+        $suffixes = ['index', 'create', 'edit', 'show', 'trashed'];
+        $last = Str::afterLast($routeName, '.');
+        $base = in_array($last, $suffixes, true) ? Str::beforeLast($routeName, '.') : $routeName;
+
+        return collect([$routeName, filled($base) ? $base . '.*' : null])
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 }

@@ -27,12 +27,14 @@ class UnitService
 
     public function store(array $data): Unit
     {
+        $data['is_dimension'] = !empty($data['is_dimension']);
         return $this->repository->create($data);
     }
 
     public function update(int $id, array $data): Unit
     {
         $unit = $this->repository->findOrFail($id);
+        $data['is_dimension'] = !empty($data['is_dimension']);
 
         return $this->repository->update($unit, $data);
     }

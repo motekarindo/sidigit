@@ -15,3 +15,15 @@
         <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
     @enderror
 </div>
+
+<div class="mt-4">
+    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+        <input type="checkbox" name="is_dimension" value="1"
+            @checked(old('is_dimension', optional($unit)->is_dimension))
+            class="size-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500/40 dark:border-gray-700 dark:bg-gray-900">
+        Gunakan satuan ini untuk ukuran (Panjang & Lebar)
+    </label>
+    @error('is_dimension')
+        <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+    @enderror
+</div>

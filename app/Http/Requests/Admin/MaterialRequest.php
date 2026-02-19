@@ -18,6 +18,7 @@ class MaterialRequest extends FormRequest
             'category_id' => ['required', 'exists:mst_categories,id'],
             'unit_id' => ['required', 'exists:mst_units,id'],
             'description' => ['nullable', 'string'],
+            'cost_price' => ['nullable', 'numeric', 'min:0'],
             'reorder_level' => ['nullable', 'numeric', 'min:0'],
         ];
     }
@@ -29,6 +30,7 @@ class MaterialRequest extends FormRequest
             'category_id' => 'Kategori',
             'unit_id' => 'Satuan',
             'description' => 'Deskripsi',
+            'cost_price' => 'Harga Pokok',
             'reorder_level' => 'Batas Minimum',
         ];
     }

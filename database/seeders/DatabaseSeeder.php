@@ -18,6 +18,15 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,     // 3. Buat Permission
             RolePermissionSeeder::class, // 4. Berikan Hak Akses
             UserSeeder::class,           // 5. Buat User
+            UnitSeeder::class,           // 6. Master Satuan
+            CategorySeeder::class,       // 7. Master Kategori
+            SupplierSeeder::class,       // 8. Master Supplier
+            WarehouseSeeder::class,      // 9. Master Gudang
+            MaterialSeeder::class,       // 10. Master Material
+            ProductSeeder::class,        // 11. Master Produk
+            FinishSeeder::class,         // 12. Master Finishing
+            CustomerSeeder::class,       // 13. Master Customer
+            EmployeeSeeder::class,       // 14. Master Karyawan
         ]);
     }
 }

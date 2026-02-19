@@ -19,10 +19,12 @@ class Material extends Model
         'category_id',
         'unit_id',
         'description',
+        'cost_price',
         'reorder_level',
     ];
 
     protected $casts = [
+        'cost_price' => 'decimal:2',
         'reorder_level' => 'decimal:2',
     ];
 

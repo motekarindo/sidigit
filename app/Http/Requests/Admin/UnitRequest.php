@@ -23,6 +23,7 @@ class UnitRequest extends FormRequest
                 'max:64',
                 Rule::unique('mst_units', 'name')->ignore($unitId),
             ],
+            'is_dimension' => ['nullable', 'boolean'],
         ];
     }
 
@@ -30,6 +31,7 @@ class UnitRequest extends FormRequest
     {
         return [
             'name' => 'Nama Satuan',
+            'is_dimension' => 'Ukuran',
         ];
     }
 }
