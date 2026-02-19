@@ -11,6 +11,33 @@
     @endphp
     <title>{{ $pageTitle ?? config('app.name', 'TailAdmin') }}</title>
 
+    <script>
+        (function() {
+            try {
+                var isDark = localStorage.getItem('darkMode') === 'true';
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.setAttribute('data-theme-preload', '');
+                }
+                document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            } catch (e) {}
+        })();
+    </script>
+    <style>
+        [data-theme-preload] *,
+        [data-theme-preload] *::before,
+        [data-theme-preload] *::after {
+            transition: none !important;
+        }
+        [data-theme="dark"][data-theme-preload] body {
+            background-color: #111827;
+        }
+        [data-theme="dark"][data-theme-preload] .bg-white,
+        [data-theme="dark"][data-theme-preload] .bg-gray-50 {
+            background-color: #111827 !important;
+        }
+    </style>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script>
         window.deferLoadingAlpine = function(callback) {
@@ -32,7 +59,7 @@
     stickyMenu: false,
     sidebarToggle: false,
     scrollTop: false,
-}" x-init="$watch('darkMode', value => localStorage.setItem('darkMode', JSON.stringify(value)))" :class="{ 'dark bg-gray-900': darkMode === true }"
+}" x-init="$watch('darkMode', value => { document.documentElement.setAttribute('data-theme-preload', ''); localStorage.setItem('darkMode', JSON.stringify(value)); document.documentElement.classList.toggle('dark', value); document.documentElement.style.colorScheme = value ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', value ? 'dark' : 'light'); window.setTimeout(() => document.documentElement.removeAttribute('data-theme-preload'), 80); })" :class="{ 'dark bg-gray-900': darkMode === true }"
     class="text-gray-700 antialiased">
 
     <livewire:layout.preloader />
@@ -69,6 +96,11 @@
             });
         </script>
     @endif
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            document.documentElement.removeAttribute('data-theme-preload');
+        });
+    </script>
 
     @stack('scripts')
     @livewireScripts

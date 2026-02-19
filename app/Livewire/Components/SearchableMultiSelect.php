@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Components;
 
-use Livewire\Attributes\Locked;
 use Livewire\Attributes\Modelable;
 use Livewire\Component;
 
@@ -14,7 +13,6 @@ class SearchableMultiSelect extends Component
     /**
      * @var array<int, array<string, mixed>>
      */
-    #[Locked]
     public array $options = [];
 
     public string $placeholder = 'Pilih opsi';

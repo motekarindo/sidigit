@@ -34,6 +34,16 @@ use App\Livewire\Admin\Product\Index as ProductsIndex;
 use App\Livewire\Admin\Product\Create as ProductsCreate;
 use App\Livewire\Admin\Product\Edit as ProductsEdit;
 use App\Livewire\Admin\Unit\Index as UnitIndex;
+use App\Livewire\Admin\Stocks\StockInIndex as StockInIndex;
+use App\Livewire\Admin\Stocks\StockOutIndex as StockOutIndex;
+use App\Livewire\Admin\Stocks\StockOpnameIndex as StockOpnameIndex;
+use App\Livewire\Admin\Stocks\BalanceIndex as StockBalanceIndex;
+use App\Livewire\Admin\Expenses\MaterialIndex as MaterialExpenseIndex;
+use App\Livewire\Admin\Expenses\GeneralIndex as GeneralExpenseIndex;
+use App\Livewire\Admin\Attendances\Index as AttendancesIndex;
+use App\Livewire\Admin\EmployeeLoans\Index as EmployeeLoansIndex;
+use App\Livewire\Admin\Reports\SalesReport as SalesReport;
+use App\Livewire\Admin\Reports\ExpenseReport as ExpenseReport;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -51,9 +61,22 @@ Route::middleware('guest')->group(function () {
 
 // Grup untuk Rute yang Membutuhkan Autentikasi
 Route::middleware('auth')->group(function () {
-    Route::get('/orders', function () {
-        echo "test";
-    })->name('orders.index');
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', \App\Livewire\Admin\Orders\Index::class)->name('index');
+        Route::get('/create', \App\Livewire\Admin\Orders\Create::class)->name('create');
+        Route::get('/{order}/edit', \App\Livewire\Admin\Orders\Edit::class)->name('edit');
+        Route::get('/trashed', \App\Livewire\Admin\Orders\Trashed::class)->name('trashed');
+    });
+
+    Route::prefix('stocks')->group(function () {
+        Route::get('/in', StockInIndex::class)->name('stock-ins.index');
+        Route::get('/out', StockOutIndex::class)->name('stock-outs.index');
+        Route::get('/opname', StockOpnameIndex::class)->name('stock-opnames.index');
+        Route::get('/balances', StockBalanceIndex::class)->name('stock-balances.index');
+    });
+
+    Route::get('expenses/materials', MaterialExpenseIndex::class)->name('expenses.materials.index');
+    Route::get('expenses/general', GeneralExpenseIndex::class)->name('expenses.general.index');
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
@@ -63,6 +86,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', CustomersIndex::class)->name('index');
         Route::get('/create', CustomersCreate::class)->name('create');
         Route::get('/{customer}/edit', CustomersEdit::class)->name('edit');
+        Route::get('/trashed', \App\Livewire\Admin\Customers\Trashed::class)->name('trashed');
     });
     Route::prefix('employees')->name('employees.')->group(function () {
         Route::get('/', EmployeesIndex::class)->name('index');
@@ -74,6 +98,7 @@ Route::middleware('auth')->group(function () {
     // --- RUTE BARU UNTUK MANAJEMEN AKSES ---
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', UsersIndex::class)->name('index');
+        Route::get('/trashed', \App\Livewire\Admin\Users\Trashed::class)->name('trashed');
     });
 
     Route::prefix('roles')->name('roles.')->group(function () {
@@ -97,6 +122,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', ProductsIndex::class)->name('index');
         Route::get('/create', ProductsCreate::class)->name('create');
         Route::get('/{product}/edit', ProductsEdit::class)->name('edit');
+        Route::get('/trashed', \App\Livewire\Admin\Product\Trashed::class)->name('trashed');
     });
 
     Route::get('units', UnitIndex::class)->name('units.index');
@@ -106,8 +132,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/', SuppliersIndex::class)->name('index');
         Route::get('/create', SuppliersCreate::class)->name('create');
         Route::get('/{supplier}/edit', SuppliersEdit::class)->name('edit');
+        Route::get('/trashed', \App\Livewire\Admin\Suppliers\Trashed::class)->name('trashed');
     });
     Route::get('materials', MaterialsIndex::class)->name('materials.index');
+    Route::get('materials/trashed', \App\Livewire\Admin\Materials\Trashed::class)->name('materials.trashed');
+    Route::get('finishes', \App\Livewire\Admin\Finishes\Index::class)->name('finishes.index');
+    Route::get('attendances', AttendancesIndex::class)->name('attendances.index');
+    Route::get('employee-loans', EmployeeLoansIndex::class)->name('employee-loans.index');
     Route::prefix('warehouses')->name('warehouses.')->group(function () {
         Route::get('/', WarehousesIndex::class)->name('index');
         Route::get('/create', WarehousesCreate::class)->name('create');
@@ -117,6 +148,9 @@ Route::middleware('auth')->group(function () {
 
     // --- RUTE UNTUK PROFILE ---
     Route::get('/profile', ProfileEdit::class)->name('profile.edit');
+
+    Route::get('reports/sales', SalesReport::class)->name('reports.sales');
+    Route::get('reports/expenses', ExpenseReport::class)->name('reports.expenses');
 
     Route::get('audit-logs', AuditLogsIndex::class)->name('audit-logs.index');
 

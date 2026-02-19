@@ -1,0 +1,36 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+class UnitSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $units = [
+            ['name' => 'CM', 'is_dimension' => true],
+            ['name' => 'M', 'is_dimension' => true],
+            ['name' => 'MM', 'is_dimension' => true],
+            ['name' => 'PCS', 'is_dimension' => false],
+            ['name' => 'SET', 'is_dimension' => false],
+        ];
+
+        foreach ($units as $unit) {
+            $exists = DB::table('mst_units')
+                ->whereRaw('LOWER(name) = ?', [Str::lower($unit['name'])])
+                ->exists();
+
+            if (!$exists) {
+                DB::table('mst_units')->insert([
+                    'name' => $unit['name'],
+                    'is_dimension' => $unit['is_dimension'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+}

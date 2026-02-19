@@ -43,7 +43,7 @@ class LoginPage extends Component
             return redirect()->intended(route('dashboard'));
         }
 
-        $this->addError('username', 'Username/Email atau Password salah.');
+        $this->addError('login', 'Username/Email atau Password salah.');
         $this->password = '';
     }
 

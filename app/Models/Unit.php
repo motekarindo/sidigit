@@ -16,6 +16,11 @@ class Unit extends Model
 
     protected $fillable = [
         'name',
+        'is_dimension',
+    ];
+
+    protected $casts = [
+        'is_dimension' => 'boolean',
     ];
 
     public function materials()

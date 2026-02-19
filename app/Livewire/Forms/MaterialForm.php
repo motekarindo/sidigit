@@ -24,6 +24,9 @@ class MaterialForm extends Form
     public ?string $description = null;
 
     #[Validate('nullable|numeric|min:0')]
+    public ?string $cost_price = null;
+
+    #[Validate('nullable|numeric|min:0')]
     public ?string $reorder_level = null;
 
     public function fillFromModel(Material $material): void
@@ -33,6 +36,9 @@ class MaterialForm extends Form
         $this->category_id = $material->category_id;
         $this->unit_id = $material->unit_id;
         $this->description = $material->description;
+        $this->cost_price = $material->cost_price !== null
+            ? (string) $material->cost_price
+            : null;
         $this->reorder_level = $material->reorder_level !== null
             ? (string) $material->reorder_level
             : null;
@@ -59,6 +65,7 @@ class MaterialForm extends Form
             'category_id' => $this->category_id,
             'unit_id' => $this->unit_id,
             'description' => $this->description,
+            'cost_price' => $this->cost_price,
             'reorder_level' => $this->reorder_level,
         ];
     }

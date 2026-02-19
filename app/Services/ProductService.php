@@ -28,6 +28,11 @@ class ProductService
         return Product::query()->with(['category', 'unit']);
     }
 
+    public function queryTrashed(): Builder
+    {
+        return Product::onlyTrashed()->with(['category', 'unit']);
+    }
+
     public function store(array $data): Product
     {
         $materials = $data['materials'] ?? [];
@@ -81,6 +86,31 @@ class ProductService
             }
 
             Product::query()->whereIn('id', $ids)->delete();
+        });
+    }
+
+    public function restore(int $id): void
+    {
+        DB::transaction(function () use ($id) {
+            $product = Product::withTrashed()->findOrFail($id);
+            $product->restore();
+            $product->productMaterials()->withTrashed()->restore();
+        });
+    }
+
+    public function restoreMany(array $ids): void
+    {
+        $ids = array_values(array_filter($ids));
+        if (empty($ids)) {
+            return;
+        }
+
+        DB::transaction(function () use ($ids) {
+            $products = Product::withTrashed()->whereIn('id', $ids)->get();
+            foreach ($products as $product) {
+                $product->restore();
+                $product->productMaterials()->withTrashed()->restore();
+            }
         });
     }
 

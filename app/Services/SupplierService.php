@@ -25,6 +25,11 @@ class SupplierService
         return Supplier::query();
     }
 
+    public function queryTrashed(): Builder
+    {
+        return Supplier::onlyTrashed();
+    }
+
     public function store(array $data): Supplier
     {
         return $this->repository->create($data);
@@ -52,6 +57,22 @@ class SupplierService
         }
 
         Supplier::query()->whereIn('id', $ids)->delete();
+    }
+
+    public function restore(int $id): void
+    {
+        $supplier = Supplier::withTrashed()->findOrFail($id);
+        $supplier->restore();
+    }
+
+    public function restoreMany(array $ids): void
+    {
+        $ids = array_values(array_filter($ids));
+        if (empty($ids)) {
+            return;
+        }
+
+        Supplier::withTrashed()->whereIn('id', $ids)->restore();
     }
 
     public function find(int $id): Supplier

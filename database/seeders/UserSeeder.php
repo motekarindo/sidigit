@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
@@ -15,14 +16,21 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // 1. Ambil role yang dibutuhkan
-        $adminRole = Role::where('slug', 'admin')->first();
-        $userRole = Role::where('slug', 'user')->first();
+        $adminRole = Role::where('name', 'Administrator')->first()
+            ?? Role::where('slug', 'administrator')->first();
+        $userRole = Role::where('name', 'User')->first()
+            ?? Role::where('slug', 'user')->first();
+
+        if (!$adminRole || !$userRole) {
+            return;
+        }
 
         // 2. Buat User Admin dan berikan peran Admin
         $adminUser = User::factory()->create([
             'name' => 'Admin User',
             'username' => 'admin',
             'email' => 'admin@gmail.com',
+            'password' => Hash::make('password'),
         ]);
         $adminUser->roles()->attach($adminRole->id);
 

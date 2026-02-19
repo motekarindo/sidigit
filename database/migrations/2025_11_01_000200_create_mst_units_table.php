@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('mst_units', function (Blueprint $table) {
             $table->id();
             $table->string('name', 64);
+            $table->boolean('is_dimension')->default(false);
             $table->timestamps();
             $table->softDeletes();
             $table->unsignedBigInteger('created_by')->nullable();

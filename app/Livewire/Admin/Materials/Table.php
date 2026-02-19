@@ -126,7 +126,13 @@ class Table extends BaseTable
     {
         return [
             ['label' => 'Tambah Material', 'method' => 'openCreate', 'class' => 'bg-brand-500 hover:bg-brand-600 text-white', 'icon' => 'plus'],
+            ['label' => 'Trashed', 'method' => 'goTrashed', 'class' => 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700', 'icon' => 'archive'],
         ];
+    }
+
+    public function goTrashed(): void
+    {
+        $this->redirectRoute('materials.trashed');
     }
 
     protected function bulkActions(): array
@@ -142,6 +148,12 @@ class Table extends BaseTable
             ['label' => 'Material', 'field' => 'name', 'sortable' => true],
             ['label' => 'Kategori', 'field' => 'category.name', 'sortable' => false],
             ['label' => 'Satuan', 'field' => 'unit.name', 'sortable' => false],
+            [
+                'label' => 'Harga Pokok',
+                'field' => 'cost_price',
+                'sortable' => false,
+                'format' => fn($row) => number_format((float) $row->cost_price, 2, ',', '.'),
+            ],
             ['label' => 'Reorder Level', 'field' => 'reorder_level', 'sortable' => false],
             [
                 'label' => 'Deskripsi',

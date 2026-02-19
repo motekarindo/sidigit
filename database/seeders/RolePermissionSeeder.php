@@ -11,14 +11,20 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminRole = Role::where('slug', 'admin')->first();
-        $userRole = Role::where('slug', 'user')->first();
+        $adminRole = Role::where('name', 'Administrator')->first()
+            ?? Role::where('slug', 'administrator')->first();
+        $userRole = Role::where('name', 'User')->first()
+            ?? Role::where('slug', 'user')->first();
+
+        if (!$adminRole || !$userRole) {
+            return;
+        }
 
         // --- Hak Akses Menu ---
         // Admin dapat semua menu
         $adminRole->menus()->sync(Menu::pluck('id'));
         // User dapat menu tertentu
-        $userMenus = Menu::whereIn('name', ['Dashboard', 'Manajemen Barang', 'Produk', 'Kategori'])->pluck('id');
+        $userMenus = Menu::whereIn('name', ['Dashboard', 'Manajemen Produk', 'Produk', 'Kategori'])->pluck('id');
         $userRole->menus()->sync($userMenus);
 
         // --- Hak Akses Permission ---

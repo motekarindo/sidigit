@@ -137,6 +137,12 @@ class Table extends BaseTable
     {
         return [
             ['label' => 'Name', 'field' => 'name', 'sortable' => true],
+            [
+                'label' => 'Ukuran',
+                'field' => 'is_dimension',
+                'sortable' => false,
+                'format' => fn ($row) => $row->is_dimension ? 'Ya' : 'Tidak',
+            ],
             ['label' => 'Diubah pada', 'field' => 'updated_at', 'sortable' => false],
         ];
     }

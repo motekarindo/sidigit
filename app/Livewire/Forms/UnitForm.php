@@ -14,23 +14,33 @@ class UnitForm extends Form
     #[Validate('required|string|min:3')]
     public string $name = '';
 
+    #[Validate('boolean')]
+    public bool $is_dimension = false;
+
     public function fillFromModel(Unit $unit): void
     {
         $this->id = $unit->id;
         $this->name = $unit->name;
+        $this->is_dimension = (bool) $unit->is_dimension;
     }
 
     public function store(UnitService $service): void
     {
         $this->validate();
 
-        $service->store(['name' => $this->name]);
+        $service->store([
+            'name' => $this->name,
+            'is_dimension' => $this->is_dimension,
+        ]);
     }
 
     public function update(UnitService $service): void
     {
         $this->validate();
 
-        $service->update($this->id, ['name' => $this->name]);
+        $service->update($this->id, [
+            'name' => $this->name,
+            'is_dimension' => $this->is_dimension,
+        ]);
     }
 }

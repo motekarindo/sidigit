@@ -95,8 +95,8 @@ class Sidebar extends Component
 
         $routeName = $this->looksLikeUrl($routeName) ? null : $routeName;
 
-        $patterns = collect([$routeName, filled($routeName) ? Str::before($routeName, '.') . '.*' : null])
-            ->merge($childRoutes)->merge($childRoutes->map(fn($child) => Str::before($child, '.') . '.*'))
+        $patterns = collect($routeName ? $this->buildRoutePatterns($routeName) : [])
+            ->merge($childRoutes->flatMap(fn($child) => $this->buildRoutePatterns($child)))
             ->filter()->unique()->values()->all();
 
         return ! empty($patterns) ? Route::is($patterns) : false;
@@ -108,10 +108,26 @@ class Sidebar extends Component
             return $this->urlsMatch($this->currentUrl(), $routeName);
         }
 
-        $patterns = collect([$routeName, filled($routeName) ? Str::before($routeName, '.') . '.*' : null])
-            ->filter()->values()->all();
+        $patterns = $this->buildRoutePatterns($routeName);
 
         return ! empty($patterns) ? Route::is($patterns) : false;
+    }
+
+    protected function buildRoutePatterns(?string $routeName): array
+    {
+        if (!filled($routeName) || $this->looksLikeUrl($routeName)) {
+            return [];
+        }
+
+        $suffixes = ['index', 'create', 'edit', 'show', 'trashed'];
+        $last = Str::afterLast($routeName, '.');
+        $base = in_array($last, $suffixes, true) ? Str::beforeLast($routeName, '.') : $routeName;
+
+        return collect([$routeName, filled($base) ? $base . '.*' : null])
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     protected function looksLikeUrl(?string $value): bool

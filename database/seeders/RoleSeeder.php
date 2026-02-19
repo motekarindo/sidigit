@@ -15,13 +15,13 @@ class RoleSeeder extends Seeder
     {
         // Gunakan updateOrCreate agar tidak duplikat jika seeder dijalankan ulang
         Role::updateOrCreate(
-            ['slug' => 'admin'],
+            ['name' => 'Administrator'],
             ['name' => 'Administrator']
         );
 
         Role::updateOrCreate(
-            ['slug' => 'user'],
-            ['name' => 'Regular User']
+            ['name' => 'User'],
+            ['name' => 'User']
         );
     }
 }

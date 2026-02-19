@@ -29,4 +29,14 @@ class Employee extends Model
         'status' => EmployeeStatus::class,
         'salary' => 'integer',
     ];
+
+    public function attendances()
+    {
+        return $this->hasMany(EmployeeAttendance::class, 'employee_id');
+    }
+
+    public function loans()
+    {
+        return $this->hasMany(EmployeeLoan::class, 'employee_id');
+    }
 }
