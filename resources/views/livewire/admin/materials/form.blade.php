@@ -19,14 +19,21 @@
         <x-forms.input label="Batas Minimum (Reorder Level)" name="form.reorder_level" placeholder="0"
             wire:model.blur="form.reorder_level" type="number" step="0.01" min="0" />
 
-        <x-forms.input label="Harga Pokok per Unit" name="form.cost_price" placeholder="0"
-            wire:model.blur="form.cost_price" type="number" step="0.01" min="0" />
+        <div>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Harga Pokok per Unit (Satuan Dasar)</label>
+            <div class="mt-2" x-data="rupiahField(@entangle('form.cost_price').live)">
+                <input type="text" inputmode="numeric" x-model="display" @input="onInput" class="form-input" />
+            </div>
+            @error('form.cost_price')
+                <p class="text-sm text-red-600 dark:text-red-400 mt-2">{{ $message }}</p>
+            @enderror
+        </div>
     </div>
 
     <div class="space-y-4">
         <div>
             <x-forms.searchable-select
-                label="Satuan"
+                label="Satuan Dasar (Stok)"
                 :options="$this->unitOptions"
                 placeholder="Pilih satuan"
                 wire:model="form.unit_id"
@@ -36,6 +43,22 @@
                 <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
             @enderror
         </div>
+
+        <div>
+            <x-forms.searchable-select
+                label="Satuan Pembelian (Opsional)"
+                :options="$this->unitOptions"
+                placeholder="Pilih satuan pembelian"
+                wire:model="form.purchase_unit_id"
+            />
+            @error('form.purchase_unit_id')
+                <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+            @enderror
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Contoh: 1 RIM = 500 PCS.</p>
+        </div>
+
+        <x-forms.input label="Konversi ke Satuan Dasar" name="form.conversion_qty" placeholder="1"
+            wire:model.blur="form.conversion_qty" type="number" step="0.01" min="0.01" />
 
         <div>
             <livewire:components.text-editor

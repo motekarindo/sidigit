@@ -20,14 +20,23 @@
     </div>
 
     <div class="space-y-4">
+        @php
+            $attendanceStatuses = collect([
+                ['value' => 'present', 'label' => 'Hadir'],
+                ['value' => 'absent', 'label' => 'Tidak Hadir'],
+                ['value' => 'sick', 'label' => 'Sakit'],
+                ['value' => 'leave', 'label' => 'Izin'],
+            ]);
+        @endphp
         <div>
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Status</label>
-            <select wire:model="form.status" class="form-input mt-3">
-                <option value="present">Hadir</option>
-                <option value="absent">Tidak Hadir</option>
-                <option value="sick">Sakit</option>
-                <option value="leave">Izin</option>
-            </select>
+            <x-forms.searchable-select
+                label="Status"
+                :options="$attendanceStatuses"
+                optionValue="value"
+                optionLabel="label"
+                placeholder="Pilih status"
+                wire:model="form.status"
+            />
             @error('form.status')
                 <p class="text-sm text-red-600 dark:text-red-400 mt-2">{{ $message }}</p>
             @enderror

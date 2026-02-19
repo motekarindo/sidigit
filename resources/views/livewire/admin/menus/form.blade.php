@@ -16,13 +16,12 @@
         wire:model.blur="form.route_name" />
 
     <div>
-        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Ikon</label>
-        <select wire:model.defer="form.icon" class="form-input mt-2">
-            <option value="">Pilih ikon</option>
-            @foreach ($this->iconOptions as $key => $label)
-                <option value="{{ $key }}">{{ $label }}</option>
-            @endforeach
-        </select>
+        <x-forms.searchable-select
+            label="Ikon"
+            :options="$this->iconOptions"
+            placeholder="Pilih ikon"
+            wire:model.defer="form.icon"
+        />
         @error('form.icon')
             <p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
         @enderror

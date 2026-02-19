@@ -36,18 +36,13 @@
                         </div>
 
                         <div>
-                            <label for="parent_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Induk Menu (Parent)
-                            </label>
-                            <select id="parent_id" name="parent_id"
-                                class="mt-2 block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-                                <option value="">Tidak ada induk</option>
-                                @foreach ($parentMenus as $parent)
-                                    <option value="{{ $parent->id }}" @selected(old('parent_id') == $parent->id)>
-                                        {{ $parent->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <x-forms.searchable-select
+                                label="Induk Menu (Parent)"
+                                name="parent_id"
+                                :options="$parentMenus"
+                                placeholder="Tidak ada induk"
+                                :selected="old('parent_id')"
+                            />
                             @error('parent_id')
                                 <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
                             @enderror
@@ -70,16 +65,13 @@
 
                     <div class="space-y-4">
                         <div>
-                            <label for="icon" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Ikon
-                            </label>
-                            <select id="icon" name="icon"
-                                class="mt-2 block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-                                <option value="">Tanpa ikon</option>
-                                @foreach ($icons as $icon)
-                                    <option value="{{ $icon }}" @selected(old('icon') == $icon)>{{ $icon }}</option>
-                                @endforeach
-                            </select>
+                            <x-forms.searchable-select
+                                label="Ikon"
+                                name="icon"
+                                :options="$icons"
+                                placeholder="Tanpa ikon"
+                                :selected="old('icon')"
+                            />
                             @error('icon')
                                 <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
                             @enderror

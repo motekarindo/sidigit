@@ -73,21 +73,13 @@
             </div>
 
             <div>
-                <label for="unit_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Satuan
-                </label>
-                <div id="product-unit-select" class="mt-2">
-                    <select id="unit_id" wire:model.live="unit_id" wire:change="handleUnitChange($event.target.value)" @class([
-                        'w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
-                        'border-error-500 focus:border-error-500 focus:ring-error-500/10 dark:border-error-400' => $errors->has(
-                            'unit_id'),
-                    ]) required>
-                        <option value="">Pilih satuan</option>
-                        @foreach ($units as $unit)
-                            <option value="{{ $unit['id'] }}">{{ $unit['name'] }}</option>
-                        @endforeach
-                    </select>
-                </div>
+                <x-forms.searchable-select
+                    label="Satuan"
+                    :options="$units"
+                    placeholder="Pilih satuan"
+                    wire:model.live="unit_id"
+                    required
+                />
                 @error('unit_id')
                     <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
                 @enderror
@@ -131,21 +123,13 @@
 
         <div class="space-y-5">
             <div>
-                <label for="category_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Kategori Produk
-                </label>
-                <div id="product-category-select" class="mt-2">
-                    <select id="category_id" wire:model.live="category_id" @class([
-                        'w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
-                        'border-error-500 focus:border-error-500 focus:ring-error-500/10 dark:border-error-400' => $errors->has(
-                            'category_id'),
-                    ]) required>
-                        <option value="">Pilih kategori</option>
-                        @foreach ($categories as $category)
-                            <option value="{{ $category['id'] }}">{{ $category['name'] }}</option>
-                        @endforeach
-                    </select>
-                </div>
+                <x-forms.searchable-select
+                    label="Kategori Produk"
+                    :options="$categories"
+                    placeholder="Pilih kategori"
+                    wire:model.live="category_id"
+                    required
+                />
                 @error('category_id')
                     <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
                 @enderror
@@ -228,33 +212,3 @@
         </div>
     </div>
 </div>
-
-@once
-    @push('scripts')
-        <script>
-            document.addEventListener('alpine:init', () => {
-                Alpine.data('rupiahField', (model) => ({
-                    value: model,
-                    display: '',
-                    init() {
-                        this.display = this.format(this.value);
-                        this.$watch('value', (val) => {
-                            this.display = this.format(val);
-                        });
-                    },
-                    onInput() {
-                        const raw = (this.display || '').replace(/[^\d]/g, '');
-                        this.value = raw ? parseInt(raw, 10) : null;
-                        this.display = raw ? this.format(raw) : '';
-                    },
-                    format(val) {
-                        if (val === null || val === undefined || val === '') return '';
-                        const num = typeof val === 'string' ? parseInt(val, 10) : Number(val);
-                        if (!Number.isFinite(num)) return '';
-                        return new Intl.NumberFormat('id-ID').format(num);
-                    },
-                }));
-            });
-        </script>
-    @endpush
-@endonce

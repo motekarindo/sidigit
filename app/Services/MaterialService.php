@@ -35,6 +35,9 @@ class MaterialService
         $data['reorder_level'] = isset($data['reorder_level']) && $data['reorder_level'] !== null
             ? $data['reorder_level']
             : 0;
+        $data['conversion_qty'] = isset($data['conversion_qty']) && $data['conversion_qty'] !== null
+            ? $data['conversion_qty']
+            : 1;
 
         return $this->repository->create($data);
     }
@@ -46,6 +49,9 @@ class MaterialService
         $data['reorder_level'] = isset($data['reorder_level']) && $data['reorder_level'] !== null
             ? $data['reorder_level']
             : 0;
+        $data['conversion_qty'] = isset($data['conversion_qty']) && $data['conversion_qty'] !== null
+            ? $data['conversion_qty']
+            : 1;
 
         return $this->repository->update($material, $data);
     }

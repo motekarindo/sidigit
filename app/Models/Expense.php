@@ -18,8 +18,11 @@ class Expense extends Model
         'type',
         'material_id',
         'supplier_id',
+        'unit_id',
         'qty',
         'unit_cost',
+        'qty_base',
+        'unit_cost_base',
         'amount',
         'payment_method',
         'expense_date',
@@ -29,6 +32,8 @@ class Expense extends Model
     protected $casts = [
         'qty' => 'decimal:2',
         'unit_cost' => 'decimal:2',
+        'qty_base' => 'decimal:2',
+        'unit_cost_base' => 'decimal:2',
         'amount' => 'decimal:2',
         'expense_date' => 'date',
     ];
@@ -41,5 +46,10 @@ class Expense extends Model
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class, 'unit_id');
     }
 }

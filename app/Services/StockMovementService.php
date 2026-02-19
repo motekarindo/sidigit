@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\StockMovement;
+use App\Models\Material;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -36,6 +37,7 @@ class StockMovementService
     {
         $payload = $this->payload($data);
         $payload['ref_type'] = $payload['ref_type'] ?? 'manual';
+        $payload['qty'] = $this->convertToBaseQty($data);
 
         return StockMovement::create($payload);
     }
@@ -44,7 +46,9 @@ class StockMovementService
     {
         $movement = StockMovement::findOrFail($id);
         $this->ensureManual($movement);
-        $movement->update($this->payload($data));
+        $payload = $this->payload($data);
+        $payload['qty'] = $this->convertToBaseQty($data);
+        $movement->update($payload);
 
         return $movement;
     }
@@ -89,6 +93,32 @@ class StockMovementService
             'ref_id' => $data['ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
         ];
+    }
+
+    protected function convertToBaseQty(array $data): float
+    {
+        $qty = (float) ($data['qty'] ?? 0);
+        $materialId = $data['material_id'] ?? null;
+        if (!$materialId) {
+            return $qty;
+        }
+
+        $material = Material::find($materialId);
+        if (!$material) {
+            return $qty;
+        }
+
+        $unitId = $data['unit_id'] ?? null;
+        if ($unitId && $unitId === $material->unit_id) {
+            return $qty;
+        }
+
+        if ($unitId && $material->purchase_unit_id && $unitId === $material->purchase_unit_id) {
+            $conversion = (float) ($material->conversion_qty ?: 1);
+            return $qty * $conversion;
+        }
+
+        return $qty;
     }
 
     protected function ensureManual(StockMovement $movement): void

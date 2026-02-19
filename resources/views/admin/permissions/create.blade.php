@@ -49,18 +49,13 @@
                 </div>
 
                 <div>
-                    <label for="menu_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Induk Menu
-                    </label>
-                    <select id="menu_id" name="menu_id"
-                        class="mt-2 block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-                        <option value="">Tidak terikat menu</option>
-                        @foreach ($menus as $menu)
-                            <option value="{{ $menu->id }}" @selected(old('menu_id') == $menu->id)>
-                                {{ $menu->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-forms.searchable-select
+                        label="Induk Menu"
+                        name="menu_id"
+                        :options="$menus"
+                        placeholder="Tidak terikat menu"
+                        :selected="old('menu_id')"
+                    />
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Mengelompokkan izin berdasarkan menu memudahkan pencarian dan manajemen.
                     </p>

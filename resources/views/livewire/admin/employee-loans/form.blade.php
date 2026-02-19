@@ -13,17 +13,34 @@
             @enderror
         </div>
 
-        <x-forms.input label="Jumlah" name="form.amount" placeholder="0" wire:model.blur="form.amount" type="number" step="0.01" min="0" required />
+        <div>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Jumlah</label>
+            <div class="mt-2" x-data="rupiahField(@entangle('form.amount').live)">
+                <input type="text" inputmode="numeric" x-model="display" @input="onInput" class="form-input" />
+            </div>
+            @error('form.amount')
+                <p class="text-sm text-red-600 dark:text-red-400 mt-2">{{ $message }}</p>
+            @enderror
+        </div>
         <x-forms.input label="Tanggal Kasbon" name="form.loan_date" wire:model.blur="form.loan_date" type="date" required />
     </div>
 
     <div class="space-y-4">
+        @php
+            $loanStatuses = collect([
+                ['value' => 'open', 'label' => 'Belum Lunas'],
+                ['value' => 'paid', 'label' => 'Lunas'],
+            ]);
+        @endphp
         <div>
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Status</label>
-            <select wire:model="form.status" class="form-input mt-3">
-                <option value="open">Belum Lunas</option>
-                <option value="paid">Lunas</option>
-            </select>
+            <x-forms.searchable-select
+                label="Status"
+                :options="$loanStatuses"
+                optionValue="value"
+                optionLabel="label"
+                placeholder="Pilih status"
+                wire:model="form.status"
+            />
             @error('form.status')
                 <p class="text-sm text-red-600 dark:text-red-400 mt-2">{{ $message }}</p>
             @enderror

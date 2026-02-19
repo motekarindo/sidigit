@@ -50,7 +50,7 @@
                     @forelse ($this->topProducts as $row)
                         <tr>
                             <td class="py-2 text-gray-900 dark:text-gray-100">{{ $row->product?->name ?? 'Produk' }}</td>
-                            <td class="py-2 text-gray-600 dark:text-gray-300">{{ number_format((float) $row->total_qty, 2, ',', '.') }}</td>
+                            <td class="py-2 text-gray-600 dark:text-gray-300">{{ number_format((float) $row->total_qty, 0, ',', '.') }}</td>
                             <td class="py-2 text-gray-600 dark:text-gray-300">Rp {{ number_format((float) $row->total_amount, 0, ',', '.') }}</td>
                         </tr>
                     @empty

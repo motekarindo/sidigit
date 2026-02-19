@@ -1,82 +1,102 @@
 @php
     $totals = $this->totalsPreview();
+    $itemsCount = count($items ?? []);
+    $totalQty = collect($items ?? [])->sum(fn ($item) => (float) ($item['qty'] ?? 0));
+    $paidTotal = collect($payments ?? [])->sum(fn ($payment) => (float) ($payment['amount'] ?? 0));
+    $balance = max(0, $totals['grand_total'] - $paidTotal);
+    $controlClass = 'mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100';
+    $controlClassTight = $controlClass . ' h-11';
+    $labelRowClass = 'flex items-center min-h-[20px]';
+    $labelRowBetweenClass = $labelRowClass . ' justify-between';
 @endphp
 
-<div class="space-y-8">
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div class="space-y-4">
+<div class="space-y-6">
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Customer (Opsional)</label>
-                <div class="mt-2">
-                    <select wire:model="customer_id"
-                        class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-                        <option value="">Pilih customer</option>
-                        @foreach ($customers as $customer)
-                            <option value="{{ $customer['id'] }}">{{ $customer['name'] }}</option>
-                        @endforeach
-                    </select>
-                </div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informasi Order</h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Lengkapi data utama sebelum membuat item.</p>
+            </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div>
+                <x-forms.searchable-select
+                    label="Customer (Opsional)"
+                    :options="$customers"
+                    placeholder="Pilih customer"
+                    wire:model="customer_id"
+                    :button-class="$controlClassTight"
+                />
                 @error('customer_id')
                     <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
                 @enderror
             </div>
 
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal Order</label>
-                    <input type="date" wire:model="order_date"
-                        class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" />
-                    @error('order_date')
-                        <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deadline</label>
-                    <input type="date" wire:model="deadline"
-                        class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" />
-                    @error('deadline')
-                        <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
-                    @enderror
-                </div>
+            <div>
+                @php
+                    $statusOptions = collect([
+                        ['value' => 'draft', 'label' => 'Draft'],
+                        ['value' => 'menunggu-dp', 'label' => 'Menunggu DP'],
+                        ['value' => 'desain', 'label' => 'Desain'],
+                        ['value' => 'approval', 'label' => 'Approval Customer'],
+                        ['value' => 'produksi', 'label' => 'Produksi'],
+                        ['value' => 'finishing', 'label' => 'Finishing'],
+                        ['value' => 'qc', 'label' => 'QC'],
+                        ['value' => 'siap', 'label' => 'Siap Diambil/Dikirim'],
+                        ['value' => 'selesai', 'label' => 'Selesai'],
+                        ['value' => 'dibatalkan', 'label' => 'Dibatalkan'],
+                    ]);
+                @endphp
+                <x-forms.searchable-select
+                    label="Status"
+                    :options="$statusOptions"
+                    optionValue="value"
+                    optionLabel="label"
+                    placeholder="Pilih status"
+                    wire:model="status"
+                    :button-class="$controlClassTight"
+                />
             </div>
         </div>
 
-        <div class="space-y-4">
+        <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-                <select wire:model="status"
-                    class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-                    <option value="draft">Draft</option>
-                    <option value="menunggu-dp">Menunggu DP</option>
-                    <option value="desain">Desain</option>
-                    <option value="approval">Approval Customer</option>
-                    <option value="produksi">Produksi</option>
-                    <option value="finishing">Finishing</option>
-                    <option value="qc">QC</option>
-                    <option value="siap">Siap Diambil/Dikirim</option>
-                    <option value="selesai">Selesai</option>
-                    <option value="dibatalkan">Dibatalkan</option>
-                </select>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal Order</label>
+                <input type="date" wire:model="order_date" class="{{ $controlClassTight }}" />
+                @error('order_date')
+                    <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Catatan</label>
-                <textarea wire:model="notes" rows="4"
-                    class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"></textarea>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Deadline (Tanggal & Jam)</label>
+                <input type="datetime-local" wire:model="deadline" class="{{ $controlClassTight }}" />
+                @error('deadline')
+                    <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+                @enderror
             </div>
+        </div>
+
+        <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Catatan</label>
+            <textarea wire:model="notes" rows="3" class="{{ $controlClass }}"></textarea>
         </div>
     </div>
 
-    <div class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Item Order</h2>
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Item Order</h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Tambahkan item sesuai produk dan bahan.</p>
+            </div>
             <button type="button" wire:click="addItem"
                 class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-600">
                 + Tambah Item
             </button>
         </div>
 
-        <div class="space-y-4">
+        <div class="mt-4 space-y-4">
             @foreach ($items as $index => $item)
                 @php
                     $calc = $this->calculateItemPreview($item);
@@ -88,50 +108,59 @@
                             : []);
                     $showDimension = !empty($item['unit_id']) && in_array((int) $item['unit_id'], $dimensionUnitIds, true);
                 @endphp
-                <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
-                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                        <div class="lg:col-span-3">
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Produk</label>
-                            <select wire:model.live="items.{{ $index }}.product_id"
-                                wire:change="handleProductChange({{ $index }}, $event.target.value)"
-                                class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-                                <option value="">Pilih produk</option>
-                                @foreach ($products as $product)
-                                    <option value="{{ $product['id'] }}">{{ $product['name'] }}</option>
-                                @endforeach
-                            </select>
+                <div class="rounded-2xl border border-gray-200 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-gray-900/40"
+                    wire:key="order-item-{{ $index }}">
+                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
+                        <div>
+                            <div class="{{ $labelRowClass }}">
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Produk</label>
+                            </div>
+                            <x-forms.searchable-select
+                                label=""
+                                :options="$products"
+                                placeholder="Pilih produk"
+                                wire:model.live="items.{{ $index }}.product_id"
+                                :button-class="$controlClassTight"
+                            />
                         </div>
 
-                        <div class="lg:col-span-3">
-                            <div class="flex items-center justify-between">
+                        <div>
+                            <div class="{{ $labelRowBetweenClass }}">
                                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Bahan</label>
                                 <button type="button" wire:click="toggleMaterialScope({{ $index }})"
                                     class="text-xs font-semibold text-brand-500">
                                     {{ !empty($item['allow_all_materials']) ? 'Filter kategori' : 'Semua bahan' }}
                                 </button>
                             </div>
-                            <select wire:model.live="items.{{ $index }}.material_id"
-                                class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-                                <option value="">Pilih bahan</option>
-                                @foreach ($materialOptions as $material)
-                                    <option value="{{ $material['id'] }}">{{ $material['name'] }}</option>
-                                @endforeach
-                            </select>
+                            <x-forms.searchable-select
+                                label=""
+                                :options="$materialOptions"
+                                placeholder="Pilih bahan"
+                                wire:model.live="items.{{ $index }}.material_id"
+                                :button-class="$controlClassTight"
+                            />
                         </div>
 
-                        <div class="lg:col-span-2">
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Qty</label>
-                            <input type="number" step="0.01" min="1" wire:model.live="items.{{ $index }}.qty"
-                                class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" />
+                        <div>
+                            <div class="{{ $labelRowClass }}">
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Qty</label>
+                            </div>
+                            <input type="number" step="1" min="1" inputmode="numeric"
+                                wire:model.live="items.{{ $index }}.qty"
+                                class="{{ $controlClassTight }}" />
                         </div>
 
-                        <div class="lg:col-span-2">
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Harga Jual</label>
-                            <input type="number" step="0.01" min="0" wire:model.live="items.{{ $index }}.price"
-                                class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" />
+                        <div>
+                            <div class="{{ $labelRowClass }}">
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Harga Jual</label>
+                            </div>
+                            <div class="" x-data="rupiahField(@entangle('items.' . $index . '.price').live)">
+                                <input type="text" inputmode="numeric" x-model="display" @input="onInput"
+                                    class="{{ $controlClassTight }}" />
+                            </div>
                         </div>
 
-                        <div class="lg:col-span-2 flex items-start justify-end">
+                        <div class="flex items-start justify-end">
                             <button type="button" wire:click="removeItem({{ $index }})"
                                 class="mt-6 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10">
                                 Hapus
@@ -139,84 +168,110 @@
                         </div>
                     </div>
 
-                    <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-4">
+                    <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-5">
                         @if ($showDimension)
                             <div>
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Panjang (cm)</label>
+                                <div class="{{ $labelRowClass }}">
+                                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Panjang (cm)</label>
+                                </div>
                                 <input type="number" step="0.01" min="0" wire:model.live="items.{{ $index }}.length_cm"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" />
+                                    class="{{ $controlClassTight }}" />
                             </div>
                             <div>
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Lebar (cm)</label>
+                                <div class="{{ $labelRowClass }}">
+                                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Lebar (cm)</label>
+                                </div>
                                 <input type="number" step="0.01" min="0" wire:model.live="items.{{ $index }}.width_cm"
-                                    class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" />
+                                    class="{{ $controlClassTight }}" />
                             </div>
                         @else
                             <div class="hidden lg:block"></div>
                             <div class="hidden lg:block"></div>
                         @endif
                         <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Diskon</label>
-                            <input type="number" step="0.01" min="0" wire:model.live="items.{{ $index }}.discount"
-                                class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" />
+                            <div class="{{ $labelRowClass }}">
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Diskon</label>
+                            </div>
+                            <div class="" x-data="rupiahField(@entangle('items.' . $index . '.discount').live)">
+                                <input type="text" inputmode="numeric" x-model="display" @input="onInput"
+                                    class="{{ $controlClassTight }}" />
+                            </div>
                         </div>
                         <div>
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Finishing</label>
-                            <select multiple wire:model="items.{{ $index }}.finish_ids"
-                                class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-                                @foreach ($finishes as $finish)
-                                    <option value="{{ $finish['id'] }}">{{ $finish['name'] }}</option>
-                                @endforeach
-                            </select>
+                            <div class="{{ $labelRowClass }}">
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Finishing</label>
+                            </div>
+                            <livewire:components.searchable-multi-select
+                                :options="$finishes"
+                                optionLabelKey="name"
+                                optionValueKey="id"
+                                wire:model="items.{{ $index }}.finish_ids"
+                                placeholder="Pilih finishing"
+                                :wire:key="'finish-select-' . $index"
+                                :button-class="$controlClassTight"
+                            />
                         </div>
+                        <div class="hidden lg:block"></div>
                     </div>
 
-                    <div class="mt-4 flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-300">
-                        <span>HPP: <span class="font-semibold text-gray-900 dark:text-white">Rp {{ number_format($calc['hpp'], 0, ',', '.') }}</span></span>
-                        <span>Total: <span class="font-semibold text-gray-900 dark:text-white">Rp {{ number_format($calc['total'], 0, ',', '.') }}</span></span>
+                    <div class="mt-4 flex items-center justify-between border-t border-gray-200 pt-3 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
+                        <span>Total Item</span>
+                        <span class="font-semibold text-gray-900 dark:text-white">Rp {{ number_format($calc['total'], 0, ',', '.') }}</span>
                     </div>
                 </div>
             @endforeach
         </div>
     </div>
 
-    <div class="space-y-4">
-        <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Pembayaran</h2>
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Pembayaran</h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Catat cicilan atau pelunasan.</p>
+            </div>
             <button type="button" wire:click="addPayment"
                 class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
                 + Tambah Pembayaran
             </button>
         </div>
 
-        <div class="space-y-3">
+        <div class="mt-4 space-y-3">
             @foreach ($payments as $index => $payment)
-                <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
-                    <div class="lg:col-span-3">
+                <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
+                    <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Jumlah</label>
-                        <input type="number" step="0.01" min="0" wire:model="payments.{{ $index }}.amount"
-                            class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" />
+                        <div class="" x-data="rupiahField(@entangle('payments.' . $index . '.amount').live)">
+                            <input type="text" inputmode="numeric" x-model="display" @input="onInput" class="{{ $controlClassTight }}" />
+                        </div>
                     </div>
-                    <div class="lg:col-span-3">
+                    <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Metode</label>
-                        <select wire:model="payments.{{ $index }}.method"
-                            class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
-                            <option value="cash">Cash</option>
-                            <option value="transfer">Transfer</option>
-                            <option value="qris">QRIS</option>
-                        </select>
+                        @php
+                            $paymentMethods = collect([
+                                ['value' => 'cash', 'label' => 'Cash'],
+                                ['value' => 'transfer', 'label' => 'Transfer'],
+                                ['value' => 'qris', 'label' => 'QRIS'],
+                            ]);
+                        @endphp
+                        <x-forms.searchable-select
+                            label=""
+                            :options="$paymentMethods"
+                            optionValue="value"
+                            optionLabel="label"
+                            placeholder="Pilih metode"
+                            wire:model="payments.{{ $index }}.method"
+                            :button-class="$controlClassTight"
+                        />
                     </div>
-                    <div class="lg:col-span-3">
+                    <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal</label>
-                        <input type="datetime-local" wire:model="payments.{{ $index }}.paid_at"
-                            class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" />
+                        <input type="datetime-local" wire:model="payments.{{ $index }}.paid_at" class="{{ $controlClassTight }}" />
                     </div>
-                    <div class="lg:col-span-2">
+                    <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Catatan</label>
-                        <input type="text" wire:model="payments.{{ $index }}.notes"
-                            class="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" />
+                        <input type="text" wire:model="payments.{{ $index }}.notes" class="{{ $controlClassTight }}" />
                     </div>
-                    <div class="lg:col-span-1 flex items-end justify-end">
+                    <div class="flex items-end justify-end">
                         <button type="button" wire:click="removePayment({{ $index }})"
                             class="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10">
                             Hapus
@@ -227,13 +282,60 @@
         </div>
     </div>
 
-    <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Ringkasan</h2>
-        <div class="mt-3 grid grid-cols-1 gap-3 text-sm text-gray-600 dark:text-gray-300 lg:grid-cols-4">
-            <div>HPP: <span class="font-semibold text-gray-900 dark:text-white">Rp {{ number_format($totals['total_hpp'], 0, ',', '.') }}</span></div>
-            <div>Total Harga: <span class="font-semibold text-gray-900 dark:text-white">Rp {{ number_format($totals['total_price'], 0, ',', '.') }}</span></div>
-            <div>Diskon: <span class="font-semibold text-gray-900 dark:text-white">Rp {{ number_format($totals['total_discount'], 0, ',', '.') }}</span></div>
-            <div>Grand Total: <span class="font-semibold text-gray-900 dark:text-white">Rp {{ number_format($totals['grand_total'], 0, ',', '.') }}</span></div>
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Ringkasan</h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Ikhtisar total pesanan dan pembayaran.</p>
+            </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div class="rounded-xl border border-gray-200 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-gray-900/40">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Total Harga</p>
+                <p class="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
+                    Rp {{ number_format($totals['total_price'], 0, ',', '.') }}
+                </p>
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-gray-900/40">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Diskon</p>
+                <p class="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
+                    Rp {{ number_format($totals['total_discount'], 0, ',', '.') }}
+                </p>
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-gray-900/40">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Grand Total</p>
+                <p class="mt-2 text-lg font-semibold text-gray-900 dark:text-white">
+                    Rp {{ number_format($totals['grand_total'], 0, ',', '.') }}
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-4">
+            <div class="rounded-xl border border-gray-200 p-3 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
+                <div class="flex items-center justify-between">
+                    <span>Total Item</span>
+                    <span class="font-semibold text-gray-900 dark:text-white">{{ $itemsCount }} item</span>
+                </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 p-3 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
+                <div class="flex items-center justify-between">
+                    <span>Total Qty</span>
+                    <span class="font-semibold text-gray-900 dark:text-white">{{ number_format($totalQty, 0, ',', '.') }}</span>
+                </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 p-3 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
+                <div class="flex items-center justify-between">
+                    <span>Total Dibayar</span>
+                    <span class="font-semibold text-gray-900 dark:text-white">Rp {{ number_format($paidTotal, 0, ',', '.') }}</span>
+                </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 p-3 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">
+                <div class="flex items-center justify-between">
+                    <span>Sisa Tagihan</span>
+                    <span class="font-semibold text-gray-900 dark:text-white">Rp {{ number_format($balance, 0, ',', '.') }}</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
