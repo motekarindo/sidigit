@@ -35,6 +35,11 @@ class Edit extends Component
 
     protected ProductService $service;
 
+    public function boot(ProductService $service): void
+    {
+        $this->service = $service;
+    }
+
     protected array $messages = [
         'sku.required' => 'SKU wajib diisi.',
         'sku.unique' => 'SKU sudah digunakan. Gunakan SKU lain.',
@@ -72,11 +77,9 @@ class Edit extends Component
         'materials.*' => 'Material Produk',
     ];
 
-    public function mount(int $product, ProductService $service): void
+    public function mount(int $product): void
     {
         $this->authorize('product.edit');
-
-        $this->service = $service;
 
         $this->loadReferenceData();
 
@@ -172,6 +175,7 @@ class Edit extends Component
 
     public function update(): void
     {
+        $this->normalizePriceInputs();
         $data = $this->validate();
         $data['description'] = $data['product_description'] ?? null;
         unset($data['product_description']);
