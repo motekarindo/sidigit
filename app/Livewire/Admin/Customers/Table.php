@@ -57,7 +57,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus pelanggan.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus pelanggan.');
         }
     }
 
@@ -78,7 +78,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus pelanggan terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus pelanggan terpilih.');
         }
     }
 

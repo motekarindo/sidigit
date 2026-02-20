@@ -37,7 +37,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Role berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus role.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus role.');
         }
     }
 
@@ -56,7 +56,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Role terpilih berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus role terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus role terpilih.');
         }
     }
 

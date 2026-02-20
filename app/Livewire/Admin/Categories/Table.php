@@ -43,7 +43,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal membuat kategori.', type: 'error');
+            $this->toastError($e, 'Gagal membuat kategori.');
         }
     }
 
@@ -57,7 +57,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui kategori.', type: 'error');
+            $this->toastError($e, 'Gagal memperbarui kategori.');
         }
     }
 
@@ -71,7 +71,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus kategori.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus kategori.');
         }
     }
 
@@ -92,7 +92,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus kategori terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus kategori terpilih.');
         }
     }
 

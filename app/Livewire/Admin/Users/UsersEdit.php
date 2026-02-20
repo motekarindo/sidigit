@@ -4,8 +4,10 @@ namespace App\Livewire\Admin\Users;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Traits\WithErrorToast;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -16,6 +18,7 @@ use Livewire\Component;
 class UsersEdit extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
 
     public User $user;
 
@@ -54,22 +57,29 @@ class UsersEdit extends Component
     {
         $data = $this->validate();
 
-        $this->user->fill([
-            'name' => $data['name'],
-            'username' => $data['username'],
-            'email' => $data['email'],
-        ]);
+        try {
+            $this->user->fill([
+                'name' => $data['name'],
+                'username' => $data['username'],
+                'email' => $data['email'],
+            ]);
 
-        if (! empty($data['password'])) {
-            $this->user->password = $data['password'];
+            if (! empty($data['password'])) {
+                $this->user->password = $data['password'];
+            }
+
+            $this->user->save();
+            $this->user->roles()->sync($this->roles);
+
+            session()->flash('success', 'User berhasil diperbarui.');
+
+            $this->redirectRoute('users.index');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $th) {
+            report($th);
+            $this->toastError($th, 'Terjadi kesalahan saat memperbarui user.');
         }
-
-        $this->user->save();
-        $this->user->roles()->sync($this->roles);
-
-        session()->flash('success', 'User berhasil diperbarui.');
-
-        $this->redirectRoute('users.index');
     }
 
     public function render()

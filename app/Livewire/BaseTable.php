@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Traits\WithBulkSelection;
+use App\Traits\WithErrorToast;
 use App\Traits\WithModal;
 use App\Traits\WithTablePagination;
 use App\Traits\WithTableSearch;
@@ -17,6 +18,7 @@ abstract class BaseTable extends Component
     use WithTableSearch;
     use WithModal;
     use WithBulkSelection;
+    use WithErrorToast;
 
     abstract protected function query();
     abstract protected function columns(): array;

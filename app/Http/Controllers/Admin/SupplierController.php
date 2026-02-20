@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SupplierRequest;
 use App\Services\SupplierService;
+use App\Support\ErrorMessage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class SupplierController extends Controller
@@ -47,7 +48,7 @@ class SupplierController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat menambahkan supplier. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan supplier.'));
         }
     }
 
@@ -83,7 +84,7 @@ class SupplierController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui data supplier. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data supplier.'));
         }
     }
 

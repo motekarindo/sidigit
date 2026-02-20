@@ -59,7 +59,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal membuat menu.', type: 'error');
+            $this->toastError($e, 'Gagal membuat menu.');
         }
     }
 
@@ -73,7 +73,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui menu.', type: 'error');
+            $this->toastError($e, 'Gagal memperbarui menu.');
         }
     }
 
@@ -85,7 +85,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Menu berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus menu.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus menu.');
         }
     }
 
@@ -104,7 +104,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Menu terpilih berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus menu terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus menu terpilih.');
         }
     }
 

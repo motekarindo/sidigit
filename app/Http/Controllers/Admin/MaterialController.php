@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\MaterialRequest;
 use App\Models\Category;
 use App\Models\Unit;
 use App\Services\MaterialService;
+use App\Support\ErrorMessage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class MaterialController extends Controller
@@ -52,7 +53,7 @@ class MaterialController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat menambahkan material. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan material.'));
         }
     }
 
@@ -90,7 +91,7 @@ class MaterialController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui data material. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data material.'));
         }
     }
 

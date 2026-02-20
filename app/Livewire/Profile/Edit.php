@@ -2,11 +2,13 @@
 
 namespace App\Livewire\Profile;
 
+use App\Traits\WithErrorToast;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -17,6 +19,7 @@ use Livewire\Component;
 class Edit extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
     use WithPageMeta;
 
     public int $userId;
@@ -69,24 +72,31 @@ class Edit extends Component
     {
         $data = $this->validate();
 
-        $payload = [
-            'name' => $data['name'],
-            'username' => $data['username'],
-            'email' => $data['email'],
-        ];
+        try {
+            $payload = [
+                'name' => $data['name'],
+                'username' => $data['username'],
+                'email' => $data['email'],
+            ];
 
-        if (!empty($data['password'])) {
-            $payload['password'] = $data['password'];
+            if (!empty($data['password'])) {
+                $payload['password'] = $data['password'];
+            }
+
+            $user = Auth::user();
+            $user->update($payload);
+
+            $this->password = '';
+            $this->password_confirmation = '';
+
+            session()->flash('toast', ['message' => 'Profil berhasil diperbarui.', 'type' => 'success']);
+            $this->redirectRoute('profile.edit');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $th) {
+            report($th);
+            $this->toastError($th, 'Terjadi kesalahan saat memperbarui profil.');
         }
-
-        $user = Auth::user();
-        $user->update($payload);
-
-        $this->password = '';
-        $this->password_confirmation = '';
-
-        session()->flash('toast', ['message' => 'Profil berhasil diperbarui.', 'type' => 'success']);
-        $this->redirectRoute('profile.edit');
     }
 
     public function render()

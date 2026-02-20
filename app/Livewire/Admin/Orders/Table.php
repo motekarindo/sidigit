@@ -40,7 +40,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Order berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus order.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus order.');
         }
     }
 
@@ -59,7 +59,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Order terpilih berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus order terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus order terpilih.');
         }
     }
 

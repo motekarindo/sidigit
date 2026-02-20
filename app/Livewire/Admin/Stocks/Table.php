@@ -101,7 +101,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal mencatat stok.', type: 'error');
+            $this->toastError($e, 'Gagal mencatat stok.');
         }
     }
 
@@ -118,7 +118,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui stok.', type: 'error');
+            $this->toastError($e, 'Gagal memperbarui stok.');
         }
     }
 
@@ -132,7 +132,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: $e->getMessage(), type: 'warning');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus stok.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus stok.');
         }
     }
 
@@ -151,7 +151,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Stok manual terpilih berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus stok terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus stok terpilih.');
         }
     }
 

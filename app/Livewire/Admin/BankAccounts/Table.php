@@ -43,7 +43,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal membuat rekening.', type: 'error');
+            $this->toastError($e, 'Gagal membuat rekening.');
         }
     }
 
@@ -57,7 +57,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui rekening.', type: 'error');
+            $this->toastError($e, 'Gagal memperbarui rekening.');
         }
     }
 
@@ -71,7 +71,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus rekening.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus rekening.');
         }
     }
 
@@ -92,7 +92,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus rekening terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus rekening terpilih.');
         }
     }
 

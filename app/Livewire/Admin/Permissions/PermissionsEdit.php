@@ -4,8 +4,10 @@ namespace App\Livewire\Admin\Permissions;
 
 use App\Models\Menu;
 use App\Models\Permission;
+use App\Traits\WithErrorToast;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -15,6 +17,7 @@ use Livewire\Component;
 class PermissionsEdit extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
 
     public Permission $permission;
     public string $name = '';
@@ -45,11 +48,18 @@ class PermissionsEdit extends Component
     {
         $data = $this->validate();
 
-        $this->permission->update($data);
+        try {
+            $this->permission->update($data);
 
-        session()->flash('success', 'Permission berhasil diperbarui.');
+            session()->flash('success', 'Permission berhasil diperbarui.');
 
-        $this->redirectRoute('permissions.index');
+            $this->redirectRoute('permissions.index');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $th) {
+            report($th);
+            $this->toastError($th, 'Terjadi kesalahan saat memperbarui permission.');
+        }
     }
 
     public function render()

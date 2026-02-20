@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Suppliers;
 
 use App\Livewire\Forms\SupplierForm;
 use App\Services\SupplierService;
+use App\Traits\WithErrorToast;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,7 @@ use Livewire\Component;
 class SuppliersCreate extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
     use WithPageMeta;
 
     public SupplierForm $form;
@@ -51,7 +53,7 @@ class SuppliersCreate extends Component
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menambahkan supplier.', type: 'error');
+            $this->toastError($e, 'Terjadi kesalahan saat menambahkan supplier.');
         }
     }
 

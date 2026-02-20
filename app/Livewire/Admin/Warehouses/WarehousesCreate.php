@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Warehouses;
 
 use App\Livewire\Forms\WarehouseForm;
 use App\Services\WarehouseService;
+use App\Traits\WithErrorToast;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,7 @@ use Livewire\Component;
 class WarehousesCreate extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
     use WithPageMeta;
 
     public WarehouseForm $form;
@@ -52,7 +54,7 @@ class WarehousesCreate extends Component
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menambahkan gudang.', type: 'error');
+            $this->toastError($e, 'Terjadi kesalahan saat menambahkan gudang.');
         }
     }
 

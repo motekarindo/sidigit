@@ -66,7 +66,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal membuat permission.', type: 'error');
+            $this->toastError($e, 'Gagal membuat permission.');
         }
     }
 
@@ -81,7 +81,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui permission.', type: 'error');
+            $this->toastError($e, 'Gagal memperbarui permission.');
         }
     }
 
@@ -95,7 +95,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus permission.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus permission.');
         }
     }
 
@@ -118,7 +118,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus permission terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus permission terpilih.');
         }
     }
 

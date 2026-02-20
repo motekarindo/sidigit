@@ -53,7 +53,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal membuat user.', type: 'error');
+            $this->toastError($e, 'Gagal membuat user.');
         }
     }
 
@@ -67,7 +67,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui user.', type: 'error');
+            $this->toastError($e, 'Gagal memperbarui user.');
         }
     }
 
@@ -84,7 +84,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'User berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus user.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus user.');
         }
     }
 
@@ -111,7 +111,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'User terpilih berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus user terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus user terpilih.');
         }
     }
 

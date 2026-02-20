@@ -64,7 +64,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal membuat kasbon.', type: 'error');
+            $this->toastError($e, 'Gagal membuat kasbon.');
         }
     }
 
@@ -78,7 +78,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui kasbon.', type: 'error');
+            $this->toastError($e, 'Gagal memperbarui kasbon.');
         }
     }
 
@@ -90,7 +90,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Kasbon berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus kasbon.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus kasbon.');
         }
     }
 
@@ -109,7 +109,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Kasbon terpilih berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus kasbon terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus kasbon terpilih.');
         }
     }
 
