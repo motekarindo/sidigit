@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Employees;
 
 use App\Livewire\Forms\EmployeeForm;
 use App\Services\EmployeeService;
+use App\Traits\WithErrorToast;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +19,7 @@ use Spatie\LivewireFilepond\WithFilePond;
 class EmployeesCreate extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
     use WithPageMeta;
     use WithFilePond;
 
@@ -57,7 +59,7 @@ class EmployeesCreate extends Component
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menambahkan karyawan.', type: 'error');
+            $this->toastError($e, 'Terjadi kesalahan saat menambahkan karyawan.');
         }
     }
 

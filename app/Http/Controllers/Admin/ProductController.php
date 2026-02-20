@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Material;
 use App\Models\Unit;
 use App\Services\ProductService;
+use App\Support\ErrorMessage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ProductController extends Controller
@@ -56,7 +57,7 @@ class ProductController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat menambahkan produk. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan produk.'));
         }
     }
 
@@ -100,7 +101,7 @@ class ProductController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui data produk. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data produk.'));
         }
     }
 

@@ -42,7 +42,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus supplier.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus supplier.');
         }
     }
 
@@ -63,7 +63,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus supplier terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus supplier terpilih.');
         }
     }
 

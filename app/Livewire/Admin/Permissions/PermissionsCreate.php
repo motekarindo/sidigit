@@ -4,8 +4,10 @@ namespace App\Livewire\Admin\Permissions;
 
 use App\Models\Menu;
 use App\Models\Permission;
+use App\Traits\WithErrorToast;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -15,6 +17,7 @@ use Livewire\Component;
 class PermissionsCreate extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
 
     public string $name = '';
     public string $slug = '';
@@ -38,11 +41,18 @@ class PermissionsCreate extends Component
     {
         $data = $this->validate();
 
-        Permission::create($data);
+        try {
+            Permission::create($data);
 
-        session()->flash('success', 'Permission berhasil dibuat.');
+            session()->flash('success', 'Permission berhasil dibuat.');
 
-        $this->redirectRoute('permissions.index');
+            $this->redirectRoute('permissions.index');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $th) {
+            report($th);
+            $this->toastError($th, 'Terjadi kesalahan saat membuat permission.');
+        }
     }
 
     public function render()

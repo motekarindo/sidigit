@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CategoryRequest;
 use App\Services\CategoryService;
+use App\Support\ErrorMessage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class CategoryController extends Controller
@@ -47,7 +48,7 @@ class CategoryController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat menambahkan kategori. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan kategori.'));
         }
     }
 
@@ -83,7 +84,7 @@ class CategoryController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui data kategori. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data kategori.'));
         }
     }
 

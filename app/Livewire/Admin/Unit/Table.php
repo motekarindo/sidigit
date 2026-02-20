@@ -53,7 +53,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal membuat unit.', type: 'error');
+            $this->toastError($e, 'Gagal membuat unit.');
         }
     }
 
@@ -68,7 +68,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui unit.', type: 'error');
+            $this->toastError($e, 'Gagal memperbarui unit.');
         }
     }
 
@@ -81,7 +81,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Unit berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus unit.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus unit.');
         }
     }
 
@@ -102,7 +102,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Unit terpilih berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus unit terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus unit terpilih.');
         }
     }
 

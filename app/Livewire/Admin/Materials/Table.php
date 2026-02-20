@@ -56,7 +56,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal membuat material.', type: 'error');
+            $this->toastError($e, 'Gagal membuat material.');
         }
     }
 
@@ -70,7 +70,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui material.', type: 'error');
+            $this->toastError($e, 'Gagal memperbarui material.');
         }
     }
 
@@ -84,7 +84,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus material.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus material.');
         }
     }
 
@@ -105,7 +105,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus material terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus material terpilih.');
         }
     }
 

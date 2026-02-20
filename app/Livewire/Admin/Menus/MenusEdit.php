@@ -4,8 +4,10 @@ namespace App\Livewire\Admin\Menus;
 
 use App\Helpers\IconHelper;
 use App\Models\Menu;
+use App\Traits\WithErrorToast;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -15,6 +17,7 @@ use Livewire\Component;
 class MenusEdit extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
 
     public Menu $menu;
     public string $name = '';
@@ -51,11 +54,18 @@ class MenusEdit extends Component
     {
         $data = $this->validate();
 
-        $this->menu->update($data);
+        try {
+            $this->menu->update($data);
 
-        session()->flash('success', 'Menu berhasil diperbarui.');
+            session()->flash('success', 'Menu berhasil diperbarui.');
 
-        $this->redirectRoute('menus.index');
+            $this->redirectRoute('menus.index');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $th) {
+            report($th);
+            $this->toastError($th, 'Terjadi kesalahan saat memperbarui menu.');
+        }
     }
 
     public function render()

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CustomerRequest;
 use App\Services\CustomerService;
+use App\Support\ErrorMessage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 
@@ -47,7 +48,7 @@ class CustomerController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat menambahkan pelanggan. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan pelanggan.'));
         }
     }
 
@@ -82,7 +83,7 @@ class CustomerController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui data pelanggan. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data pelanggan.'));
         }
     }
 

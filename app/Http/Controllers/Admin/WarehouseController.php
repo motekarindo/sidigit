@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\WarehouseRequest;
 use App\Services\WarehouseService;
+use App\Support\ErrorMessage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class WarehouseController extends Controller
@@ -47,7 +48,7 @@ class WarehouseController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat menambahkan gudang. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan gudang.'));
         }
     }
 
@@ -83,7 +84,7 @@ class WarehouseController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui data gudang. Silakan coba lagi.');
+                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data gudang.'));
         }
     }
 

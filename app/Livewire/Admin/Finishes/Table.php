@@ -51,7 +51,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal membuat finishing.', type: 'error');
+            $this->toastError($e, 'Gagal membuat finishing.');
         }
     }
 
@@ -65,7 +65,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui finishing.', type: 'error');
+            $this->toastError($e, 'Gagal memperbarui finishing.');
         }
     }
 
@@ -77,7 +77,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Finishing berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus finishing.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus finishing.');
         }
     }
 
@@ -96,7 +96,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Finishing terpilih berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus finishing terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus finishing terpilih.');
         }
     }
 

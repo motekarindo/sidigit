@@ -4,10 +4,12 @@ namespace App\Livewire\Admin\Roles;
 
 use App\Models\Menu;
 use App\Models\Role;
+use App\Traits\WithErrorToast;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -17,6 +19,7 @@ use Livewire\Component;
 class RolesEdit extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
     use WithPageMeta;
 
     public Role $role;
@@ -219,19 +222,26 @@ class RolesEdit extends Component
     {
         $data = $this->validate();
 
-        $this->role->update([
-            'name' => $data['name'],
-        ]);
+        try {
+            $this->role->update([
+                'name' => $data['name'],
+            ]);
 
-        $this->role->permissions()->sync($this->permissions);
-        $this->role->menus()->sync($this->menus);
+            $this->role->permissions()->sync($this->permissions);
+            $this->role->menus()->sync($this->menus);
 
-        session()->flash('toast', [
-            'message' => 'Role berhasil diperbarui.',
-            'type' => 'success',
-        ]);
+            session()->flash('toast', [
+                'message' => 'Role berhasil diperbarui.',
+                'type' => 'success',
+            ]);
 
-        $this->redirectRoute('roles.index');
+            $this->redirectRoute('roles.index');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $th) {
+            report($th);
+            $this->toastError($th, 'Terjadi kesalahan saat memperbarui role.');
+        }
     }
 
     public function render()

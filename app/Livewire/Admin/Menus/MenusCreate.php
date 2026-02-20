@@ -4,8 +4,10 @@ namespace App\Livewire\Admin\Menus;
 
 use App\Helpers\IconHelper;
 use App\Models\Menu;
+use App\Traits\WithErrorToast;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -15,6 +17,7 @@ use Livewire\Component;
 class MenusCreate extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
 
     public string $name = '';
     public ?int $parent_id = null;
@@ -42,11 +45,18 @@ class MenusCreate extends Component
     {
         $data = $this->validate();
 
-        Menu::create($data);
+        try {
+            Menu::create($data);
 
-        session()->flash('success', 'Menu baru berhasil ditambahkan.');
+            session()->flash('success', 'Menu baru berhasil ditambahkan.');
 
-        $this->redirectRoute('menus.index');
+            $this->redirectRoute('menus.index');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $th) {
+            report($th);
+            $this->toastError($th, 'Terjadi kesalahan saat menambahkan menu.');
+        }
     }
 
     public function render()

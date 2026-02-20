@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Product;
 
 use App\Livewire\Admin\Product\Concerns\HandlesProductForm;
 use App\Services\ProductService;
+use App\Traits\WithErrorToast;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,7 @@ class Edit extends Component
 {
     use AuthorizesRequests;
     use HandlesProductForm;
+    use WithErrorToast;
     use WithPageMeta;
 
     public int $productId;
@@ -192,8 +194,7 @@ class Edit extends Component
             throw $e;
         } catch (\Throwable $th) {
             report($th);
-
-            $this->dispatch('toast', message: 'Terjadi kesalahan saat memperbarui data produk. Silakan coba lagi.', type: 'error');
+            $this->toastError($th, 'Terjadi kesalahan saat memperbarui data produk.');
         }
     }
 

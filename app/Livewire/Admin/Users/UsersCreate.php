@@ -4,8 +4,10 @@ namespace App\Livewire\Admin\Users;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Traits\WithErrorToast;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -16,6 +18,7 @@ use Livewire\Component;
 class UsersCreate extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
 
     public string $name = '';
     public string $username = '';
@@ -45,18 +48,25 @@ class UsersCreate extends Component
     {
         $data = $this->validate();
 
-        $user = User::create([
-            'name' => $data['name'],
-            'username' => $data['username'],
-            'email' => $data['email'],
-            'password' => $data['password'],
-        ]);
+        try {
+            $user = User::create([
+                'name' => $data['name'],
+                'username' => $data['username'],
+                'email' => $data['email'],
+                'password' => $data['password'],
+            ]);
 
-        $user->roles()->sync($this->roles);
+            $user->roles()->sync($this->roles);
 
-        session()->flash('success', 'User baru berhasil ditambahkan.');
+            session()->flash('success', 'User baru berhasil ditambahkan.');
 
-        $this->redirectRoute('users.index');
+            $this->redirectRoute('users.index');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $th) {
+            report($th);
+            $this->toastError($th, 'Terjadi kesalahan saat menambahkan user.');
+        }
     }
 
     public function render()

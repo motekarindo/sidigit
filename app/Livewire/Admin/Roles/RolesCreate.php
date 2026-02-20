@@ -4,10 +4,12 @@ namespace App\Livewire\Admin\Roles;
 
 use App\Models\Menu;
 use App\Models\Role;
+use App\Traits\WithErrorToast;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -17,6 +19,7 @@ use Livewire\Component;
 class RolesCreate extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
     use WithPageMeta;
 
     public string $name = '';
@@ -211,19 +214,26 @@ class RolesCreate extends Component
     {
         $data = $this->validate();
 
-        $role = Role::create([
-            'name' => $data['name'],
-        ]);
+        try {
+            $role = Role::create([
+                'name' => $data['name'],
+            ]);
 
-        $role->permissions()->sync($this->permissions);
-        $role->menus()->sync($this->menus);
+            $role->permissions()->sync($this->permissions);
+            $role->menus()->sync($this->menus);
 
-        session()->flash('toast', [
-            'message' => 'Role baru berhasil ditambahkan.',
-            'type' => 'success',
-        ]);
+            session()->flash('toast', [
+                'message' => 'Role baru berhasil ditambahkan.',
+                'type' => 'success',
+            ]);
 
-        $this->redirectRoute('roles.index');
+            $this->redirectRoute('roles.index');
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $th) {
+            report($th);
+            $this->toastError($th, 'Terjadi kesalahan saat menambahkan role.');
+        }
     }
 
     public function render()

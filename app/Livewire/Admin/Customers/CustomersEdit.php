@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Customers;
 
 use App\Livewire\Forms\CustomerForm;
 use App\Services\CustomerService;
+use App\Traits\WithErrorToast;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,7 @@ use Livewire\Component;
 class CustomersEdit extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
     use WithPageMeta;
 
     public CustomerForm $form;
@@ -60,7 +62,7 @@ class CustomersEdit extends Component
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui pelanggan.', type: 'error');
+            $this->toastError($e, 'Terjadi kesalahan saat memperbarui pelanggan.');
         }
     }
 

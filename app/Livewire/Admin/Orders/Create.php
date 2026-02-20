@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Orders;
 
 use App\Livewire\Admin\Orders\Concerns\HandlesOrderForm;
 use App\Services\OrderService;
+use App\Traits\WithErrorToast;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,7 @@ use Livewire\Component;
 class Create extends Component
 {
     use AuthorizesRequests;
+    use WithErrorToast;
     use WithPageMeta;
     use HandlesOrderForm;
 
@@ -102,7 +104,7 @@ class Create extends Component
             throw $e;
         } catch (\Throwable $th) {
             report($th);
-            $this->dispatch('toast', message: 'Terjadi kesalahan saat menambahkan order.', type: 'error');
+            $this->toastError($th, 'Terjadi kesalahan saat menambahkan order.');
         }
     }
 

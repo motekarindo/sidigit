@@ -64,7 +64,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal membuat absensi.', type: 'error');
+            $this->toastError($e, 'Gagal membuat absensi.');
         }
     }
 
@@ -78,7 +78,7 @@ class Table extends BaseTable
             throw $e;
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal memperbarui absensi.', type: 'error');
+            $this->toastError($e, 'Gagal memperbarui absensi.');
         }
     }
 
@@ -90,7 +90,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Absensi berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus absensi.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus absensi.');
         }
     }
 
@@ -109,7 +109,7 @@ class Table extends BaseTable
             $this->dispatch('toast', message: 'Absensi terpilih berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
-            $this->dispatch('toast', message: 'Gagal menghapus absensi terpilih.', type: 'error');
+            $this->toastError($e, 'Gagal menghapus absensi terpilih.');
         }
     }
 
