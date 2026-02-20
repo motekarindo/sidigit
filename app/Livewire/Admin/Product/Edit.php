@@ -130,8 +130,7 @@ class Edit extends Component
 
     public function updatedCategoryId($value): void
     {
-        $this->materials = [];
-        $this->refreshMaterialsForCategory($value ? (int) $value : null);
+        $this->refreshMaterialsForCategory();
     }
 
     public function updatedUnitId($value): void
@@ -146,8 +145,6 @@ class Edit extends Component
 
     protected function rulesFor(?int $productId): array
     {
-        $categoryId = $this->category_id;
-
         return [
             'sku' => [
                 'required',
@@ -166,11 +163,7 @@ class Edit extends Component
             'materials' => ['required', 'array', 'min:1'],
             'materials.*' => [
                 'integer',
-                Rule::exists('mst_materials', 'id')->where(function ($query) use ($categoryId) {
-                    if ($categoryId) {
-                        $query->where('category_id', $categoryId);
-                    }
-                }),
+                Rule::exists('mst_materials', 'id'),
             ],
         ];
     }

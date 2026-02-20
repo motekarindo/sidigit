@@ -86,6 +86,13 @@ class Table extends BaseTable
     protected function rowActions(): array
     {
         return [
+            [
+                'label' => 'Print Invoice',
+                'url' => fn ($row) => route('orders.invoice', ['order' => $row->id, 'print' => 1]),
+                'target' => '_blank',
+                'class' => 'text-gray-700',
+                'icon' => 'printer',
+            ],
             ['label' => 'Edit', 'method' => 'goEdit', 'class' => 'text-brand-500', 'icon' => 'pencil'],
             ['label' => 'Delete', 'method' => 'confirmDelete', 'class' => 'text-red-600', 'icon' => 'trash-2'],
         ];

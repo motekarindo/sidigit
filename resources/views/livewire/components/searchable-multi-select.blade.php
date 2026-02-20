@@ -85,8 +85,25 @@
     @endif
 
     <button type="button" @click="toggle"
-        class="{{ $resolvedButtonClass }} flex items-center justify-between gap-2 text-left">
-        <span class="block truncate" x-text="selectedLabel ?? placeholder"></span>
+        class="{{ $resolvedButtonClass }} flex items-start justify-between gap-2 text-left">
+        <div class="flex flex-1 flex-wrap items-center gap-2">
+            <template x-if="!selected.length">
+                <span class="text-gray-400 dark:text-gray-500" x-text="placeholder"></span>
+            </template>
+            <template x-for="option in selected" :key="option.value">
+                <span class="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-200"
+                    :title="option.label">
+                    <span class="max-w-[180px] truncate" x-text="option.label"></span>
+                    <button type="button" @click.stop="toggleOption(option)"
+                        class="rounded-full p-0.5 text-brand-600 transition hover:bg-brand-100 hover:text-brand-700 dark:text-brand-200 dark:hover:bg-brand-500/20">
+                        <svg class="h-3 w-3" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 6 8 8M14 6L6 14" />
+                        </svg>
+                    </button>
+                </span>
+            </template>
+        </div>
         <span class="flex items-center gap-1">
             <template x-if="allowClear && selected.length">
                 <span role="button" tabindex="-1" @click.stop="clear"

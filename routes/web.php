@@ -60,13 +60,15 @@ Route::middleware('guest')->group(function () {
 
 
 // Grup untuk Rute yang Membutuhkan Autentikasi
-Route::middleware('auth')->group(function () {
-    Route::prefix('orders')->name('orders.')->group(function () {
-        Route::get('/', \App\Livewire\Admin\Orders\Index::class)->name('index');
-        Route::get('/create', \App\Livewire\Admin\Orders\Create::class)->name('create');
-        Route::get('/{order}/edit', \App\Livewire\Admin\Orders\Edit::class)->name('edit');
-        Route::get('/trashed', \App\Livewire\Admin\Orders\Trashed::class)->name('trashed');
-    });
+    Route::middleware('auth')->group(function () {
+        Route::prefix('orders')->name('orders.')->group(function () {
+            Route::get('/', \App\Livewire\Admin\Orders\Index::class)->name('index');
+            Route::get('/create', \App\Livewire\Admin\Orders\Create::class)->name('create');
+            Route::get('/{order}/edit', \App\Livewire\Admin\Orders\Edit::class)->name('edit');
+            Route::get('/{order}/invoice', [\App\Http\Controllers\Admin\OrderInvoiceController::class, 'show'])->name('invoice');
+            Route::get('/{order}/invoice/pdf', [\App\Http\Controllers\Admin\OrderInvoiceController::class, 'pdf'])->name('invoice.pdf');
+            Route::get('/trashed', \App\Livewire\Admin\Orders\Trashed::class)->name('trashed');
+        });
 
     Route::prefix('stocks')->group(function () {
         Route::get('/in', StockInIndex::class)->name('stocks.in');

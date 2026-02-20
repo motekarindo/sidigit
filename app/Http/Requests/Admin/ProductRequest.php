@@ -15,8 +15,6 @@ class ProductRequest extends FormRequest
     public function rules(): array
     {
         $productId = (int) $this->route('product');
-        $categoryId = $this->input('category_id');
-
         return [
             'sku' => [
                 'required',
@@ -35,11 +33,7 @@ class ProductRequest extends FormRequest
             'materials' => ['required', 'array', 'min:1'],
             'materials.*' => [
                 'integer',
-                Rule::exists('mst_materials', 'id')->where(function ($query) use ($categoryId) {
-                    if ($categoryId) {
-                        $query->where('category_id', $categoryId);
-                    }
-                }),
+                Rule::exists('mst_materials', 'id'),
             ],
         ];
     }
