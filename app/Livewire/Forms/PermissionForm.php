@@ -31,6 +31,31 @@ class PermissionForm extends Form
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'name.required' => 'Nama permission wajib diisi.',
+            'name.string' => 'Nama permission harus berupa teks.',
+            'name.max' => 'Nama permission maksimal 255 karakter.',
+            'name.unique' => 'Nama permission sudah digunakan.',
+            'slug.required' => 'Slug wajib diisi.',
+            'slug.string' => 'Slug harus berupa teks.',
+            'slug.max' => 'Slug maksimal 255 karakter.',
+            'slug.unique' => 'Slug sudah digunakan.',
+            'menu_id.required' => 'Menu wajib dipilih.',
+            'menu_id.exists' => 'Menu yang dipilih tidak valid.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'name' => 'Nama permission',
+            'slug' => 'Slug',
+            'menu_id' => 'Menu',
+        ];
+    }
+
     public function fillFromModel(Permission $permission): void
     {
         $this->id = $permission->id;
