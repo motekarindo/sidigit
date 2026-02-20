@@ -54,6 +54,44 @@ class MaterialForm extends Form
             : null;
     }
 
+    protected function messages(): array
+    {
+        return [
+            'name.required' => 'Nama material wajib diisi.',
+            'name.string' => 'Nama material harus berupa teks.',
+            'name.max' => 'Nama material maksimal 128 karakter.',
+            'category_id.required' => 'Kategori wajib dipilih.',
+            'category_id.integer' => 'Kategori tidak valid.',
+            'category_id.exists' => 'Kategori yang dipilih tidak valid.',
+            'unit_id.required' => 'Satuan dasar wajib dipilih.',
+            'unit_id.integer' => 'Satuan dasar tidak valid.',
+            'unit_id.exists' => 'Satuan dasar yang dipilih tidak valid.',
+            'purchase_unit_id.integer' => 'Satuan pembelian tidak valid.',
+            'purchase_unit_id.exists' => 'Satuan pembelian yang dipilih tidak valid.',
+            'description.string' => 'Deskripsi harus berupa teks.',
+            'cost_price.integer' => 'Harga pokok harus berupa angka bulat.',
+            'cost_price.min' => 'Harga pokok minimal 0.',
+            'conversion_qty.numeric' => 'Konversi harus berupa angka.',
+            'conversion_qty.min' => 'Konversi minimal 0,01.',
+            'reorder_level.numeric' => 'Batas minimum harus berupa angka.',
+            'reorder_level.min' => 'Batas minimum minimal 0.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'name' => 'Nama material',
+            'category_id' => 'Kategori',
+            'unit_id' => 'Satuan dasar',
+            'purchase_unit_id' => 'Satuan pembelian',
+            'description' => 'Deskripsi',
+            'cost_price' => 'Harga pokok',
+            'conversion_qty' => 'Konversi',
+            'reorder_level' => 'Batas minimum',
+        ];
+    }
+
     public function store(MaterialService $service): void
     {
         $this->validate();

@@ -14,6 +14,23 @@ class CategoryForm extends Form
     #[Validate('required|string|min:3|max:128')]
     public string $name = '';
 
+    protected function messages(): array
+    {
+        return [
+            'name.required' => 'Nama kategori wajib diisi.',
+            'name.string' => 'Nama kategori harus berupa teks.',
+            'name.min' => 'Nama kategori minimal 3 karakter.',
+            'name.max' => 'Nama kategori maksimal 128 karakter.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'name' => 'Nama kategori',
+        ];
+    }
+
     public function fillFromModel(Category $category): void
     {
         $this->id = $category->id;
