@@ -14,7 +14,7 @@ class MenuCacheService
     protected $repository;
     public function __construct(MenuRepository $repository)
     {
-        $this-> repository = $repository
+        $this-> repository = $repository;
     }
 
     public function filter(Collection $menus, User $user, Collection $allowedMenuIds): Collection
