@@ -50,11 +50,24 @@ class SuppliersCreate extends Component
             session()->flash('toast', ['message' => 'Supplier berhasil ditambahkan.', 'type' => 'success']);
             $this->redirectRoute('suppliers.index');
         } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
             $this->toastError($e, 'Terjadi kesalahan saat menambahkan supplier.');
         }
+    }
+
+    protected function toastValidation(\Illuminate\Validation\ValidationException $e, ?string $fallback = null): void
+    {
+        $errors = $e->validator->errors()->all();
+        if (!empty($errors)) {
+            $message = "Periksa input:\n• " . implode("\n• ", $errors);
+        } else {
+            $message = $fallback ?: 'Periksa kembali input. Ada data yang belum sesuai.';
+        }
+
+        $this->dispatch('toast', message: $message, type: 'warning');
     }
 
     public function render()

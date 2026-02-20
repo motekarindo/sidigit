@@ -117,6 +117,18 @@ class Table extends BaseTable
         }
     }
 
+    protected function toastValidation(ValidationException $e, ?string $fallback = null): void
+    {
+        $errors = $e->validator->errors()->all();
+        if (!empty($errors)) {
+            $message = "Periksa input:\n• " . implode("\n• ", $errors);
+        } else {
+            $message = $fallback ?: 'Periksa kembali input. Ada data yang belum sesuai.';
+        }
+
+        $this->dispatch('toast', message: $message, type: 'warning');
+    }
+
     protected function formView(): ?string
     {
         return 'livewire.admin.attendances.form';
@@ -158,5 +170,20 @@ class Table extends BaseTable
     protected function selectionColumnCheckbox(): bool
     {
         return true;
+    }
+
+    protected function createModalWidth(): string
+    {
+        return '3xl';
+    }
+
+    protected function editModalWidth(): string
+    {
+        return '3xl';
+    }
+
+    protected function deleteModalWidth(): string
+    {
+        return 'xl';
     }
 }

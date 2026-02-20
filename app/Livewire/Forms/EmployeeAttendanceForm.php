@@ -28,6 +28,34 @@ class EmployeeAttendanceForm extends Form
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'employee_id.required' => 'Karyawan wajib dipilih.',
+            'employee_id.integer' => 'Karyawan tidak valid.',
+            'employee_id.exists' => 'Karyawan yang dipilih tidak valid.',
+            'attendance_date.required' => 'Tanggal absensi wajib diisi.',
+            'attendance_date.date' => 'Tanggal absensi tidak valid.',
+            'check_in.date_format' => 'Format jam check in tidak valid.',
+            'check_out.date_format' => 'Format jam check out tidak valid.',
+            'status.required' => 'Status wajib dipilih.',
+            'status.max' => 'Status maksimal 24 karakter.',
+            'notes.string' => 'Catatan harus berupa teks.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'employee_id' => 'Karyawan',
+            'attendance_date' => 'Tanggal absensi',
+            'check_in' => 'Check in',
+            'check_out' => 'Check out',
+            'status' => 'Status',
+            'notes' => 'Catatan',
+        ];
+    }
+
     public function fillFromModel(EmployeeAttendance $attendance): void
     {
         $this->id = $attendance->id;

@@ -42,6 +42,40 @@ class EmployeeForm extends Form
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'name.required' => 'Nama karyawan wajib diisi.',
+            'name.string' => 'Nama karyawan harus berupa teks.',
+            'name.max' => 'Nama karyawan maksimal 32 karakter.',
+            'address.string' => 'Alamat harus berupa teks.',
+            'address.max' => 'Alamat maksimal 128 karakter.',
+            'phone_number.string' => 'No. telepon harus berupa teks.',
+            'phone_number.max' => 'No. telepon maksimal 16 karakter.',
+            'email.email' => 'Format email tidak valid.',
+            'email.max' => 'Email maksimal 64 karakter.',
+            'email.unique' => 'Email sudah digunakan.',
+            'photo.array' => 'Foto tidak valid.',
+            'salary.integer' => 'Gaji harus berupa angka bulat.',
+            'salary.min' => 'Gaji minimal 0.',
+            'status.required' => 'Status wajib dipilih.',
+            'status.enum' => 'Status tidak valid.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'name' => 'Nama karyawan',
+            'address' => 'Alamat',
+            'phone_number' => 'No. telepon',
+            'email' => 'Email',
+            'photo' => 'Foto',
+            'salary' => 'Gaji',
+            'status' => 'Status',
+        ];
+    }
+
     public function fillFromModel(Employee $employee): void
     {
         $this->id = $employee->id;

@@ -31,6 +31,42 @@ class SupplierForm extends Form
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'name.required' => 'Nama supplier wajib diisi.',
+            'name.string' => 'Nama supplier harus berupa teks.',
+            'name.max' => 'Nama supplier maksimal 128 karakter.',
+            'on_behalf.string' => 'Atas nama harus berupa teks.',
+            'on_behalf.max' => 'Atas nama maksimal 128 karakter.',
+            'address.string' => 'Alamat harus berupa teks.',
+            'address.max' => 'Alamat maksimal 255 karakter.',
+            'industry.required' => 'Bidang usaha wajib diisi.',
+            'industry.string' => 'Bidang usaha harus berupa teks.',
+            'industry.max' => 'Bidang usaha maksimal 128 karakter.',
+            'phone_number.required' => 'No. telepon wajib diisi.',
+            'phone_number.string' => 'No. telepon harus berupa teks.',
+            'phone_number.max' => 'No. telepon maksimal 32 karakter.',
+            'email.email' => 'Format email tidak valid.',
+            'email.max' => 'Email maksimal 128 karakter.',
+            'rekening_number.string' => 'No. rekening harus berupa teks.',
+            'rekening_number.max' => 'No. rekening maksimal 128 karakter.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'name' => 'Nama supplier',
+            'on_behalf' => 'Atas nama',
+            'address' => 'Alamat',
+            'industry' => 'Bidang usaha',
+            'phone_number' => 'No. telepon',
+            'email' => 'Email',
+            'rekening_number' => 'No. rekening',
+        ];
+    }
+
     public function fillFromModel(Supplier $supplier): void
     {
         $this->id = $supplier->id;

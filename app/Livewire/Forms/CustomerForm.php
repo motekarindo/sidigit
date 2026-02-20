@@ -34,6 +34,35 @@ class CustomerForm extends Form
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'name.required' => 'Nama pelanggan wajib diisi.',
+            'name.string' => 'Nama pelanggan harus berupa teks.',
+            'name.max' => 'Nama pelanggan maksimal 32 karakter.',
+            'address.string' => 'Alamat harus berupa teks.',
+            'address.max' => 'Alamat maksimal 128 karakter.',
+            'phone_number.string' => 'No. telepon harus berupa teks.',
+            'phone_number.max' => 'No. telepon maksimal 16 karakter.',
+            'email.email' => 'Format email tidak valid.',
+            'email.max' => 'Email maksimal 64 karakter.',
+            'email.unique' => 'Email sudah digunakan.',
+            'member_type.required' => 'Tipe member wajib dipilih.',
+            'member_type.enum' => 'Tipe member tidak valid.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'name' => 'Nama pelanggan',
+            'address' => 'Alamat',
+            'phone_number' => 'No. telepon',
+            'email' => 'Email',
+            'member_type' => 'Tipe member',
+        ];
+    }
+
     public function fillFromModel(Customer $customer): void
     {
         $this->id = $customer->id;
