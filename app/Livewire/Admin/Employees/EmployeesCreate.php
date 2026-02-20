@@ -56,6 +56,7 @@ class EmployeesCreate extends Component
             session()->flash('toast', ['message' => 'Karyawan berhasil ditambahkan.', 'type' => 'success']);
             $this->redirectRoute('employees.index');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BankAccountRequest;
 use App\Services\BankAccountService;
-use App\Support\ErrorMessage;
+use App\Support\ErrorReporter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class BankAccountController extends Controller
@@ -42,11 +42,10 @@ class BankAccountController extends Controller
                 ->route('bank-accounts.index')
                 ->with('success', "Rekening {$bankAccount->account_name} berhasil ditambahkan.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan rekening.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat menambahkan rekening.')['message']);
         }
     }
 
@@ -58,7 +57,6 @@ class BankAccountController extends Controller
 
             return view('admin.bank-account.edit', compact('bankAccount'));
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('bank-accounts.index')
@@ -76,11 +74,10 @@ class BankAccountController extends Controller
                 ->route('bank-accounts.index')
                 ->with('success', "Rekening {$bankAccountModel->account_name} berhasil diperbarui.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data rekening.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat memperbarui data rekening.')['message']);
         }
     }
 
@@ -95,7 +92,6 @@ class BankAccountController extends Controller
                 ->route('bank-accounts.index')
                 ->with('success', "Rekening {$bankAccountModel->account_name} berhasil dihapus.");
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('bank-accounts.index')

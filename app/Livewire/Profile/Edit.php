@@ -92,6 +92,7 @@ class Edit extends Component
             session()->flash('toast', ['message' => 'Profil berhasil diperbarui.', 'type' => 'success']);
             $this->redirectRoute('profile.edit');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $th) {
             report($th);

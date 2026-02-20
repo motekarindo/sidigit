@@ -75,6 +75,7 @@ class UsersEdit extends Component
 
             $this->redirectRoute('users.index');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $th) {
             report($th);

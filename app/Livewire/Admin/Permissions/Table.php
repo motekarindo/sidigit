@@ -63,6 +63,7 @@ class Table extends BaseTable
             $this->closeModal();
             $this->dispatch('toast', message: 'Permission berhasil dibuat.', type: 'success');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
@@ -78,6 +79,7 @@ class Table extends BaseTable
             $this->closeModal();
             $this->dispatch('toast', message: 'Permission berhasil diperbarui.', type: 'success');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
@@ -92,6 +94,7 @@ class Table extends BaseTable
             $this->closeModal();
             $this->dispatch('toast', message: 'Permission berhasil dihapus.', type: 'success');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
@@ -115,6 +118,7 @@ class Table extends BaseTable
             $this->closeModal();
             $this->dispatch('toast', message: 'Permission terpilih berhasil dihapus.', type: 'success');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);

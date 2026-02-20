@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SupplierRequest;
 use App\Services\SupplierService;
-use App\Support\ErrorMessage;
+use App\Support\ErrorReporter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class SupplierController extends Controller
@@ -44,11 +44,10 @@ class SupplierController extends Controller
                 ->route('suppliers.index')
                 ->with('success', "Supplier {$supplier->name} berhasil ditambahkan.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan supplier.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat menambahkan supplier.')['message']);
         }
     }
 
@@ -61,7 +60,6 @@ class SupplierController extends Controller
 
             return view('admin.supplier.edit', compact('supplier'));
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('suppliers.index')
@@ -80,11 +78,10 @@ class SupplierController extends Controller
                 ->route('suppliers.index')
                 ->with('success', "Supplier {$supplierModel->name} berhasil diperbarui.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data supplier.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat memperbarui data supplier.')['message']);
         }
     }
 
@@ -100,7 +97,6 @@ class SupplierController extends Controller
                 ->route('suppliers.index')
                 ->with('success', "Supplier {$supplierModel->name} berhasil dihapus.");
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('suppliers.index')
