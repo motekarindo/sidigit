@@ -17,6 +17,24 @@ class UnitForm extends Form
     #[Validate('boolean')]
     public bool $is_dimension = false;
 
+    protected function messages(): array
+    {
+        return [
+            'name.required' => 'Nama satuan wajib diisi.',
+            'name.string' => 'Nama satuan harus berupa teks.',
+            'name.min' => 'Nama satuan minimal 3 karakter.',
+            'is_dimension.boolean' => 'Pilihan ukuran tidak valid.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'name' => 'Nama satuan',
+            'is_dimension' => 'Ukuran',
+        ];
+    }
+
     public function fillFromModel(Unit $unit): void
     {
         $this->id = $unit->id;

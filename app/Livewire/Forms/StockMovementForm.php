@@ -26,6 +26,34 @@ class StockMovementForm extends Form
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'material_id.required' => 'Bahan wajib dipilih.',
+            'material_id.integer' => 'Bahan tidak valid.',
+            'material_id.exists' => 'Bahan yang dipilih tidak valid.',
+            'unit_id.required' => 'Satuan wajib dipilih.',
+            'unit_id.integer' => 'Satuan tidak valid.',
+            'unit_id.exists' => 'Satuan yang dipilih tidak valid.',
+            'type.required' => 'Tipe stok wajib diisi.',
+            'type.in' => 'Tipe stok tidak valid.',
+            'qty.required' => 'Qty wajib diisi.',
+            'qty.integer' => 'Qty harus berupa angka bulat.',
+            'notes.string' => 'Catatan harus berupa teks.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'material_id' => 'Bahan',
+            'unit_id' => 'Satuan',
+            'type' => 'Tipe stok',
+            'qty' => 'Qty',
+            'notes' => 'Catatan',
+        ];
+    }
+
     public function fillFromModel(StockMovement $movement, ?int $materialUnitId = null): void
     {
         $this->id = $movement->id;

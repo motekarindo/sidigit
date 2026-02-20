@@ -146,12 +146,12 @@ class Create extends Component
 
     public function save(): void
     {
-        $this->normalizePriceInputs();
-        $data = $this->validate();
-        $data['description'] = $data['product_description'] ?? null;
-        unset($data['product_description']);
-
         try {
+            $this->normalizePriceInputs();
+            $data = $this->validate();
+            $data['description'] = $data['product_description'] ?? null;
+            unset($data['product_description']);
+
             $product = $this->service->store($data);
 
             session()->flash('toast', [
@@ -166,6 +166,18 @@ class Create extends Component
             report($th);
             $this->toastError($th, 'Terjadi kesalahan saat menambahkan produk.');
         }
+    }
+
+    protected function toastValidation(ValidationException $e, ?string $fallback = null): void
+    {
+        $errors = $e->validator->errors()->all();
+        if (!empty($errors)) {
+            $message = "Periksa input:\n• " . implode("\n• ", $errors);
+        } else {
+            $message = $fallback ?: 'Periksa kembali input. Ada data yang belum sesuai.';
+        }
+
+        $this->dispatch('toast', message: $message, type: 'warning');
     }
 
     public function render()

@@ -40,6 +40,7 @@ class Table extends BaseTable
             $this->closeModal();
             $this->dispatch('toast', message: 'Kategori berhasil dibuat.', type: 'success');
         } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
@@ -54,6 +55,7 @@ class Table extends BaseTable
             $this->closeModal();
             $this->dispatch('toast', message: 'Kategori berhasil diperbarui.', type: 'success');
         } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
@@ -68,6 +70,7 @@ class Table extends BaseTable
             $this->closeModal();
             $this->dispatch('toast', message: 'Kategori berhasil dihapus.', type: 'success');
         } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
@@ -89,11 +92,24 @@ class Table extends BaseTable
             $this->closeModal();
             $this->dispatch('toast', message: 'Kategori terpilih berhasil dihapus.', type: 'success');
         } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
             $this->toastError($e, 'Gagal menghapus kategori terpilih.');
         }
+    }
+
+    protected function toastValidation(\Illuminate\Validation\ValidationException $e, ?string $fallback = null): void
+    {
+        $errors = $e->validator->errors()->all();
+        if (!empty($errors)) {
+            $message = "Periksa input:\n• " . implode("\n• ", $errors);
+        } else {
+            $message = $fallback ?: 'Periksa kembali input. Ada data yang belum sesuai.';
+        }
+
+        $this->dispatch('toast', message: $message, type: 'warning');
     }
 
     protected function formView(): ?string

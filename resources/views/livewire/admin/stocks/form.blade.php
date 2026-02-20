@@ -44,6 +44,7 @@
         type="number"
         step="1"
         inputmode="numeric"
+        required
     />
 
     @if ($type === 'opname')

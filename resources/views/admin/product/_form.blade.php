@@ -8,7 +8,7 @@
         <div class="space-y-5">
             <div>
                 <label for="sku" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    SKU
+                    SKU <span class="text-red-500">*</span>
                 </label>
                 <input type="text" id="sku" wire:model.defer="sku" required placeholder="SKU produk" @class([
                     'mt-2 block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
@@ -22,7 +22,7 @@
 
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Nama Produk
+                    Nama Produk <span class="text-red-500">*</span>
                 </label>
                 <input type="text" id="name" wire:model.defer="name" required placeholder="Nama produk" @class([
                     'mt-2 block w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100',
@@ -37,7 +37,7 @@
             <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
                 <div>
                     <label for="base_price" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Harga Pokok (Rp)
+                        Harga Pokok (Rp) <span class="text-red-500">*</span>
                     </label>
                     <div class="mt-2" x-data="rupiahField(@entangle('base_price').live)">
                         <input type="text" id="base_price" placeholder="0" inputmode="numeric" autocomplete="off"
@@ -55,7 +55,7 @@
 
                 <div>
                     <label for="sale_price" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Harga Jual (Rp)
+                        Harga Jual (Rp) <span class="text-red-500">*</span>
                     </label>
                     <div class="mt-2" x-data="rupiahField(@entangle('sale_price').live)">
                         <input type="text" id="sale_price" placeholder="0" inputmode="numeric" autocomplete="off"
@@ -137,7 +137,7 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Bahan
+                    Bahan <span class="text-red-500">*</span>
                 </label>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Pilih bahan berdasarkan kategori. Gunakan <kbd

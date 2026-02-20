@@ -2,7 +2,7 @@
     <x-breadcrumbs :items="$breadcrumbs" />
 
     <x-card class="rounded-3xl p-4 shadow-theme-sm">
-        <form wire:submit.prevent="update" class="space-y-8">
+        <form wire:submit.prevent="update" class="space-y-8" novalidate>
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">{{ $title }}</h1>
