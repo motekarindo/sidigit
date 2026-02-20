@@ -74,6 +74,31 @@ trait HandlesProductForm
         }
     }
 
+    protected function normalizePriceInputs(): void
+    {
+        $this->base_price = $this->sanitizeMoneyValue($this->base_price);
+        $this->sale_price = $this->sanitizeMoneyValue($this->sale_price);
+    }
+
+    protected function sanitizeMoneyValue($value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            return (int) round((float) $value);
+        }
+
+        $digits = preg_replace('/[^\d]/', '', (string) $value);
+
+        return $digits === '' ? null : (int) $digits;
+    }
+
     public function handleUnitChange($value): void
     {
         $this->unit_id = $value ? (int) $value : null;
