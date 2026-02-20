@@ -50,6 +50,18 @@ class Table extends BaseTable
         $this->form->reset();
     }
 
+    protected function toastValidation(ValidationException $e, ?string $fallback = null): void
+    {
+        $errors = $e->validator->errors()->all();
+        if (!empty($errors)) {
+            $message = "Periksa input:\n• " . implode("\n• ", $errors);
+        } else {
+            $message = $fallback ?: 'Periksa kembali input. Ada data yang belum sesuai.';
+        }
+
+        $this->dispatch('toast', message: $message, type: 'warning');
+    }
+
     protected function loadForm(int $id): void
     {
         $permission = $this->service->find($id);

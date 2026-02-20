@@ -32,6 +32,33 @@ class MenuForm extends Form
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'name.required' => 'Nama menu wajib diisi.',
+            'name.string' => 'Nama menu harus berupa teks.',
+            'name.max' => 'Nama menu maksimal 255 karakter.',
+            'parent_id.integer' => 'Menu induk tidak valid.',
+            'parent_id.exists' => 'Menu induk yang dipilih tidak valid.',
+            'route_name.max' => 'Route name maksimal 255 karakter.',
+            'route_name.unique' => 'Route name sudah digunakan.',
+            'icon.max' => 'Ikon maksimal 255 karakter.',
+            'order.required' => 'Urutan wajib diisi.',
+            'order.integer' => 'Urutan harus berupa angka.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'name' => 'Nama menu',
+            'parent_id' => 'Menu induk',
+            'route_name' => 'Route name',
+            'icon' => 'Ikon',
+            'order' => 'Urutan',
+        ];
+    }
+
     public function fillFromModel(Menu $menu): void
     {
         $this->id = $menu->id;

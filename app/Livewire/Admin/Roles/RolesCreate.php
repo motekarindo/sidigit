@@ -66,6 +66,41 @@ class RolesCreate extends Component
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'name.required' => 'Nama role wajib diisi.',
+            'name.string' => 'Nama role harus berupa teks.',
+            'name.max' => 'Nama role maksimal 255 karakter.',
+            'name.unique' => 'Nama role sudah digunakan.',
+            'permissions.array' => 'Izin harus berupa daftar.',
+            'permissions.*.exists' => 'Izin yang dipilih tidak valid.',
+            'menus.array' => 'Menu harus berupa daftar.',
+            'menus.*.exists' => 'Menu yang dipilih tidak valid.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'name' => 'Nama role',
+            'permissions' => 'Izin',
+            'menus' => 'Menu',
+        ];
+    }
+
+    protected function toastValidation(ValidationException $e, ?string $fallback = null): void
+    {
+        $errors = $e->validator->errors()->all();
+        if (!empty($errors)) {
+            $message = "Periksa input:\n• " . implode("\n• ", $errors);
+        } else {
+            $message = $fallback ?: 'Periksa kembali input. Ada data yang belum sesuai.';
+        }
+
+        $this->dispatch('toast', message: $message, type: 'warning');
+    }
+
     protected function loadMenus()
     {
         return Cache::remember('roles.menu-options', 600, function () {
