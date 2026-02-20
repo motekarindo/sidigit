@@ -10,17 +10,33 @@ use Spatie\LaravelData\Attributes\DataCollectionOf;
 
 class MenuItemData extends Data
 {
-    public function __construct(
-        public string $name,
-        public string $route_name,
-        public ?string $route_url = null,
-        public string $icon,
-        public bool $active,
-        public ?int $parent_id,
+    public string $name;
+    public string $route_name;
+    public ?string $route_url = null;
+    public string $icon;
+    public bool $active;
+    public ?int $parent_id;
 
-        #[DataCollectionOf(MenuItemData::class)]
-        public Collection $children,
-    ) {}
+    #[DataCollectionOf(MenuItemData::class)]
+    public Collection $children;
+
+    public function __construct(
+        string $name,
+        string $route_name,
+        ?string $route_url = null,
+        string $icon,
+        bool $active,
+        ?int $parent_id,
+        Collection $children,
+    ) {
+        $this->name = $name;
+        $this->route_name = $route_name;
+        $this->route_url = $route_url;
+        $this->icon = $icon;
+        $this->active = $active;
+        $this->parent_id = $parent_id;
+        $this->children = $children;
+    }
 
     public static function fromModel($menu): self
     {

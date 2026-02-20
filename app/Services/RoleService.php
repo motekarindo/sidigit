@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\Builder;
 
 class RoleService
 {
-    public function __construct(
-        protected RoleRepository $repository
-    ) {}
+    protected RoleRepository $repository;
+
+    public function __construct(RoleRepository $repository)
+    {
+        $this->repository = $repository;
+    }
 
     public function query(): Builder
     {

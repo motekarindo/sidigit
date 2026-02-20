@@ -17,9 +17,12 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public function __construct(
-        protected OrderRepository $repository
-    ) {}
+    protected OrderRepository $repository;
+
+    public function __construct(OrderRepository $repository)
+    {
+        $this->repository = $repository;
+    }
 
     public function query(): Builder
     {

@@ -9,14 +9,17 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ShareMenuMiddleware
 {
-    public function __construct(
-        protected MenuCacheService $service
-    ) {}
+    protected MenuCacheService $service;
+
+    public function __construct(MenuCacheService $service)
+    {
+        $this->service = $service;
+    }
 
     public function handle(Request $request, Closure $next): Response
     {
         if (auth()->check()) {
-            view()->share('sidebarMenus', app(MenuCacheService::class)->sidebarForUser(auth()->user()));
+            view()->share('sidebarMenus', $this->service->sidebarForUser(auth()->user()));
         }
 
         return $next($request);

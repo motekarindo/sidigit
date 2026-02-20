@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\Builder;
 
 class FinishService
 {
-    public function __construct(
-        protected FinishRepository $repository
-    ) {}
+    protected FinishRepository $repository;
+
+    public function __construct(FinishRepository $repository)
+    {
+        $this->repository = $repository;
+    }
 
     public function query(): Builder
     {

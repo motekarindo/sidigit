@@ -12,9 +12,12 @@ use Illuminate\Support\Facades\DB;
 
 class ExpenseService
 {
-    public function __construct(
-        protected ExpenseRepository $repository
-    ) {}
+    protected ExpenseRepository $repository;
+
+    public function __construct(ExpenseRepository $repository)
+    {
+        $this->repository = $repository;
+    }
 
     public function query(): Builder
     {

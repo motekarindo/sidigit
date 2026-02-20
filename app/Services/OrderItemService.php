@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\Builder;
 
 class OrderItemService
 {
-    public function __construct(
-        protected OrderItemRepository $repository
-    ) {}
+    protected OrderItemRepository $repository;
+
+    public function __construct(OrderItemRepository $repository)
+    {
+        $this->repository = $repository;
+    }
 
     public function query(): Builder
     {
