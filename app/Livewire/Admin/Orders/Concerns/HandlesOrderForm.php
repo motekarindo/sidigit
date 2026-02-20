@@ -13,7 +13,6 @@ trait HandlesOrderForm
     public array $customers = [];
     public array $products = [];
     public array $materialsAll = [];
-    public array $materialsByCategory = [];
     public array $units = [];
     public array $finishes = [];
     public array $dimensionUnitIds = [];
@@ -29,17 +28,28 @@ trait HandlesOrderForm
             ])
             ->toArray();
 
+        $materialMap = app(ProductService::class)->getMaterialIdsByProduct();
+
         $this->products = app(ProductService::class)->query()
+            ->with([
+                'unit:id,name',
+            ])
             ->orderBy('name')
             ->get(['id', 'name', 'category_id', 'unit_id', 'sale_price', 'base_price'])
-            ->map(fn ($product) => [
+            ->map(function ($product) use ($materialMap) {
+                $unitName = $product->unit?->name ?? 'Tanpa satuan';
+
+                return [
                 'id' => $product->id,
                 'name' => $product->name,
+                'label' => "{$product->name} - {$unitName}",
                 'category_id' => $product->category_id,
                 'unit_id' => $product->unit_id,
                 'sale_price' => (float) $product->sale_price,
                 'base_price' => (float) $product->base_price,
-            ])
+                'material_ids' => $materialMap[$product->id] ?? [],
+            ];
+            })
             ->toArray();
 
         $materials = app(MaterialService::class)->query()
@@ -53,17 +63,6 @@ trait HandlesOrderForm
             'unit_id' => $material->unit_id,
             'cost_price' => (float) $material->cost_price,
         ])->toArray();
-
-        $this->materialsByCategory = $materials
-            ->groupBy('category_id')
-            ->map(fn ($items) => $items->map(fn ($material) => [
-                'id' => $material->id,
-                'name' => $material->name,
-                'category_id' => $material->category_id,
-                'unit_id' => $material->unit_id,
-                'cost_price' => (float) $material->cost_price,
-            ])->values()->toArray())
-            ->toArray();
 
         $this->units = app(UnitService::class)->query()
             ->orderBy('name')
@@ -98,16 +97,15 @@ trait HandlesOrderForm
     {
         return [
             'product_id' => null,
-            'category_id' => null,
             'material_id' => null,
             'unit_id' => null,
             'qty' => 1,
             'length_cm' => null,
             'width_cm' => null,
             'price' => null,
+            'price_source' => 'auto',
             'discount' => 0,
             'finish_ids' => [],
-            'allow_all_materials' => false,
         ];
     }
 
@@ -123,8 +121,26 @@ trait HandlesOrderForm
         }
 
         [$index, $field] = explode('.', $name, 2);
+        $index = (int) $index;
         if ($field === 'product_id') {
-            $this->handleProductChange((int) $index, $value);
+            $this->handleProductChange($index, $value);
+            $this->autoSetItemPrice($index);
+            return;
+        }
+
+        if (in_array($field, ['length_cm', 'width_cm'], true)) {
+            $this->autoSetItemPrice($index);
+            return;
+        }
+
+        if ($field === 'price') {
+            if ($value === null || $value === '') {
+                $this->items[$index]['price_source'] = 'auto';
+                $this->autoSetItemPrice($index);
+            } else {
+                $this->items[$index]['price_source'] = 'manual';
+            }
+            return;
         }
     }
 
@@ -139,15 +155,17 @@ trait HandlesOrderForm
         $product = collect($this->products)->firstWhere('id', (int) $productId);
         if (!$product) {
             $this->items[$index]['product_id'] = null;
-            $this->items[$index]['category_id'] = null;
             $this->items[$index]['unit_id'] = null;
             $this->items[$index]['material_id'] = null;
+            $this->items[$index]['price'] = null;
+            $this->items[$index]['price_source'] = 'auto';
             return;
         }
 
         $this->items[$index]['product_id'] = (int) $productId;
-        $this->items[$index]['category_id'] = $product['category_id'];
         $this->items[$index]['unit_id'] = $product['unit_id'];
+        $this->items[$index]['material_id'] = null;
+        $this->items[$index]['price_source'] = $this->items[$index]['price_source'] ?? 'auto';
 
         if (!in_array((int) $product['unit_id'], $this->dimensionUnitIds, true)) {
             $this->items[$index]['length_cm'] = null;
@@ -155,10 +173,39 @@ trait HandlesOrderForm
         }
     }
 
-    public function toggleMaterialScope(int $index): void
+    protected function autoSetItemPrice(int $index): void
     {
-        $this->items[$index]['allow_all_materials'] = !empty($this->items[$index]['allow_all_materials']) ? false : true;
-        $this->items[$index]['material_id'] = null;
+        if (!isset($this->items[$index])) {
+            return;
+        }
+
+        $source = $this->items[$index]['price_source'] ?? 'auto';
+        if ($source === 'manual') {
+            return;
+        }
+
+        $price = $this->defaultItemPrice($this->items[$index]);
+        $this->items[$index]['price'] = $price !== null ? (int) round($price) : null;
+        $this->items[$index]['price_source'] = 'auto';
+    }
+
+    protected function defaultItemPrice(array $item): ?float
+    {
+        $product = collect($this->products)->firstWhere('id', (int) ($item['product_id'] ?? 0));
+        if (!$product || empty($product['sale_price'])) {
+            return null;
+        }
+
+        $basePrice = (float) $product['sale_price'];
+        $lengthCm = $item['length_cm'] !== null ? (float) $item['length_cm'] : null;
+        $widthCm = $item['width_cm'] !== null ? (float) $item['width_cm'] : null;
+
+        if ($lengthCm && $widthCm) {
+            $areaM2 = ($lengthCm / 100) * ($widthCm / 100);
+            return $basePrice * $areaM2;
+        }
+
+        return $basePrice;
     }
 
     public function addPayment(): void
@@ -209,7 +256,7 @@ trait HandlesOrderForm
 
         $price = $item['price'] !== null && $item['price'] !== ''
             ? (float) $item['price']
-            : ($product && !empty($product['sale_price']) ? (float) $product['sale_price'] : ($hpp > 0 ? $hpp * 1.3 : 0));
+            : ($this->defaultItemPrice($item) ?? ($hpp > 0 ? $hpp * 1.3 : 0));
 
         $total = max(0, ($price * $qty) - $discount);
 

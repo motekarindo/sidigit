@@ -115,16 +115,32 @@
                                             <ul class="py-1">
                                                 @foreach ($rowActions as $action)
                                                     <li>
-                                                        <button
-                                                            wire:click="{{ $action['method'] }}({{ $row->id }})"
-                                                            @click="open = false"
-                                                            class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 inline-flex items-center gap-2 {{ $action['class'] ?? 'text-gray-700' }}">
-                                                            @if (!empty($action['icon']))
-                                                                <x-dynamic-component :component="'lucide-' . $action['icon']"
-                                                                    class="w-4 h-4" />
-                                                            @endif
-                                                            {{ $action['label'] }}
-                                                        </button>
+                                                        @if (!empty($action['url']))
+                                                            @php
+                                                                $actionUrl = is_callable($action['url']) ? $action['url']($row) : $action['url'];
+                                                                $actionTarget = $action['target'] ?? '_self';
+                                                            @endphp
+                                                            <a href="{{ $actionUrl }}" target="{{ $actionTarget }}"
+                                                                @click="open = false"
+                                                                class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 inline-flex items-center gap-2 {{ $action['class'] ?? 'text-gray-700' }}">
+                                                                @if (!empty($action['icon']))
+                                                                    <x-dynamic-component :component="'lucide-' . $action['icon']"
+                                                                        class="w-4 h-4" />
+                                                                @endif
+                                                                {{ $action['label'] }}
+                                                            </a>
+                                                        @else
+                                                            <button
+                                                                wire:click="{{ $action['method'] }}({{ $row->id }})"
+                                                                @click="open = false"
+                                                                class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 inline-flex items-center gap-2 {{ $action['class'] ?? 'text-gray-700' }}">
+                                                                @if (!empty($action['icon']))
+                                                                    <x-dynamic-component :component="'lucide-' . $action['icon']"
+                                                                        class="w-4 h-4" />
+                                                                @endif
+                                                                {{ $action['label'] }}
+                                                            </button>
+                                                        @endif
                                                     </li>
                                                 @endforeach
                                             </ul>

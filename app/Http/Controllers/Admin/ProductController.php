@@ -47,10 +47,10 @@ class ProductController extends Controller
         $this->authorize('product.create');
 
         $categories = $this->categoryService->query()->orderBy('name')->get();
-        $materialsByCategory = $this->getMaterialsByCategory();
+        $materialsAll = $this->getMaterialsAll();
         $units = $this->unitService->query()->orderBy('name')->get();
 
-        return view('admin.product.create', compact('categories', 'materialsByCategory', 'units'));
+        return view('admin.product.create', compact('categories', 'materialsAll', 'units'));
     }
 
     public function store(ProductRequest $request)
@@ -78,13 +78,13 @@ class ProductController extends Controller
         try {
             $productModel = $this->service->find($product);
             $categories = $this->categoryService->query()->orderBy('name')->get();
-            $materialsByCategory = $this->getMaterialsByCategory();
+            $materialsAll = $this->getMaterialsAll();
             $units = $this->unitService->query()->orderBy('name')->get();
 
             return view('admin.product.edit', [
                 'product' => $productModel,
                 'categories' => $categories,
-                'materialsByCategory' => $materialsByCategory,
+                'materialsAll' => $materialsAll,
                 'units' => $units,
             ]);
         } catch (\Throwable $th) {
@@ -132,24 +132,21 @@ class ProductController extends Controller
         }
     }
 
-    protected function getMaterialsByCategory(): array
+    protected function getMaterialsAll(): array
     {
         return $this->materialService->query()
-            ->with('unit')
+            ->with(['unit', 'category'])
             ->orderBy('name')
             ->get()
-            ->groupBy('category_id')
-            ->mapWithKeys(function ($materials, $categoryId) {
+            ->map(function ($material) {
                 return [
-                    (string) $categoryId => $materials->map(function ($material) {
-                        return [
-                            'id' => (string) $material->id,
-                            'name' => $material->name,
-                            'unit' => optional($material->unit)->name,
-                        ];
-                    })->values(),
+                    'id' => (string) $material->id,
+                    'name' => $material->name,
+                    'unit' => optional($material->unit)->name,
+                    'category' => optional($material->category)->name,
                 ];
             })
+            ->values()
             ->toArray();
     }
 }

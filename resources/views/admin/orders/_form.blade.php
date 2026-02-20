@@ -110,12 +110,11 @@
             @foreach ($items as $index => $item)
                 @php
                     $calc = $this->calculateItemPreview($item);
-                    $categoryId = $item['category_id'] ?? null;
-                    $materialOptions = $item['allow_all_materials'] ?? false
-                        ? $materialsAll
-                        : ($categoryId !== null && isset($materialsByCategory[$categoryId])
-                            ? $materialsByCategory[$categoryId]
-                            : []);
+                    $selectedProduct = collect($products ?? [])->firstWhere('id', (int) ($item['product_id'] ?? 0));
+                    $materialIds = $selectedProduct['material_ids'] ?? [];
+                    $materialOptions = !empty($materialIds)
+                        ? collect($materialsAll ?? [])->whereIn('id', $materialIds)->values()->all()
+                        : [];
                     $showDimension = !empty($item['unit_id']) && in_array((int) $item['unit_id'], $dimensionUnitIds, true);
                 @endphp
                 <div class="rounded-2xl border border-gray-200 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-gray-900/40"
@@ -141,20 +140,27 @@
                         </div>
 
                         <div>
-                            <div class="{{ $labelRowBetweenClass }}">
+                            <div class="{{ $labelRowClass }}">
                                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Bahan</label>
-                                <button type="button" wire:click="toggleMaterialScope({{ $index }})"
-                                    class="text-xs font-semibold text-brand-500">
-                                    {{ !empty($item['allow_all_materials']) ? 'Filter kategori' : 'Semua bahan' }}
-                                </button>
                             </div>
-                            <x-forms.searchable-select
-                                label=""
-                                :options="$materialOptions"
-                                placeholder="Pilih bahan"
-                                wire:model.live="items.{{ $index }}.material_id"
-                                :button-class="$controlClassTight"
-                            />
+                            <div wire:key="material-select-{{ $index }}-{{ $item['product_id'] ?? 'none' }}">
+                                <x-forms.searchable-select
+                                    label=""
+                                    :options="$materialOptions"
+                                    placeholder="Pilih bahan"
+                                    wire:model.live="items.{{ $index }}.material_id"
+                                    :button-class="$controlClassTight"
+                                />
+                            </div>
+                            @if (empty($item['product_id']))
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Pilih produk terlebih dahulu untuk melihat bahan.
+                                </p>
+                            @elseif (empty($materialOptions))
+                                <p class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                    Produk ini belum memiliki bahan.
+                                </p>
+                            @endif
                         </div>
 
                         <div>
@@ -242,26 +248,40 @@
         </div>
     </div>
 
-    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Pembayaran</h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Catat cicilan atau pelunasan.</p>
+        @php
+            $isEditing = property_exists($this, 'orderId') && !empty($this->orderId);
+        @endphp
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Pembayaran</h2>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Catat cicilan atau pelunasan.</p>
+                </div>
+            @if (!$isEditing)
+                <button type="button" wire:click="addPayment"
+                    class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
+                    + Tambah Pembayaran
+                </button>
+            @endif
             </div>
-            <button type="button" wire:click="addPayment"
-                class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
-                + Tambah Pembayaran
-            </button>
-        </div>
 
         <div class="mt-4 space-y-3">
             @foreach ($payments as $index => $payment)
+                @php
+                    $isHistory = $isEditing && !empty($payment['id']);
+                @endphp
                 <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Jumlah</label>
-                        <div class="" x-data="rupiahField(@entangle('payments.' . $index . '.amount').live)">
-                            <input type="text" inputmode="numeric" x-model="display" @input="onInput" class="{{ $controlClassTight }}" />
-                        </div>
+                        @if ($isHistory)
+                            <div class="{{ $controlClassTight }} flex items-center bg-gray-50 text-gray-700 dark:bg-gray-900/60 dark:text-gray-200">
+                                Rp {{ number_format((float) ($payment['amount'] ?? 0), 0, ',', '.') }}
+                            </div>
+                        @else
+                            <div class="" x-data="rupiahField(@entangle('payments.' . $index . '.amount').live)">
+                                <input type="text" inputmode="numeric" x-model="display" @input="onInput" class="{{ $controlClassTight }}" />
+                            </div>
+                        @endif
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Metode</label>
@@ -272,29 +292,49 @@
                                 ['value' => 'qris', 'label' => 'QRIS'],
                             ]);
                         @endphp
-                        <x-forms.searchable-select
-                            label=""
-                            :options="$paymentMethods"
-                            optionValue="value"
-                            optionLabel="label"
-                            placeholder="Pilih metode"
-                            wire:model="payments.{{ $index }}.method"
-                            :button-class="$controlClassTight"
-                        />
+                        @if ($isHistory)
+                            <div class="{{ $controlClassTight }} flex items-center bg-gray-50 text-gray-700 dark:bg-gray-900/60 dark:text-gray-200">
+                                {{ $paymentMethods->firstWhere('value', $payment['method'] ?? null)['label'] ?? '-' }}
+                            </div>
+                        @else
+                            <x-forms.searchable-select
+                                label=""
+                                :options="$paymentMethods"
+                                optionValue="value"
+                                optionLabel="label"
+                                placeholder="Pilih metode"
+                                wire:model="payments.{{ $index }}.method"
+                                :button-class="$controlClassTight"
+                            />
+                        @endif
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal</label>
-                        <input type="datetime-local" wire:model="payments.{{ $index }}.paid_at" class="{{ $controlClassTight }}" />
+                        @if ($isHistory)
+                            <div class="{{ $controlClassTight }} flex items-center bg-gray-50 text-gray-700 dark:bg-gray-900/60 dark:text-gray-200">
+                                {{ $payment['paid_at'] ?? '-' }}
+                            </div>
+                        @else
+                            <input type="datetime-local" wire:model="payments.{{ $index }}.paid_at" class="{{ $controlClassTight }}" />
+                        @endif
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Catatan</label>
-                        <input type="text" wire:model="payments.{{ $index }}.notes" class="{{ $controlClassTight }}" />
+                        @if ($isHistory)
+                            <div class="{{ $controlClassTight }} flex items-center bg-gray-50 text-gray-700 dark:bg-gray-900/60 dark:text-gray-200">
+                                {{ $payment['notes'] ?? '-' }}
+                            </div>
+                        @else
+                            <input type="text" wire:model="payments.{{ $index }}.notes" class="{{ $controlClassTight }}" />
+                        @endif
                     </div>
                     <div class="flex items-end justify-end">
-                        <button type="button" wire:click="removePayment({{ $index }})"
-                            class="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10">
-                            Hapus
-                        </button>
+                        @if (!$isHistory && !$isEditing)
+                            <button type="button" wire:click="removePayment({{ $index }})"
+                                class="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10">
+                                Hapus
+                            </button>
+                        @endif
                     </div>
                 </div>
             @endforeach

@@ -1,6 +1,5 @@
 @php
-    $hasCategory = !empty($category_id);
-    $hasMaterials = count($materialsForSelectedCategory ?? []) > 0;
+    $hasMaterials = count($materialsAll ?? []) > 0;
 @endphp
 
 <div class="space-y-6">
@@ -140,24 +139,17 @@
                     Bahan <span class="text-red-500">*</span>
                 </label>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Pilih bahan berdasarkan kategori. Gunakan <kbd
+                    Pilih bahan yang digunakan untuk produk ini. Gunakan <kbd
                         class="rounded border px-1 py-0.5 text-[11px]">Ctrl</kbd>/<kbd
                         class="rounded border px-1 py-0.5 text-[11px]">Cmd</kbd> untuk memilih lebih dari satu.
                 </p>
 
                 <div class="mt-3 space-y-3">
-                    <p id="materials-hint-select" @class([
-                        'rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-400',
-                        'hidden' => $hasCategory,
-                    ])>
-                        Pilih kategori terlebih dahulu untuk melihat daftar material.
-                    </p>
-
                     <p id="materials-hint-empty" @class([
                         'rounded-xl border border-dashed border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-700 dark:border-warning-500/40 dark:bg-warning-500/10 dark:text-warning-200',
-                        'hidden' => !$hasCategory || $hasMaterials,
+                        'hidden' => $hasMaterials,
                     ])>
-                        Belum ada material pada kategori ini. Tambahkan material terlebih dahulu di
+                        Belum ada bahan yang tersedia. Tambahkan bahan terlebih dahulu di
                         <a href="{{ route('materials.index') }}" target="_blank" rel="noopener noreferrer"
                             class="font-semibold underline underline-offset-2">
                             halaman bahan
@@ -168,14 +160,18 @@
                         </button>
                     </p>
 
-                    <div id="product-material-select" @class(['hidden' => !$hasCategory || !$hasMaterials])>
+                    <div id="product-material-select" @class(['hidden' => !$hasMaterials])>
                         @php
-                            $materialOptions = collect($materialsForSelectedCategory ?? [])->map(function ($material) {
+                            $materialOptions = collect($materialsAll ?? [])->map(function ($material) {
+                                $categoryLabel = $material['category'] ?? null;
+                                $unitLabel = $material['unit'] ?? null;
+
+                                $categoryText = $categoryLabel ?: 'Tanpa kategori';
+                                $unitText = $unitLabel ?: 'Tanpa satuan';
+
                                 return [
                                     'id' => $material['id'],
-                                    'label' => $material['unit']
-                                        ? $material['name'] . ' (' . $material['unit'] . ')'
-                                        : $material['name'],
+                                    'label' => $material['name'] . ' - ' . $categoryText . ' - ' . $unitText,
                                 ];
                             })->values()->all();
                         @endphp
@@ -186,7 +182,7 @@
                             placeholder="Pilih material"
                             wire:model="materials"
                             :required="true"
-                            :key="'materials-'.$category_id"
+                            :key="'materials-all'"
                         />
                     </div>
                 </div>

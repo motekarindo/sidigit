@@ -94,10 +94,14 @@ class Create extends Component
 
     protected OrderService $service;
 
-    public function mount(OrderService $service): void
+    public function boot(OrderService $service): void
+    {
+        $this->service = $service;
+    }
+
+    public function mount(): void
     {
         $this->authorize('order.create');
-        $this->service = $service;
         $this->order_date = now()->format('Y-m-d');
         $this->loadReferenceData();
         $this->items = [$this->newItem()];
@@ -134,6 +138,7 @@ class Create extends Component
             'items.*.finish_ids' => ['nullable', 'array'],
             'items.*.finish_ids.*' => ['integer', 'exists:finishes,id'],
             'payments' => ['nullable', 'array'],
+            'payments.*.id' => ['nullable', 'integer'],
             'payments.*.amount' => ['nullable', 'integer', 'min:0'],
             'payments.*.method' => ['nullable', 'string'],
             'payments.*.paid_at' => ['nullable', 'date'],
@@ -160,7 +165,7 @@ class Create extends Component
                 'message' => "Order {$order->order_no} berhasil dibuat.",
                 'type' => 'success',
             ]);
-            $this->redirectRoute('orders.index');
+            $this->redirectRoute('orders.invoice', ['order' => $order->id]);
         } catch (ValidationException $e) {
             $this->toastValidation($e);
             throw $e;

@@ -119,6 +119,11 @@ class ProductService
         return $this->repository->findOrFail($id);
     }
 
+    public function getMaterialIdsByProduct(): array
+    {
+        return $this->repository->materialIdsByProduct();
+    }
+
     protected function prepareMaterials(array $materials): array
     {
         return collect($materials)

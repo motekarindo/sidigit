@@ -64,4 +64,20 @@ class ProductRepository
 
         return $product->productMaterials()->createMany($payload);
     }
+
+    public function materialIdsByProduct(): array
+    {
+        return \DB::table('mst_product_materials')
+            ->select('product_id', 'material_id')
+            ->whereNull('deleted_at')
+            ->get()
+            ->groupBy('product_id')
+            ->map(function ($rows) {
+                return $rows->pluck('material_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->values()
+                    ->all();
+            })
+            ->toArray();
+    }
 }

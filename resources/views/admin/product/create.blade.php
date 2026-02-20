@@ -32,7 +32,7 @@
                 @include('admin.product._form', [
                     'product' => null,
                     'categories' => $categories,
-                    'materialsByCategory' => $materialsByCategory,
+                    'materialsAll' => $materialsAll,
                     'units' => $units,
                 ])
 

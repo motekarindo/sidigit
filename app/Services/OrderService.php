@@ -76,7 +76,6 @@ class OrderService
             $this->clearItems($order);
             $this->syncItems($order, $items);
 
-            $this->clearPayments($order);
             $this->syncPayments($order, $payments);
 
             $this->recalculateTotals($order);
@@ -142,7 +141,7 @@ class OrderService
     public function find(int $id): Order
     {
         return $this->repository->query()
-            ->with(['customer', 'items', 'items.product', 'items.material', 'items.finishes', 'payments'])
+            ->with(['customer', 'items', 'items.product', 'items.material', 'items.finishes.finish', 'payments'])
             ->findOrFail($id);
     }
 
@@ -207,6 +206,10 @@ class OrderService
     protected function syncPayments(Order $order, array $payments): void
     {
         foreach ($payments as $payment) {
+            if (!empty($payment['id'])) {
+                continue;
+            }
+
             if (empty($payment['amount'])) {
                 continue;
             }
@@ -242,7 +245,7 @@ class OrderService
 
         $price = $item['price'] !== null && $item['price'] !== ''
             ? (float) $item['price']
-            : $this->defaultPrice($product, $hpp);
+            : $this->defaultPrice($product, $hpp, $lengthCm, $widthCm);
 
         $total = max(0, ($price * $qty) - $discount);
 
@@ -277,10 +280,16 @@ class OrderService
         return (float) Finish::query()->whereIn('id', $finishIds)->sum('price');
     }
 
-    protected function defaultPrice(Product $product, float $hpp): float
+    protected function defaultPrice(Product $product, float $hpp, ?float $lengthCm = null, ?float $widthCm = null): float
     {
         if ($product->sale_price > 0) {
-            return (float) $product->sale_price;
+            $price = (float) $product->sale_price;
+            if ($lengthCm && $widthCm) {
+                $areaM2 = ($lengthCm / 100) * ($widthCm / 100);
+                return $price * $areaM2;
+            }
+
+            return $price;
         }
 
         if ($hpp > 0) {
@@ -304,10 +313,11 @@ class OrderService
             ? ($lengthCm / 100) * ($widthCm / 100) * $qty
             : $qty;
 
-        StockMovement::create([
+        app(StockMovementService::class)->store([
             'material_id' => $material->id,
             'type' => 'out',
             'qty' => $usage,
+            'unit_id' => $material->unit_id,
             'ref_type' => 'order',
             'ref_id' => $orderItem->order_id,
             'notes' => 'Pemakaian bahan untuk order',

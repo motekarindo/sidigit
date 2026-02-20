@@ -34,10 +34,14 @@ class Edit extends Component
 
     protected OrderService $service;
 
-    public function mount(int $order, OrderService $service): void
+    public function boot(OrderService $service): void
+    {
+        $this->service = $service;
+    }
+
+    public function mount(int $order): void
     {
         $this->authorize('order.edit');
-        $this->service = $service;
         $this->loadReferenceData();
 
         $orderModel = $this->service->find($order);
@@ -52,21 +56,21 @@ class Edit extends Component
         $this->items = $orderModel->items->map(function ($item) {
             return [
                 'product_id' => $item->product_id,
-                'category_id' => $item->product?->category_id,
                 'material_id' => $item->material_id,
                 'unit_id' => $item->unit_id,
                 'qty' => (float) $item->qty,
                 'length_cm' => $item->length_cm,
                 'width_cm' => $item->width_cm,
                 'price' => (float) $item->price,
+                'price_source' => 'manual',
                 'discount' => (float) $item->discount,
                 'finish_ids' => $item->finishes?->pluck('finish_id')->toArray() ?? [],
-                'allow_all_materials' => false,
             ];
         })->toArray();
 
         $this->payments = $orderModel->payments->map(function ($payment) {
             return [
+                'id' => $payment->id,
                 'amount' => (float) $payment->amount,
                 'method' => $payment->method,
                 'paid_at' => $payment->paid_at?->format('Y-m-d H:i'),
@@ -109,6 +113,7 @@ class Edit extends Component
             'items.*.finish_ids' => ['nullable', 'array'],
             'items.*.finish_ids.*' => ['integer', 'exists:finishes,id'],
             'payments' => ['nullable', 'array'],
+            'payments.*.id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('payments', 'id')->where('order_id', $this->orderId)],
             'payments.*.amount' => ['nullable', 'integer', 'min:0'],
             'payments.*.method' => ['nullable', 'string'],
             'payments.*.paid_at' => ['nullable', 'date'],
