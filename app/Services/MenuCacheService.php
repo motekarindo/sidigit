@@ -11,10 +11,11 @@ use Illuminate\Support\Facades\Cache;
 class MenuCacheService
 {
     protected string $cacheVersion = 'v2';
-
-    public function __construct(
-        protected MenuRepository $repository
-    ) {}
+    protected $repository;
+    public function __construct(MenuRepository $repository)
+    {
+        $this-> repository = $repository
+    }
 
     public function filter(Collection $menus, User $user, Collection $allowedMenuIds): Collection
     {
