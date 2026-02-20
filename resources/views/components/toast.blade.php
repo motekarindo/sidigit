@@ -70,7 +70,7 @@
                     <x-lucide-alert-circle x-show="toast.type === 'danger' || toast.type === 'error'" class="w-5 h-5" />
                 </span>
                 <div class="flex-1">
-                    <span x-text="toast.message" class="block leading-5"></span>
+                    <span x-text="toast.message" class="block leading-5 whitespace-pre-line"></span>
                     <template x-if="toast.ref">
                         <button type="button" @click="copyRef(toast)"
                             class="mt-2 inline-flex items-center gap-1 rounded-md border border-white/30 bg-white/10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white/90 hover:bg-white/20"

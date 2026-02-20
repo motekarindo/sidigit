@@ -43,6 +43,39 @@ class UserForm extends Form
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'name.required' => 'Nama wajib diisi.',
+            'name.string' => 'Nama harus berupa teks.',
+            'name.max' => 'Nama maksimal 255 karakter.',
+            'username.required' => 'Username wajib diisi.',
+            'username.string' => 'Username harus berupa teks.',
+            'username.max' => 'Username maksimal 255 karakter.',
+            'username.unique' => 'Username sudah digunakan.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.max' => 'Email maksimal 255 karakter.',
+            'email.unique' => 'Email sudah digunakan.',
+            'password.required' => 'Password wajib diisi.',
+            'password.confirmed' => 'Konfirmasi password tidak sesuai.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'role_id.required' => 'Role wajib dipilih.',
+            'role_id.exists' => 'Role yang dipilih tidak valid.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'name' => 'Nama',
+            'username' => 'Username',
+            'email' => 'Email',
+            'password' => 'Password',
+            'role_id' => 'Role',
+        ];
+    }
+
     public function fillFromModel(User $user): void
     {
         $this->id = $user->id;
