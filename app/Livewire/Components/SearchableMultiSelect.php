@@ -22,6 +22,7 @@ class SearchableMultiSelect extends Component
     public string $optionValueKey = 'id';
     public bool $allowClear = true;
     public bool $required = false;
+    public ?string $buttonClass = null;
 
     public function render()
     {
