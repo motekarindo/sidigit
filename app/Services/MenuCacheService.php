@@ -10,27 +10,38 @@ use Illuminate\Support\Facades\Cache;
 
 class MenuCacheService
 {
+    protected string $cacheVersion = 'v2';
+
     public function __construct(
         protected MenuRepository $repository
     ) {}
 
-    public function filter(Collection $menus, User $user): Collection
+    public function filter(Collection $menus, User $user, Collection $allowedMenuIds): Collection
     {
         return $menus
-            ->filter(fn ($menu) =>
-                !$menu->permission_name || $user->can($menu->permission_name)
-            )
-            ->map(function ($menu) use ($user) {
+            ->map(function ($menu) use ($user, $allowedMenuIds) {
                 $menu = clone $menu;
                 if ($menu->children?->isNotEmpty()) {
-                    $menu->children = $this->filter($menu->children, $user);
+                    $menu->children = $this->filter($menu->children, $user, $allowedMenuIds);
                 }
 
                 return $menu;
             })
-            ->filter(fn ($menu) =>
-                filled($menu->route_name) || $menu->children->isNotEmpty()
-            )
+            ->filter(function ($menu) use ($user, $allowedMenuIds) {
+                $children = $menu->children instanceof Collection ? $menu->children : collect();
+                $hasChildren = $children->isNotEmpty();
+                $allowed = $allowedMenuIds->contains($menu->id);
+                $permissionName = $menu->permission_name ?? null;
+                $passesPermission = !$permissionName || $user->can($permissionName);
+
+                $visible = ($allowed && $passesPermission) || $hasChildren;
+
+                if (!$visible) {
+                    return false;
+                }
+
+                return filled($menu->route_name) || $hasChildren;
+            })
             ->values();
     }
 
@@ -40,7 +51,8 @@ class MenuCacheService
 
         return Cache::rememberForever($key, function () use ($user) {
             $menus = $this->repository->tree();
-            $visible = $this->filter($menus, $user);
+            $allowedMenuIds = $this->allowedMenuIds($user);
+            $visible = $this->filter($menus, $user, $allowedMenuIds);
 
             return $visible->map(
                 fn ($menu) => MenuItemData::fromModel($menu)
@@ -48,8 +60,29 @@ class MenuCacheService
         });
     }
 
+    protected function allowedMenuIds(User $user): Collection
+    {
+        return $user->roles()
+            ->with('menus:id,parent_id')
+            ->get()
+            ->flatMap(fn ($role) => $role->menus)
+            ->pluck('id')
+            ->unique()
+            ->values();
+    }
+
     protected function cacheKey(User $user): string
     {
+        $menuIds = $user->roles()
+            ->with('menus:id')
+            ->get()
+            ->flatMap(fn ($role) => $role->menus)
+            ->pluck('id')
+            ->filter()
+            ->unique()
+            ->sort()
+            ->implode('|');
+
         $permissions = $user->roles()
             ->with('permissions:id,slug')
             ->get()
@@ -60,6 +93,6 @@ class MenuCacheService
             ->sort()
             ->implode('|');
 
-        return 'sidebar.menus.user.' . $user->id . '.' . sha1($permissions);
+        return 'sidebar.menus.user.' . $user->id . '.' . $this->cacheVersion . '.' . sha1($menuIds . '|' . $permissions);
     }
 }

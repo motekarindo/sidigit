@@ -7,32 +7,6 @@
         $menus = collect($menus);
     }
 
-    $hasDynamicMenus = $menus->count() > 0;
-
-    if (! $hasDynamicMenus) {
-        $fallbackData = collect([
-            ['name' => 'Dashboard', 'route_name' => Route::has('dashboard') ? 'dashboard' : null],
-            ['name' => 'Orders', 'route_name' => Route::has('orders.index') ? 'orders.index' : null],
-            ['name' => 'Users', 'route_name' => Route::has('users.index') ? 'users.index' : null],
-            ['name' => 'Roles', 'route_name' => Route::has('roles.index') ? 'roles.index' : null],
-            ['name' => 'Permissions', 'route_name' => Route::has('permissions.index') ? 'permissions.index' : null],
-            ['name' => 'Menus', 'route_name' => Route::has('menus.index') ? 'menus.index' : null],
-            ['name' => 'Products', 'route_name' => Route::has('products.index') ? 'products.index' : null],
-            ['name' => 'Categories', 'route_name' => Route::has('categories.index') ? 'categories.index' : null],
-            ['name' => 'Audit Logs', 'route_name' => Route::has('audit-logs.index') ? 'audit-logs.index' : null],
-        ])->filter(fn ($item) => filled($item['route_name']));
-
-        $menus = $fallbackData->values()->map(function ($item, $index) {
-            return (object) [
-                'name' => $item['name'],
-                'route_name' => $item['route_name'],
-                'icon' => null,
-                'children' => collect(),
-                'order' => $index,
-            ];
-        });
-    }
-
     $makeInitials = static fn ($name) => Str::of($name)->replaceMatches('/[^A-Za-z0-9]/', '')->substr(0, 2)->upper();
 @endphp
 
