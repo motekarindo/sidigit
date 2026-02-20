@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CustomerRequest;
 use App\Services\CustomerService;
-use App\Support\ErrorMessage;
+use App\Support\ErrorReporter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 
@@ -44,11 +44,10 @@ class CustomerController extends Controller
                 ->route('customers.index')
                 ->with('success', "Pelanggan {$customer->name} berhasil ditambahkan.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan pelanggan.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat menambahkan pelanggan.')['message']);
         }
     }
 
@@ -61,7 +60,6 @@ class CustomerController extends Controller
 
             return view('admin.customer.edit', compact('customer', 'memberTypes'));
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('customers.index')
@@ -79,11 +77,10 @@ class CustomerController extends Controller
                 ->route('customers.index')
                 ->with('success', "Pelanggan {$customerModel->name} berhasil diperbarui.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data pelanggan.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat memperbarui data pelanggan.')['message']);
         }
     }
 
@@ -98,7 +95,6 @@ class CustomerController extends Controller
                 ->route('customers.index')
                 ->with('success', "Pelanggan {$customerModel->name} berhasil dihapus.");
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('customers.index')

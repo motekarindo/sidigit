@@ -55,6 +55,7 @@ class PermissionsEdit extends Component
 
             $this->redirectRoute('permissions.index');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $th) {
             report($th);

@@ -105,6 +105,7 @@ class Table extends BaseTable
             $this->closeModal();
             $this->dispatch('toast', message: 'Expense berhasil dibuat.', type: 'success');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
@@ -120,6 +121,7 @@ class Table extends BaseTable
             $this->closeModal();
             $this->dispatch('toast', message: 'Expense berhasil diperbarui.', type: 'success');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);

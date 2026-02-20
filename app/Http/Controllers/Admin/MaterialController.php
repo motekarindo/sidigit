@@ -7,7 +7,7 @@ use App\Http\Requests\Admin\MaterialRequest;
 use App\Models\Category;
 use App\Models\Unit;
 use App\Services\MaterialService;
-use App\Support\ErrorMessage;
+use App\Support\ErrorReporter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class MaterialController extends Controller
@@ -49,11 +49,10 @@ class MaterialController extends Controller
                 ->route('materials.index')
                 ->with('success', "Material {$material->name} berhasil ditambahkan.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan material.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat menambahkan material.')['message']);
         }
     }
 
@@ -68,7 +67,6 @@ class MaterialController extends Controller
 
             return view('admin.material.edit', compact('material', 'categories', 'units'));
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('materials.index')
@@ -87,11 +85,10 @@ class MaterialController extends Controller
                 ->route('materials.index')
                 ->with('success', "Material {$materialModel->name} berhasil diperbarui.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data material.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat memperbarui data material.')['message']);
         }
     }
 
@@ -107,7 +104,6 @@ class MaterialController extends Controller
                 ->route('materials.index')
                 ->with('success', "Material {$materialModel->name} berhasil dihapus.");
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('materials.index')

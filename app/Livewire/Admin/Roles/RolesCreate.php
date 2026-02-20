@@ -229,6 +229,7 @@ class RolesCreate extends Component
 
             $this->redirectRoute('roles.index');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $th) {
             report($th);

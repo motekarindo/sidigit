@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CategoryRequest;
 use App\Services\CategoryService;
-use App\Support\ErrorMessage;
+use App\Support\ErrorReporter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class CategoryController extends Controller
@@ -44,11 +44,10 @@ class CategoryController extends Controller
                 ->route('categories.index')
                 ->with('success', "Kategori {$category->name} berhasil ditambahkan.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan kategori.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat menambahkan kategori.')['message']);
         }
     }
 
@@ -61,7 +60,6 @@ class CategoryController extends Controller
 
             return view('admin.category.edit', compact('category'));
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('categories.index')
@@ -80,11 +78,10 @@ class CategoryController extends Controller
                 ->route('categories.index')
                 ->with('success', "Kategori {$categoryModel->name} berhasil diperbarui.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data kategori.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat memperbarui data kategori.')['message']);
         }
     }
 
@@ -100,7 +97,6 @@ class CategoryController extends Controller
                 ->route('categories.index')
                 ->with('success', "Kategori {$categoryModel->name} berhasil dihapus.");
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('categories.index')

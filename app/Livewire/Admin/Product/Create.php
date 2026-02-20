@@ -160,6 +160,7 @@ class Create extends Component
             ]);
             $this->redirectRoute('products.index');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $th) {
             report($th);

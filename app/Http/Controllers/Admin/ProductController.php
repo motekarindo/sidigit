@@ -8,7 +8,7 @@ use App\Models\Category;
 use App\Models\Material;
 use App\Models\Unit;
 use App\Services\ProductService;
-use App\Support\ErrorMessage;
+use App\Support\ErrorReporter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ProductController extends Controller
@@ -53,11 +53,10 @@ class ProductController extends Controller
                 ->route('products.index')
                 ->with('success', "Produk {$product->name} berhasil ditambahkan.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan produk.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat menambahkan produk.')['message']);
         }
     }
 
@@ -78,7 +77,6 @@ class ProductController extends Controller
                 'units' => $units,
             ]);
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('products.index')
@@ -97,11 +95,10 @@ class ProductController extends Controller
                 ->route('products.index')
                 ->with('success', "Produk {$updatedProduct->name} berhasil diperbarui.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data produk.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat memperbarui data produk.')['message']);
         }
     }
 
@@ -117,7 +114,6 @@ class ProductController extends Controller
                 ->route('products.index')
                 ->with('success', "Produk {$productModel->name} berhasil dihapus.");
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('products.index')

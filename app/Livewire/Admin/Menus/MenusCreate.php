@@ -52,6 +52,7 @@ class MenusCreate extends Component
 
             $this->redirectRoute('menus.index');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $th) {
             report($th);

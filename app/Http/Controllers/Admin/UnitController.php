@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UnitRequest;
 use App\Services\UnitService;
-use App\Support\ErrorMessage;
+use App\Support\ErrorReporter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class UnitController extends Controller
@@ -44,11 +44,10 @@ class UnitController extends Controller
                 ->route('units.index')
                 ->with('success', "Satuan {$unit->name} berhasil ditambahkan.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat menambahkan satuan.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat menambahkan satuan.')['message']);
         }
     }
 
@@ -61,7 +60,6 @@ class UnitController extends Controller
 
             return view('admin.unit.edit', compact('unit'));
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('units.index')
@@ -80,11 +78,10 @@ class UnitController extends Controller
                 ->route('units.index')
                 ->with('success', "Satuan {$unitModel->name} berhasil diperbarui.");
         } catch (\Throwable $th) {
-            report($th);
 
             return back()
                 ->withInput()
-                ->with('error', ErrorMessage::for($th, 'Terjadi kesalahan saat memperbarui data satuan.'));
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat memperbarui data satuan.')['message']);
         }
     }
 
@@ -100,7 +97,6 @@ class UnitController extends Controller
                 ->route('units.index')
                 ->with('success', "Satuan {$unitModel->name} berhasil dihapus.");
         } catch (\Throwable $th) {
-            report($th);
 
             return redirect()
                 ->route('units.index')

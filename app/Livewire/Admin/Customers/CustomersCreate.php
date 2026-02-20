@@ -53,6 +53,7 @@ class CustomersCreate extends Component
             session()->flash('toast', ['message' => 'Pelanggan berhasil ditambahkan.', 'type' => 'success']);
             $this->redirectRoute('customers.index');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);

@@ -57,6 +57,7 @@ class WarehousesEdit extends Component
             session()->flash('toast', ['message' => 'Gudang berhasil diperbarui.', 'type' => 'success']);
             $this->redirectRoute('warehouses.index');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);

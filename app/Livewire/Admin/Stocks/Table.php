@@ -98,6 +98,7 @@ class Table extends BaseTable
             $this->closeModal();
             $this->dispatch('toast', message: 'Stok berhasil dicatat.', type: 'success');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
@@ -115,6 +116,7 @@ class Table extends BaseTable
         } catch (\RuntimeException $e) {
             $this->dispatch('toast', message: $e->getMessage(), type: 'warning');
         } catch (ValidationException $e) {
+            $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
