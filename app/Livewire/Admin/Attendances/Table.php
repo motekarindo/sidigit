@@ -4,19 +4,21 @@ namespace App\Livewire\Admin\Attendances;
 
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\EmployeeAttendanceForm;
-use App\Models\Employee;
 use App\Services\EmployeeAttendanceService;
+use App\Services\EmployeeService;
 use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
 {
     protected EmployeeAttendanceService $service;
+    protected EmployeeService $employeeService;
 
     public EmployeeAttendanceForm $form;
 
-    public function boot(EmployeeAttendanceService $service): void
+    public function boot(EmployeeAttendanceService $service, EmployeeService $employeeService): void
     {
         $this->service = $service;
+        $this->employeeService = $employeeService;
     }
 
     protected function query()
@@ -38,7 +40,7 @@ class Table extends BaseTable
 
     public function getEmployeeOptionsProperty()
     {
-        return Employee::orderBy('name')->get();
+        return $this->employeeService->query()->orderBy('name')->get();
     }
 
     protected function resetForm(): void

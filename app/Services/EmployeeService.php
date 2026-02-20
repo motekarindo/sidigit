@@ -25,7 +25,7 @@ class EmployeeService
 
     public function query(): Builder
     {
-        return Employee::query();
+        return $this->repository->query();
     }
 
     public function store(array $data): Employee
@@ -62,7 +62,7 @@ class EmployeeService
             return;
         }
 
-        $employees = Employee::query()->whereIn('id', $ids)->get();
+        $employees = $this->repository->query()->whereIn('id', $ids)->get();
         foreach ($employees as $employee) {
             if ($employee->photo) {
                 $disk = config('filesystems.default', 'public');
@@ -70,7 +70,7 @@ class EmployeeService
             }
         }
 
-        Employee::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 
     public function find(int $id): Employee

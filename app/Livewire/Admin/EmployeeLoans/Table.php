@@ -4,19 +4,21 @@ namespace App\Livewire\Admin\EmployeeLoans;
 
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\EmployeeLoanForm;
-use App\Models\Employee;
 use App\Services\EmployeeLoanService;
+use App\Services\EmployeeService;
 use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
 {
     protected EmployeeLoanService $service;
+    protected EmployeeService $employeeService;
 
     public EmployeeLoanForm $form;
 
-    public function boot(EmployeeLoanService $service): void
+    public function boot(EmployeeLoanService $service, EmployeeService $employeeService): void
     {
         $this->service = $service;
+        $this->employeeService = $employeeService;
     }
 
     protected function query()
@@ -38,7 +40,7 @@ class Table extends BaseTable
 
     public function getEmployeeOptionsProperty()
     {
-        return Employee::orderBy('name')->get();
+        return $this->employeeService->query()->orderBy('name')->get();
     }
 
     protected function resetForm(): void

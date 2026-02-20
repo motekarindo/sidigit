@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\MaterialRequest;
-use App\Models\Category;
-use App\Models\Unit;
+use App\Services\CategoryService;
 use App\Services\MaterialService;
+use App\Services\UnitService;
 use App\Support\ErrorReporter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -14,9 +14,14 @@ class MaterialController extends Controller
 {
     use AuthorizesRequests;
     protected $service;
-    public function __construct(MaterialService $service)
+    protected CategoryService $categoryService;
+    protected UnitService $unitService;
+
+    public function __construct(MaterialService $service, CategoryService $categoryService, UnitService $unitService)
     {
         $this->service = $service;
+        $this->categoryService = $categoryService;
+        $this->unitService = $unitService;
     }
 
     public function index()
@@ -32,8 +37,8 @@ class MaterialController extends Controller
     {
         $this->authorize('material.create');
 
-        $categories = Category::orderBy('name')->get();
-        $units = Unit::orderBy('name')->get();
+        $categories = $this->categoryService->query()->orderBy('name')->get();
+        $units = $this->unitService->query()->orderBy('name')->get();
 
         return view('admin.material.create', compact('categories', 'units'));
     }
@@ -62,8 +67,8 @@ class MaterialController extends Controller
 
         try {
             $material = $this->service->find($material);
-            $categories = Category::orderBy('name')->get();
-            $units = Unit::orderBy('name')->get();
+            $categories = $this->categoryService->query()->orderBy('name')->get();
+            $units = $this->unitService->query()->orderBy('name')->get();
 
             return view('admin.material.edit', compact('material', 'categories', 'units'));
         } catch (\Throwable $th) {

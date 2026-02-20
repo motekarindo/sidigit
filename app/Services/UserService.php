@@ -3,42 +3,56 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Repositories\UserRepository;
 use Illuminate\Database\Eloquent\Builder;
 
 class UserService
 {
+    public function __construct(
+        protected UserRepository $repository
+    ) {}
+
     public function query(): Builder
     {
-        return User::query()->with('roles');
+        return $this->repository->query()->with('roles');
     }
 
     public function queryTrashed(): Builder
     {
-        return User::onlyTrashed()->with('roles');
+        return $this->repository->queryTrashed()->with('roles');
     }
 
     public function find(int $id): User
     {
-        return User::findOrFail($id);
+        return $this->repository->findOrFail($id);
+    }
+
+    public function findWithRoles(int $id): User
+    {
+        return $this->repository->query()->with('roles')->findOrFail($id);
     }
 
     public function store(array $data): User
     {
-        return User::create($data);
+        return $this->repository->create($data);
     }
 
     public function update(int $id, array $data): User
     {
-        $user = $this->find($id);
-        $user->update($data);
+        $user = $this->repository->findOrFail($id);
+        return $this->repository->update($user, $data);
+    }
 
-        return $user;
+    public function syncRoles(int $id, array $roles): void
+    {
+        $user = $this->repository->findOrFail($id);
+        $user->roles()->sync($roles);
     }
 
     public function destroy(int $id): void
     {
-        $user = $this->find($id);
-        $user->delete();
+        $user = $this->repository->findOrFail($id);
+        $this->repository->delete($user);
     }
 
     public function destroyMany(array $ids): void
@@ -48,12 +62,12 @@ class UserService
             return;
         }
 
-        User::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 
     public function restore(int $id): void
     {
-        $user = User::withTrashed()->findOrFail($id);
+        $user = $this->repository->findTrashed($id);
         $user->restore();
     }
 
@@ -64,6 +78,6 @@ class UserService
             return;
         }
 
-        User::withTrashed()->whereIn('id', $ids)->restore();
+        $this->repository->queryTrashed()->whereIn('id', $ids)->restore();
     }
 }

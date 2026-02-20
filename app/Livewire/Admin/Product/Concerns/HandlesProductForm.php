@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Admin\Product\Concerns;
 
-use App\Models\Category;
-use App\Models\Material;
-use App\Models\Unit;
+use App\Services\CategoryService;
+use App\Services\MaterialService;
+use App\Services\UnitService;
 
 trait HandlesProductForm
 {
@@ -17,7 +17,8 @@ trait HandlesProductForm
 
     protected function loadReferenceData(): void
     {
-        $this->categories = Category::orderBy('name')
+        $this->categories = app(CategoryService::class)->query()
+            ->orderBy('name')
             ->get(['id', 'name'])
             ->map(fn ($category) => [
                 'id' => $category->id,
@@ -25,7 +26,8 @@ trait HandlesProductForm
             ])
             ->toArray();
 
-        $this->units = Unit::orderBy('name')
+        $this->units = app(UnitService::class)->query()
+            ->orderBy('name')
             ->get(['id', 'name', 'is_dimension'])
             ->map(fn ($unit) => [
                 'id' => $unit->id,
@@ -107,14 +109,14 @@ trait HandlesProductForm
 
     protected function getMaterialsByCategory(): array
     {
-        return Material::query()
+        return app(MaterialService::class)->query()
             ->with('unit')
             ->orderBy('name')
             ->get()
             ->groupBy('category_id')
             ->mapWithKeys(function ($materials, $categoryId) {
                 return [
-                    'cat_' . (string) $categoryId => $materials->map(function (Material $material) {
+                    'cat_' . (string) $categoryId => $materials->map(function ($material) {
                         return [
                             'id' => (string) $material->id,
                             'name' => $material->name,

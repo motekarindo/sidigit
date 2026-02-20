@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Admin\Roles;
 
-use App\Models\Menu;
-use App\Models\Role;
+use App\Services\MenuService;
+use App\Services\RoleService;
 use App\Traits\WithErrorToast;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -22,7 +22,9 @@ class RolesEdit extends Component
     use WithErrorToast;
     use WithPageMeta;
 
-    public Role $role;
+    public int $roleId;
+    protected MenuService $menuService;
+    protected RoleService $roleService;
     public string $name = '';
     public array $permissions = [];
     public array $menus = [];
@@ -33,15 +35,22 @@ class RolesEdit extends Component
     public bool $selectAllMenus = false;
     public bool $selectAllPermissions = false;
 
-    public function mount(Role $role): void
+    public function boot(MenuService $menuService, RoleService $roleService): void
+    {
+        $this->menuService = $menuService;
+        $this->roleService = $roleService;
+    }
+
+    public function mount(int $role): void
     {
         $this->authorize('role.edit');
 
-        $this->role = $role->load(['permissions', 'menus']);
+        $this->roleId = $role;
+        $roleModel = $this->roleService->findWithRelations($this->roleId);
 
-        $this->name = $this->role->name;
-        $this->permissions = $this->role->permissions->pluck('id')->map(fn($id) => (int) $id)->toArray();
-        $this->menus = $this->role->menus->pluck('id')->map(fn($id) => (int) $id)->toArray();
+        $this->name = $roleModel->name;
+        $this->permissions = $roleModel->permissions->pluck('id')->map(fn($id) => (int) $id)->toArray();
+        $this->menus = $roleModel->menus->pluck('id')->map(fn($id) => (int) $id)->toArray();
 
         $this->setPageMeta(
             'Edit Role',
@@ -49,7 +58,7 @@ class RolesEdit extends Component
             [
                 ['label' => 'Dashboard', 'url' => route('dashboard'), 'icon' => true],
                 ['label' => 'Role', 'url' => route('roles.index')],
-                ['label' => $this->role->name, 'current' => true],
+                ['label' => $this->name, 'current' => true],
             ]
         );
     }
@@ -57,7 +66,7 @@ class RolesEdit extends Component
     protected function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', Rule::unique(Role::class, 'name')->ignore($this->role->id)],
+            'name' => ['required', 'string', 'max:255', Rule::unique('roles', 'name')->ignore($this->roleId)],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['exists:permissions,id'],
             'menus' => ['nullable', 'array'],
@@ -68,10 +77,7 @@ class RolesEdit extends Component
     protected function loadMenus()
     {
         return Cache::remember('roles.menu-options', 600, function () {
-            return Menu::whereNull('parent_id')
-                ->with(['children'])
-                ->orderBy('order')
-                ->get();
+            return $this->menuService->tree();
         });
     }
 
@@ -83,10 +89,7 @@ class RolesEdit extends Component
     protected function loadMenusWithPermissions()
     {
         return Cache::remember('roles.menu-options-with-permissions', 600, function () {
-            return Menu::whereNull('parent_id')
-                ->with(['children.permissions', 'permissions'])
-                ->orderBy('order')
-                ->get();
+            return $this->menuService->treeWithPermissions();
         });
     }
 
@@ -96,7 +99,7 @@ class RolesEdit extends Component
             return;
         }
 
-        $menu = Menu::with(['permissions', 'children.permissions'])->find($menuId);
+        $menu = $this->menuService->query()->with(['permissions', 'children.permissions'])->find($menuId);
         if (! $menu) {
             return;
         }
@@ -223,12 +226,11 @@ class RolesEdit extends Component
         $data = $this->validate();
 
         try {
-            $this->role->update([
+            $this->roleService->update($this->roleId, [
                 'name' => $data['name'],
             ]);
 
-            $this->role->permissions()->sync($this->permissions);
-            $this->role->menus()->sync($this->menus);
+            $this->roleService->syncPermissionsMenus($this->roleId, $this->permissions, $this->menus);
 
             session()->flash('toast', [
                 'message' => 'Role berhasil diperbarui.',

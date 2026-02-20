@@ -4,14 +4,16 @@ namespace App\Livewire\Admin\Stocks;
 
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\StockMovementForm;
-use App\Models\Material;
-use App\Models\Unit;
+use App\Services\MaterialService;
 use App\Services\StockMovementService;
+use App\Services\UnitService;
 use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
 {
     protected StockMovementService $service;
+    protected MaterialService $materialService;
+    protected UnitService $unitService;
 
     public StockMovementForm $form;
 
@@ -21,9 +23,11 @@ class Table extends BaseTable
         'source' => 'all', // all | manual | order | expense
     ];
 
-    public function boot(StockMovementService $service): void
+    public function boot(StockMovementService $service, MaterialService $materialService, UnitService $unitService): void
     {
         $this->service = $service;
+        $this->materialService = $materialService;
+        $this->unitService = $unitService;
     }
 
     protected function query()
@@ -47,27 +51,27 @@ class Table extends BaseTable
 
     public function getMaterialOptionsProperty()
     {
-        return Material::orderBy('name')->get();
+        return $this->materialService->query()->orderBy('name')->get();
     }
 
     public function getUnitOptionsProperty()
     {
         $materialId = $this->form->material_id;
         if (!$materialId) {
-            return Unit::orderBy('name')->get();
+            return $this->unitService->query()->orderBy('name')->get();
         }
 
-        $material = Material::find($materialId);
+        $material = $this->materialService->query()->find($materialId);
         if (!$material) {
-            return Unit::orderBy('name')->get();
+            return $this->unitService->query()->orderBy('name')->get();
         }
 
         $ids = array_filter([$material->unit_id, $material->purchase_unit_id]);
         if (empty($ids)) {
-            return Unit::orderBy('name')->get();
+            return $this->unitService->query()->orderBy('name')->get();
         }
 
-        return Unit::query()->whereIn('id', $ids)->orderBy('name')->get();
+        return $this->unitService->query()->whereIn('id', $ids)->orderBy('name')->get();
     }
 
     protected function resetForm(): void
@@ -78,7 +82,7 @@ class Table extends BaseTable
 
     public function updatedFormMaterialId($value): void
     {
-        $material = Material::find($value);
+        $material = $this->materialService->query()->find($value);
         if ($material) {
             $this->form->unit_id = $material->purchase_unit_id ?: $material->unit_id;
         }
@@ -87,7 +91,9 @@ class Table extends BaseTable
     protected function loadForm(int $id): void
     {
         $movement = $this->service->find($id);
-        $this->form->fillFromModel($movement);
+        $material = $this->materialService->query()->find($movement->material_id);
+        $materialUnitId = $material?->purchase_unit_id ?: $material?->unit_id;
+        $this->form->fillFromModel($movement, $materialUnitId);
     }
 
     public function create(): void

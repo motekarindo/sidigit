@@ -3,7 +3,7 @@
 namespace App\Livewire\Admin\Stocks;
 
 use App\Livewire\BaseTable;
-use App\Models\Material;
+use App\Services\MaterialService;
 use Illuminate\Support\Facades\DB;
 
 class BalanceTable extends BaseTable
@@ -11,7 +11,7 @@ class BalanceTable extends BaseTable
     protected function query()
     {
         return $this->applySearch(
-            Material::query()
+            app(MaterialService::class)->query()
                 ->leftJoin('stock_movements as sm', function ($join) {
                     $join->on('sm.material_id', '=', 'mst_materials.id')
                         ->whereNull('sm.deleted_at');

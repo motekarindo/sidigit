@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ProductRequest;
-use App\Models\Category;
-use App\Models\Material;
-use App\Models\Unit;
+use App\Services\CategoryService;
+use App\Services\MaterialService;
 use App\Services\ProductService;
+use App\Services\UnitService;
 use App\Support\ErrorReporter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -16,10 +16,21 @@ class ProductController extends Controller
     use AuthorizesRequests;
 
     protected $service;
+    protected CategoryService $categoryService;
+    protected MaterialService $materialService;
+    protected UnitService $unitService;
 
-    public function __construct(ProductService $service)
+    public function __construct(
+        ProductService $service,
+        CategoryService $categoryService,
+        MaterialService $materialService,
+        UnitService $unitService
+    )
     {
         $this->service = $service;
+        $this->categoryService = $categoryService;
+        $this->materialService = $materialService;
+        $this->unitService = $unitService;
     }
 
     public function index()
@@ -35,9 +46,9 @@ class ProductController extends Controller
     {
         $this->authorize('product.create');
 
-        $categories = Category::orderBy('name')->get();
+        $categories = $this->categoryService->query()->orderBy('name')->get();
         $materialsByCategory = $this->getMaterialsByCategory();
-        $units = Unit::orderBy('name')->get();
+        $units = $this->unitService->query()->orderBy('name')->get();
 
         return view('admin.product.create', compact('categories', 'materialsByCategory', 'units'));
     }
@@ -66,9 +77,9 @@ class ProductController extends Controller
 
         try {
             $productModel = $this->service->find($product);
-            $categories = Category::orderBy('name')->get();
+            $categories = $this->categoryService->query()->orderBy('name')->get();
             $materialsByCategory = $this->getMaterialsByCategory();
-            $units = Unit::orderBy('name')->get();
+            $units = $this->unitService->query()->orderBy('name')->get();
 
             return view('admin.product.edit', [
                 'product' => $productModel,
@@ -123,14 +134,14 @@ class ProductController extends Controller
 
     protected function getMaterialsByCategory(): array
     {
-        return Material::query()
+        return $this->materialService->query()
             ->with('unit')
             ->orderBy('name')
             ->get()
             ->groupBy('category_id')
             ->mapWithKeys(function ($materials, $categoryId) {
                 return [
-                    (string) $categoryId => $materials->map(function (Material $material) {
+                    (string) $categoryId => $materials->map(function ($material) {
                         return [
                             'id' => (string) $material->id,
                             'name' => $material->name,

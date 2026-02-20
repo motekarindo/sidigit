@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Admin\Reports;
 
-use App\Models\Expense;
+use App\Services\ExpenseService;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
@@ -18,8 +18,15 @@ class ExpenseReport extends Component
     use AuthorizesRequests;
     use WithPageMeta;
 
+    protected ExpenseService $service;
+
     public string $start_date;
     public string $end_date;
+
+    public function boot(ExpenseService $service): void
+    {
+        $this->service = $service;
+    }
 
     public function mount(): void
     {
@@ -40,7 +47,7 @@ class ExpenseReport extends Component
 
     public function getSummaryProperty(): array
     {
-        $base = Expense::query()
+        $base = $this->service->query()
             ->whereBetween('expense_date', [$this->start_date, $this->end_date]);
 
         $total = (float) (clone $base)->sum('amount');
@@ -56,7 +63,7 @@ class ExpenseReport extends Component
 
     public function getTopMaterialsProperty()
     {
-        return Expense::query()
+        return $this->service->query()
             ->select('material_id', DB::raw('sum(amount) as total_amount'))
             ->where('type', 'material')
             ->whereBetween('expense_date', [$this->start_date, $this->end_date])

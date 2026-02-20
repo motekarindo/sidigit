@@ -22,12 +22,12 @@ class MaterialService
 
     public function query(): Builder
     {
-        return Material::query()->with(['category', 'unit']);
+        return $this->repository->query()->with(['category', 'unit']);
     }
 
     public function queryTrashed(): Builder
     {
-        return Material::onlyTrashed()->with(['category', 'unit']);
+        return $this->repository->query()->onlyTrashed()->with(['category', 'unit']);
     }
 
     public function store(array $data): Material
@@ -70,12 +70,12 @@ class MaterialService
             return;
         }
 
-        Material::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 
     public function restore(int $id): void
     {
-        $material = Material::withTrashed()->findOrFail($id);
+        $material = $this->repository->query()->withTrashed()->findOrFail($id);
         $material->restore();
     }
 
@@ -86,7 +86,7 @@ class MaterialService
             return;
         }
 
-        Material::withTrashed()->whereIn('id', $ids)->restore();
+        $this->repository->query()->withTrashed()->whereIn('id', $ids)->restore();
     }
 
     public function find(int $id): Material

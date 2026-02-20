@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Admin\Roles;
 
-use App\Models\Menu;
-use App\Models\Role;
+use App\Services\MenuService;
+use App\Services\RoleService;
 use App\Traits\WithErrorToast;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -22,6 +22,9 @@ class RolesCreate extends Component
     use WithErrorToast;
     use WithPageMeta;
 
+    protected MenuService $menuService;
+    protected RoleService $roleService;
+
     public string $name = '';
     public array $permissions = [];
     public array $menus = [];
@@ -31,6 +34,12 @@ class RolesCreate extends Component
     public array $menuPermissionsLoaded = [];
     public bool $selectAllMenus = false;
     public bool $selectAllPermissions = false;
+
+    public function boot(MenuService $menuService, RoleService $roleService): void
+    {
+        $this->menuService = $menuService;
+        $this->roleService = $roleService;
+    }
 
     public function mount(): void
     {
@@ -49,7 +58,7 @@ class RolesCreate extends Component
     protected function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', Rule::unique(Role::class, 'name')],
+            'name' => ['required', 'string', 'max:255', Rule::unique('roles', 'name')],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['exists:permissions,id'],
             'menus' => ['nullable', 'array'],
@@ -60,10 +69,7 @@ class RolesCreate extends Component
     protected function loadMenus()
     {
         return Cache::remember('roles.menu-options', 600, function () {
-            return Menu::whereNull('parent_id')
-                ->with(['children'])
-                ->orderBy('order')
-                ->get();
+            return $this->menuService->tree();
         });
     }
 
@@ -75,10 +81,7 @@ class RolesCreate extends Component
     protected function loadMenusWithPermissions()
     {
         return Cache::remember('roles.menu-options-with-permissions', 600, function () {
-            return Menu::whereNull('parent_id')
-                ->with(['children.permissions', 'permissions'])
-                ->orderBy('order')
-                ->get();
+            return $this->menuService->treeWithPermissions();
         });
     }
 
@@ -88,7 +91,7 @@ class RolesCreate extends Component
             return;
         }
 
-        $menu = Menu::with(['permissions', 'children.permissions'])->find($menuId);
+        $menu = $this->menuService->query()->with(['permissions', 'children.permissions'])->find($menuId);
         if (! $menu) {
             return;
         }
@@ -215,12 +218,11 @@ class RolesCreate extends Component
         $data = $this->validate();
 
         try {
-            $role = Role::create([
+            $role = $this->roleService->store([
                 'name' => $data['name'],
             ]);
 
-            $role->permissions()->sync($this->permissions);
-            $role->menus()->sync($this->menus);
+            $this->roleService->syncPermissionsMenus($role->id, $this->permissions, $this->menus);
 
             session()->flash('toast', [
                 'message' => 'Role baru berhasil ditambahkan.',

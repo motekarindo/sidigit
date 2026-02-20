@@ -3,7 +3,7 @@
 namespace App\Livewire\Admin\Menus;
 
 use App\Helpers\IconHelper;
-use App\Models\Menu;
+use App\Services\MenuService;
 use App\Traits\WithErrorToast;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
@@ -19,24 +19,31 @@ class MenusEdit extends Component
     use AuthorizesRequests;
     use WithErrorToast;
 
-    public Menu $menu;
+    public int $menuId;
+    protected MenuService $service;
     public string $name = '';
     public ?int $parent_id = null;
     public ?string $route_name = null;
     public ?string $icon = null;
     public int $order;
 
-    public function mount(Menu $menu): void
+    public function boot(MenuService $service): void
+    {
+        $this->service = $service;
+    }
+
+    public function mount(int $menu): void
     {
         $this->authorize('menu.edit');
 
-        $this->menu = $menu;
+        $this->menuId = $menu;
+        $menuModel = $this->service->find($this->menuId);
 
-        $this->name = $menu->name;
-        $this->parent_id = $menu->parent_id;
-        $this->route_name = $menu->route_name;
-        $this->icon = $menu->icon;
-        $this->order = $menu->order;
+        $this->name = $menuModel->name;
+        $this->parent_id = $menuModel->parent_id;
+        $this->route_name = $menuModel->route_name;
+        $this->icon = $menuModel->icon;
+        $this->order = $menuModel->order;
     }
 
     protected function rules(): array
@@ -44,7 +51,7 @@ class MenusEdit extends Component
         return [
             'name' => ['required', 'string', 'max:255'],
             'parent_id' => ['nullable', 'integer', 'exists:menus,id'],
-            'route_name' => ['nullable', 'string', 'max:255', Rule::unique(Menu::class, 'route_name')->ignore($this->menu->id)],
+            'route_name' => ['nullable', 'string', 'max:255', Rule::unique('menus', 'route_name')->ignore($this->menuId)],
             'icon' => ['nullable', 'string', 'max:255'],
             'order' => ['required', 'integer'],
         ];
@@ -55,7 +62,7 @@ class MenusEdit extends Component
         $data = $this->validate();
 
         try {
-            $this->menu->update($data);
+            $this->service->update($this->menuId, $data);
 
             session()->flash('success', 'Menu berhasil diperbarui.');
 
@@ -81,9 +88,7 @@ class MenusEdit extends Component
 
     protected function parentMenuOptions(): array
     {
-        return Menu::where('id', '!=', $this->menu->id)
-            ->orderBy('name')
-            ->get()
+        return $this->service->parentOptions($this->menuId)
             ->map(fn($menu) => [
                 'id' => $menu->id,
                 'label' => $menu->name,

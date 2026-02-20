@@ -4,10 +4,16 @@ namespace App\Repositories;
 
 use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class ProductRepository
 {
+    public function query(): Builder
+    {
+        return Product::query();
+    }
+
     public function paginate(int $perPage = 10): LengthAwarePaginator
     {
         return Product::query()

@@ -4,9 +4,15 @@ namespace App\Repositories;
 
 use App\Models\BankAccount;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class BankAccountRepository
 {
+    public function query(): Builder
+    {
+        return BankAccount::query();
+    }
+
     public function paginate(int $perPage = 10): LengthAwarePaginator
     {
         return BankAccount::query()

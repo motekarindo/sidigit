@@ -4,7 +4,6 @@ namespace App\Livewire\Admin\Unit;
 
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\UnitForm;
-use App\Models\Unit;
 use App\Services\UnitService;
 use Illuminate\Validation\ValidationException;
 
@@ -14,7 +13,6 @@ class Table extends BaseTable
     public UnitForm $form;
 
     public bool $showEditModal = false;
-    public ?Unit $editingUnit = null;
 
     public string $editName = '';
 

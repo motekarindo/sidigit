@@ -23,7 +23,7 @@ class BankAccountService
 
     public function query(): Builder
     {
-        return BankAccount::query();
+        return $this->repository->query();
     }
 
     public function store(array $data): BankAccount
@@ -52,7 +52,7 @@ class BankAccountService
             return;
         }
 
-        BankAccount::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 
     public function find(int $id): BankAccount

@@ -10,20 +10,25 @@ use App\Models\OrderItemFinish;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Repositories\OrderRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
+    public function __construct(
+        protected OrderRepository $repository
+    ) {}
+
     public function query(): Builder
     {
-        return Order::query()->with(['customer']);
+        return $this->repository->query()->with(['customer']);
     }
 
     public function queryTrashed(): Builder
     {
-        return Order::onlyTrashed()->with(['customer']);
+        return $this->repository->queryTrashed()->with(['customer']);
     }
 
     public function getPaginated(int $perPage = 10): LengthAwarePaginator
@@ -39,7 +44,7 @@ class OrderService
 
         return DB::transaction(function () use ($data, $items, $payments) {
             $data['order_no'] = $data['order_no'] ?? $this->generateOrderNo();
-            $order = Order::create($data);
+            $order = $this->repository->create($data);
 
             $this->syncItems($order, $items);
             $this->syncPayments($order, $payments);
@@ -61,9 +66,9 @@ class OrderService
         unset($data['items'], $data['payments']);
 
         return DB::transaction(function () use ($id, $data, $items, $payments) {
-            $order = Order::findOrFail($id);
+            $order = $this->repository->findOrFail($id);
             $oldStatus = $order->status;
-            $order->update($data);
+            $this->repository->update($order, $data);
 
             $this->clearItems($order);
             $this->syncItems($order, $items);
@@ -87,10 +92,10 @@ class OrderService
 
     public function destroy(int $id): void
     {
-        $order = Order::findOrFail($id);
+        $order = $this->repository->findOrFail($id);
         $order->items()->delete();
         $order->payments()->delete();
-        $order->delete();
+        $this->repository->delete($order);
     }
 
     public function destroyMany(array $ids): void
@@ -100,17 +105,17 @@ class OrderService
             return;
         }
 
-        $orders = Order::query()->whereIn('id', $ids)->get();
+        $orders = $this->repository->query()->whereIn('id', $ids)->get();
         foreach ($orders as $order) {
             $order->items()->delete();
             $order->payments()->delete();
-            $order->delete();
+            $this->repository->delete($order);
         }
     }
 
     public function restore(int $id): void
     {
-        $order = Order::withTrashed()->findOrFail($id);
+        $order = $this->repository->findTrashed($id);
         $order->restore();
         $order->items()->withTrashed()->restore();
         $order->payments()->withTrashed()->restore();
@@ -123,7 +128,7 @@ class OrderService
             return;
         }
 
-        $orders = Order::withTrashed()->whereIn('id', $ids)->get();
+        $orders = $this->repository->queryTrashed()->whereIn('id', $ids)->get();
         foreach ($orders as $order) {
             $order->restore();
             $order->items()->withTrashed()->restore();
@@ -133,7 +138,9 @@ class OrderService
 
     public function find(int $id): Order
     {
-        return Order::with(['customer', 'items', 'items.product', 'items.material', 'items.finishes', 'payments'])->findOrFail($id);
+        return $this->repository->query()
+            ->with(['customer', 'items', 'items.product', 'items.material', 'items.finishes', 'payments'])
+            ->findOrFail($id);
     }
 
     protected function syncItems(Order $order, array $items): void

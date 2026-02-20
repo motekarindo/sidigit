@@ -25,12 +25,12 @@ class ProductService
 
     public function query(): Builder
     {
-        return Product::query()->with(['category', 'unit']);
+        return $this->repository->query()->with(['category', 'unit']);
     }
 
     public function queryTrashed(): Builder
     {
-        return Product::onlyTrashed()->with(['category', 'unit']);
+        return $this->repository->query()->onlyTrashed()->with(['category', 'unit']);
     }
 
     public function store(array $data): Product
@@ -80,19 +80,19 @@ class ProductService
         }
 
         DB::transaction(function () use ($ids) {
-            $products = Product::query()->whereIn('id', $ids)->get();
+            $products = $this->repository->query()->whereIn('id', $ids)->get();
             foreach ($products as $product) {
                 $product->productMaterials()->delete();
             }
 
-            Product::query()->whereIn('id', $ids)->delete();
+            $this->repository->query()->whereIn('id', $ids)->delete();
         });
     }
 
     public function restore(int $id): void
     {
         DB::transaction(function () use ($id) {
-            $product = Product::withTrashed()->findOrFail($id);
+            $product = $this->repository->query()->withTrashed()->findOrFail($id);
             $product->restore();
             $product->productMaterials()->withTrashed()->restore();
         });
@@ -106,7 +106,7 @@ class ProductService
         }
 
         DB::transaction(function () use ($ids) {
-            $products = Product::withTrashed()->whereIn('id', $ids)->get();
+            $products = $this->repository->query()->withTrashed()->whereIn('id', $ids)->get();
             foreach ($products as $product) {
                 $product->restore();
                 $product->productMaterials()->withTrashed()->restore();

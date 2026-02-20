@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Admin\Reports;
 
-use App\Models\Order;
-use App\Models\OrderItem;
+use App\Services\OrderItemService;
+use App\Services\OrderService;
 use App\Traits\WithPageMeta;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +19,17 @@ class SalesReport extends Component
     use AuthorizesRequests;
     use WithPageMeta;
 
+    protected OrderService $orderService;
+    protected OrderItemService $orderItemService;
+
     public string $start_date;
     public string $end_date;
+
+    public function boot(OrderService $orderService, OrderItemService $orderItemService): void
+    {
+        $this->orderService = $orderService;
+        $this->orderItemService = $orderItemService;
+    }
 
     public function mount(): void
     {
@@ -41,7 +50,7 @@ class SalesReport extends Component
 
     public function getSummaryProperty(): array
     {
-        $orders = Order::query()
+        $orders = $this->orderService->query()
             ->whereBetween('order_date', [$this->start_date, $this->end_date]);
 
         $totalOrders = (clone $orders)->count();
@@ -61,7 +70,7 @@ class SalesReport extends Component
 
     public function getTopProductsProperty()
     {
-        return OrderItem::query()
+        return $this->orderItemService->query()
             ->select('product_id', DB::raw('sum(qty) as total_qty'), DB::raw('sum(total) as total_amount'))
             ->whereHas('order', function ($query) {
                 $query->whereBetween('order_date', [$this->start_date, $this->end_date]);

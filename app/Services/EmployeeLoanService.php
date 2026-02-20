@@ -3,14 +3,19 @@
 namespace App\Services;
 
 use App\Models\EmployeeLoan;
+use App\Repositories\EmployeeLoanRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
 class EmployeeLoanService
 {
+    public function __construct(
+        protected EmployeeLoanRepository $repository
+    ) {}
+
     public function query(): Builder
     {
-        return EmployeeLoan::query()->with('employee');
+        return $this->repository->query()->with('employee');
     }
 
     public function getPaginated(int $perPage = 10): LengthAwarePaginator
@@ -20,21 +25,19 @@ class EmployeeLoanService
 
     public function store(array $data): EmployeeLoan
     {
-        return EmployeeLoan::create($data);
+        return $this->repository->create($data);
     }
 
     public function update(int $id, array $data): EmployeeLoan
     {
-        $loan = EmployeeLoan::findOrFail($id);
-        $loan->update($data);
-
-        return $loan;
+        $loan = $this->repository->findOrFail($id);
+        return $this->repository->update($loan, $data);
     }
 
     public function destroy(int $id): void
     {
-        $loan = EmployeeLoan::findOrFail($id);
-        $loan->delete();
+        $loan = $this->repository->findOrFail($id);
+        $this->repository->delete($loan);
     }
 
     public function destroyMany(array $ids): void
@@ -44,11 +47,11 @@ class EmployeeLoanService
             return;
         }
 
-        EmployeeLoan::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 
     public function find(int $id): EmployeeLoan
     {
-        return EmployeeLoan::with('employee')->findOrFail($id);
+        return $this->repository->query()->with('employee')->findOrFail($id);
     }
 }

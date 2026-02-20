@@ -4,14 +4,19 @@ namespace App\Services;
 
 use App\Models\StockMovement;
 use App\Models\Material;
+use App\Repositories\StockMovementRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
 class StockMovementService
 {
+    public function __construct(
+        protected StockMovementRepository $repository
+    ) {}
+
     public function query(): Builder
     {
-        return StockMovement::query()->with('material');
+        return $this->repository->query()->with('material');
     }
 
     public function queryByType(string $type, bool $manualOnly = true): Builder
@@ -39,25 +44,23 @@ class StockMovementService
         $payload['ref_type'] = $payload['ref_type'] ?? 'manual';
         $payload['qty'] = $this->convertToBaseQty($data);
 
-        return StockMovement::create($payload);
+        return $this->repository->create($payload);
     }
 
     public function update(int $id, array $data): StockMovement
     {
-        $movement = StockMovement::findOrFail($id);
+        $movement = $this->repository->findOrFail($id);
         $this->ensureManual($movement);
         $payload = $this->payload($data);
         $payload['qty'] = $this->convertToBaseQty($data);
-        $movement->update($payload);
-
-        return $movement;
+        return $this->repository->update($movement, $payload);
     }
 
     public function destroy(int $id): void
     {
-        $movement = StockMovement::findOrFail($id);
+        $movement = $this->repository->findOrFail($id);
         $this->ensureManual($movement);
-        $movement->delete();
+        $this->repository->delete($movement);
     }
 
     public function destroyMany(array $ids): void
@@ -67,20 +70,20 @@ class StockMovementService
             return;
         }
 
-        $movements = StockMovement::query()->whereIn('id', $ids)->get();
+        $movements = $this->repository->query()->whereIn('id', $ids)->get();
         $manualIds = $movements
             ->filter(fn ($movement) => empty($movement->ref_type) || $movement->ref_type === 'manual')
             ->pluck('id')
             ->all();
 
         if (!empty($manualIds)) {
-            StockMovement::query()->whereIn('id', $manualIds)->delete();
+            $this->repository->query()->whereIn('id', $manualIds)->delete();
         }
     }
 
     public function find(int $id): StockMovement
     {
-        return StockMovement::findOrFail($id);
+        return $this->repository->findOrFail($id);
     }
 
     protected function payload(array $data): array

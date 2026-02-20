@@ -3,14 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Menu; 
-use Illuminate\Http\Request;
 use App\Helpers\IconHelper;
+use App\Services\MenuService;
+use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class MenuController extends Controller
 {
     use AuthorizesRequests;
+    protected MenuService $service;
+
+    public function __construct(MenuService $service)
+    {
+        $this->service = $service;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -21,7 +27,7 @@ class MenuController extends Controller
 
 
         // 2. Ambil semua data menu dengan relasi parent-nya untuk efisiensi
-        $menus = Menu::with('parent')->latest()->paginate(10);
+        $menus = $this->service->query()->latest()->paginate(10);
 
         // 3. Kirim data ke view
         return view('admin.menu.index', compact('menus'));
@@ -34,7 +40,10 @@ class MenuController extends Controller
     {
         $this->authorize('menu.create');
 
-        $parentMenus = Menu::whereNull('route_name')->orWhere('route_name', '=', '')->get();
+        $parentMenus = $this->service->query()
+            ->whereNull('route_name')
+            ->orWhere('route_name', '=', '')
+            ->get();
         // Siapkan daftar ikon untuk dikirim ke view
         $icons = IconHelper::getIcons();
 
@@ -65,7 +74,7 @@ class MenuController extends Controller
         ]);
 
         // 3. Simpan data baru ke database
-        Menu::create($validated);
+        $this->service->store($validated);
 
         // 4. Redirect kembali ke halaman index dengan pesan sukses (flash message)
         return redirect()->route('menus.index')->with('success', 'Menu baru berhasil ditambahkan.');
@@ -82,26 +91,30 @@ class MenuController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Menu $menu)
+    public function edit(int $menu)
     {
 
         // 1. Otorisasi: Pastikan user punya izin 'menu.edit'
         $this->authorize('menu.edit');
 
         // 2. Ambil semua menu untuk pilihan "Induk Menu"
-        $parentMenus = Menu::all();
+        $parentMenus = $this->service->parentOptions($menu);
 
         // 3. Ambil daftar ikon
         $icons = IconHelper::getIcons(); // Pastikan method ini ada dari langkah sebelumnya
 
         // 4. Kirim semua data yang dibutuhkan ke view
-        return view('admin.menu.edit', compact('menu', 'parentMenus', 'icons'));
+        return view('admin.menu.edit', [
+            'menu' => $this->service->find($menu),
+            'parentMenus' => $parentMenus,
+            'icons' => $icons,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Menu $menu)
+    public function update(Request $request, int $menu)
     {
         // 1. Otorisasi: Pastikan user punya izin 'menu.edit'
         $this->authorize('menu.edit');
@@ -111,13 +124,13 @@ class MenuController extends Controller
             'name' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:menus,id',
             // Validasi unik, tapi abaikan untuk menu saat ini
-            'route_name' => 'nullable|string|max:255|unique:menus,route_name,' . $menu->id,
+            'route_name' => 'nullable|string|max:255|unique:menus,route_name,' . $menu,
             'icon' => 'nullable|string|max:255',
             'order' => 'required|integer',
         ]);
 
         // 3. Update data di database
-        $menu->update($validated);
+        $this->service->update($menu, $validated);
 
         // 4. Redirect ke halaman index dengan pesan sukses
         return redirect()->route('menus.index')->with('success', 'Menu berhasil diperbarui.');
@@ -126,13 +139,13 @@ class MenuController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Menu $menu)
+    public function destroy(int $menu)
     {
         // 1. Otorisasi: Pastikan user punya izin 'menu.delete'
         $this->authorize('menu.delete');
 
         // 2. Hapus data dari database
-        $menu->delete();
+        $this->service->destroy($menu);
 
         // 3. Redirect kembali ke halaman index dengan pesan sukses
         return redirect()->route('menus.index')->with('success', 'Menu berhasil dihapus.');

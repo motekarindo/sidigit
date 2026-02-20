@@ -4,9 +4,15 @@ namespace App\Repositories;
 
 use App\Models\Warehouse;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class WarehouseRepository
 {
+    public function query(): Builder
+    {
+        return Warehouse::query();
+    }
+
     public function paginate(int $perPage = 10): LengthAwarePaginator
     {
         return Warehouse::query()

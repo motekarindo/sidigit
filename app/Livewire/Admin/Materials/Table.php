@@ -4,20 +4,24 @@ namespace App\Livewire\Admin\Materials;
 
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\MaterialForm;
-use App\Models\Category;
-use App\Models\Unit;
 use App\Services\MaterialService;
+use App\Services\CategoryService;
+use App\Services\UnitService;
 use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
 {
     protected MaterialService $service;
+    protected CategoryService $categoryService;
+    protected UnitService $unitService;
 
     public MaterialForm $form;
 
-    public function boot(MaterialService $service): void
+    public function boot(MaterialService $service, CategoryService $categoryService, UnitService $unitService): void
     {
         $this->service = $service;
+        $this->categoryService = $categoryService;
+        $this->unitService = $unitService;
     }
 
     protected function query()
@@ -27,12 +31,12 @@ class Table extends BaseTable
 
     public function getCategoryOptionsProperty()
     {
-        return Category::orderBy('name')->get();
+        return $this->categoryService->query()->orderBy('name')->get();
     }
 
     public function getUnitOptionsProperty()
     {
-        return Unit::orderBy('name')->get();
+        return $this->unitService->query()->orderBy('name')->get();
     }
 
     protected function resetForm(): void

@@ -3,7 +3,7 @@
 namespace App\Livewire\Admin\Menus;
 
 use App\Helpers\IconHelper;
-use App\Models\Menu;
+use App\Services\MenuService;
 use App\Traits\WithErrorToast;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
@@ -19,11 +19,18 @@ class MenusCreate extends Component
     use AuthorizesRequests;
     use WithErrorToast;
 
+    protected MenuService $service;
+
     public string $name = '';
     public ?int $parent_id = null;
     public ?string $route_name = null;
     public ?string $icon = null;
     public int $order = 0;
+
+    public function boot(MenuService $service): void
+    {
+        $this->service = $service;
+    }
 
     public function mount(): void
     {
@@ -35,7 +42,7 @@ class MenusCreate extends Component
         return [
             'name' => ['required', 'string', 'max:255'],
             'parent_id' => ['nullable', 'integer', 'exists:menus,id'],
-            'route_name' => ['nullable', 'string', 'max:255', Rule::unique(Menu::class, 'route_name')],
+            'route_name' => ['nullable', 'string', 'max:255', Rule::unique('menus', 'route_name')],
             'icon' => ['nullable', 'string', 'max:255'],
             'order' => ['required', 'integer'],
         ];
@@ -46,7 +53,7 @@ class MenusCreate extends Component
         $data = $this->validate();
 
         try {
-            Menu::create($data);
+            $this->service->store($data);
 
             session()->flash('success', 'Menu baru berhasil ditambahkan.');
 
@@ -72,8 +79,7 @@ class MenusCreate extends Component
 
     protected function parentMenuOptions(): array
     {
-        return Menu::orderBy('name')
-            ->get()
+        return $this->service->parentOptions()
             ->map(fn($menu) => [
                 'id' => $menu->id,
                 'label' => $menu->name,

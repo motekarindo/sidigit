@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Auth;
 
-use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -14,6 +14,8 @@ use Livewire\Component;
 #[Title('Daftar')]
 class RegisterPage extends Component
 {
+    protected UserService $service;
+
     public string $name = '';
 
     public string $username = '';
@@ -24,12 +26,17 @@ class RegisterPage extends Component
 
     public string $password_confirmation = '';
 
+    public function boot(UserService $service): void
+    {
+        $this->service = $service;
+    }
+
     protected function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'alpha_dash', 'max:255', Rule::unique(User::class, 'username')],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class, 'email')],
+            'username' => ['required', 'string', 'alpha_dash', 'max:255', Rule::unique('users', 'username')],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')],
             'password' => ['required', Password::defaults(), 'confirmed'],
         ];
     }
@@ -38,7 +45,7 @@ class RegisterPage extends Component
     {
         $validated = $this->validate();
 
-        $user = User::create([
+        $user = $this->service->store([
             'name' => $validated['name'],
             'username' => $validated['username'],
             'email' => $validated['email'],

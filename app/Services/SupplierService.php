@@ -22,12 +22,12 @@ class SupplierService
 
     public function query(): Builder
     {
-        return Supplier::query();
+        return $this->repository->query();
     }
 
     public function queryTrashed(): Builder
     {
-        return Supplier::onlyTrashed();
+        return $this->repository->query()->onlyTrashed();
     }
 
     public function store(array $data): Supplier
@@ -56,12 +56,12 @@ class SupplierService
             return;
         }
 
-        Supplier::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 
     public function restore(int $id): void
     {
-        $supplier = Supplier::withTrashed()->findOrFail($id);
+        $supplier = $this->repository->query()->withTrashed()->findOrFail($id);
         $supplier->restore();
     }
 
@@ -72,7 +72,7 @@ class SupplierService
             return;
         }
 
-        Supplier::withTrashed()->whereIn('id', $ids)->restore();
+        $this->repository->query()->withTrashed()->whereIn('id', $ids)->restore();
     }
 
     public function find(int $id): Supplier

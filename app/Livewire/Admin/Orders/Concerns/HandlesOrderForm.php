@@ -2,11 +2,11 @@
 
 namespace App\Livewire\Admin\Orders\Concerns;
 
-use App\Models\Customer;
-use App\Models\Finish;
-use App\Models\Material;
-use App\Models\Product;
-use App\Models\Unit;
+use App\Services\CustomerService;
+use App\Services\FinishService;
+use App\Services\MaterialService;
+use App\Services\ProductService;
+use App\Services\UnitService;
 
 trait HandlesOrderForm
 {
@@ -20,7 +20,8 @@ trait HandlesOrderForm
 
     protected function loadReferenceData(): void
     {
-        $this->customers = Customer::orderBy('name')
+        $this->customers = app(CustomerService::class)->query()
+            ->orderBy('name')
             ->get(['id', 'name'])
             ->map(fn ($customer) => [
                 'id' => $customer->id,
@@ -28,7 +29,8 @@ trait HandlesOrderForm
             ])
             ->toArray();
 
-        $this->products = Product::orderBy('name')
+        $this->products = app(ProductService::class)->query()
+            ->orderBy('name')
             ->get(['id', 'name', 'category_id', 'unit_id', 'sale_price', 'base_price'])
             ->map(fn ($product) => [
                 'id' => $product->id,
@@ -40,7 +42,8 @@ trait HandlesOrderForm
             ])
             ->toArray();
 
-        $materials = Material::orderBy('name')
+        $materials = app(MaterialService::class)->query()
+            ->orderBy('name')
             ->get(['id', 'name', 'category_id', 'unit_id', 'cost_price']);
 
         $this->materialsAll = $materials->map(fn ($material) => [
@@ -62,7 +65,8 @@ trait HandlesOrderForm
             ])->values()->toArray())
             ->toArray();
 
-        $this->units = Unit::orderBy('name')
+        $this->units = app(UnitService::class)->query()
+            ->orderBy('name')
             ->get(['id', 'name', 'is_dimension'])
             ->map(fn ($unit) => [
                 'id' => $unit->id,
@@ -78,7 +82,7 @@ trait HandlesOrderForm
             ->values()
             ->toArray();
 
-        $this->finishes = Finish::query()
+        $this->finishes = app(FinishService::class)->query()
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'price'])

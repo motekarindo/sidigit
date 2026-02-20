@@ -4,13 +4,14 @@ namespace App\Livewire\Admin\Permissions;
 
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\PermissionForm;
-use App\Models\Menu;
 use App\Services\PermissionService;
+use App\Services\MenuService;
 use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
 {
     protected PermissionService $service;
+    protected MenuService $menuService;
 
     public PermissionForm $form;
 
@@ -22,9 +23,10 @@ class Table extends BaseTable
     public string $sortField = 'created_at';
     public string $sortDirection = 'desc';
 
-    public function boot(PermissionService $service): void
+    public function boot(PermissionService $service, MenuService $menuService): void
     {
         $this->service = $service;
+        $this->menuService = $menuService;
     }
 
     protected function query()
@@ -40,7 +42,7 @@ class Table extends BaseTable
 
     public function getMenuOptionsProperty()
     {
-        return Menu::orderBy('name')->get();
+        return $this->menuService->parentOptions();
     }
 
     protected function resetForm(): void
