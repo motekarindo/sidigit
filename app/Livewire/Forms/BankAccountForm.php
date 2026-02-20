@@ -29,6 +29,31 @@ class BankAccountForm extends Form
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'rekening_number.required' => 'Nomor rekening wajib diisi.',
+            'rekening_number.string' => 'Nomor rekening harus berupa teks.',
+            'rekening_number.max' => 'Nomor rekening maksimal 18 karakter.',
+            'rekening_number.unique' => 'Nomor rekening sudah digunakan.',
+            'account_name.required' => 'Nama pemilik rekening wajib diisi.',
+            'account_name.string' => 'Nama pemilik rekening harus berupa teks.',
+            'account_name.max' => 'Nama pemilik rekening maksimal 64 karakter.',
+            'bank_name.required' => 'Nama bank wajib diisi.',
+            'bank_name.string' => 'Nama bank harus berupa teks.',
+            'bank_name.max' => 'Nama bank maksimal 64 karakter.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'rekening_number' => 'Nomor rekening',
+            'account_name' => 'Nama pemilik',
+            'bank_name' => 'Nama bank',
+        ];
+    }
+
     public function fillFromModel(BankAccount $bankAccount): void
     {
         $this->id = $bankAccount->id;

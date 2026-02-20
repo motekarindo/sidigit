@@ -25,6 +25,30 @@ class WarehouseForm extends Form
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'name.required' => 'Nama gudang wajib diisi.',
+            'name.string' => 'Nama gudang harus berupa teks.',
+            'name.max' => 'Nama gudang maksimal 128 karakter.',
+            'location_lat.numeric' => 'Latitude harus berupa angka.',
+            'location_lat.between' => 'Latitude harus di antara -90 sampai 90.',
+            'location_lng.numeric' => 'Longitude harus berupa angka.',
+            'location_lng.between' => 'Longitude harus di antara -180 sampai 180.',
+            'description.string' => 'Deskripsi harus berupa teks.',
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'name' => 'Nama gudang',
+            'location_lat' => 'Latitude',
+            'location_lng' => 'Longitude',
+            'description' => 'Deskripsi',
+        ];
+    }
+
     public function fillFromModel(Warehouse $warehouse): void
     {
         $this->id = $warehouse->id;

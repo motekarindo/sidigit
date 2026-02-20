@@ -1,7 +1,7 @@
 <div class="space-y-3">
     <x-forms.input label="Nama Finishing" name="form.name" placeholder="Nama finishing" wire:model.blur="form.name" required />
     <div>
-        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Harga</label>
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">Harga <span class="text-red-500">*</span></label>
         <div class="mt-2" x-data="rupiahField(@entangle('form.price').live)">
             <input type="text" inputmode="numeric" x-model="display" @input="onInput" class="form-input" />
         </div>
