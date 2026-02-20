@@ -25,7 +25,7 @@ class MenusCreate extends Component
     public ?int $parent_id = null;
     public ?string $route_name = null;
     public ?string $icon = null;
-    public int $order = 0;
+    public ?int $order = null;
 
     public function boot(MenuService $service): void
     {
@@ -89,9 +89,9 @@ class MenusCreate extends Component
 
     public function save(): void
     {
-        $data = $this->validate();
-
         try {
+            $data = $this->validate();
+
             $this->service->store($data);
 
             session()->flash('success', 'Menu baru berhasil ditambahkan.');
