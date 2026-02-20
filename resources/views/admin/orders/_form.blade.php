@@ -22,7 +22,7 @@
         <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div>
                 <x-forms.searchable-select
-                    label="Customer (Opsional)"
+                    label="Customer"
                     :options="$customers"
                     placeholder="Pilih customer"
                     wire:model="customer_id"
@@ -56,14 +56,18 @@
                     placeholder="Pilih status"
                     wire:model="status"
                     :button-class="$controlClassTight"
+                    required
                 />
+                @error('status')
+                    <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
         <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal Order</label>
-                <input type="date" wire:model="order_date" class="{{ $controlClassTight }}" />
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal Order <span class="text-red-500">*</span></label>
+                <input type="date" wire:model="order_date" class="{{ $controlClassTight }}" required />
                 @error('order_date')
                     <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
                 @enderror
@@ -81,6 +85,9 @@
         <div class="mt-4">
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Catatan</label>
             <textarea wire:model="notes" rows="3" class="{{ $controlClass }}"></textarea>
+            @error('notes')
+                <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+            @enderror
         </div>
     </div>
 
@@ -97,6 +104,9 @@
         </div>
 
         <div class="mt-4 space-y-4">
+            @error('items')
+                <p class="text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+            @enderror
             @foreach ($items as $index => $item)
                 @php
                     $calc = $this->calculateItemPreview($item);
@@ -113,7 +123,7 @@
                     <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
                         <div>
                             <div class="{{ $labelRowClass }}">
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Produk</label>
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Produk <span class="text-red-500">*</span></label>
                             </div>
                             <x-forms.searchable-select
                                 label=""
@@ -122,6 +132,12 @@
                                 wire:model.live="items.{{ $index }}.product_id"
                                 :button-class="$controlClassTight"
                             />
+                            @error('items.' . $index . '.product_id')
+                                <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+                            @enderror
+                            @error('items.' . $index . '.unit_id')
+                                <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
@@ -143,11 +159,14 @@
 
                         <div>
                             <div class="{{ $labelRowClass }}">
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Qty</label>
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Qty <span class="text-red-500">*</span></label>
                             </div>
                             <input type="number" step="1" min="1" inputmode="numeric"
-                                wire:model.live="items.{{ $index }}.qty"
+                                wire:model.live="items.{{ $index }}.qty" required
                                 class="{{ $controlClassTight }}" />
+                            @error('items.' . $index . '.qty')
+                                <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>

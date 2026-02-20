@@ -31,6 +31,67 @@ class Create extends Component
     public array $items = [];
     public array $payments = [];
 
+    protected array $messages = [
+        'customer_id.exists' => 'Customer yang dipilih tidak valid.',
+        'status.required' => 'Status wajib diisi.',
+        'status.string' => 'Status harus berupa teks.',
+        'order_date.required' => 'Tanggal order wajib diisi.',
+        'order_date.date' => 'Tanggal order tidak valid.',
+        'deadline.date' => 'Deadline tidak valid.',
+        'notes.string' => 'Catatan harus berupa teks.',
+        'items.required' => 'Item order wajib diisi.',
+        'items.array' => 'Item order tidak valid.',
+        'items.min' => 'Minimal 1 item order.',
+        'items.*.product_id.required' => 'Produk wajib dipilih.',
+        'items.*.product_id.exists' => 'Produk yang dipilih tidak valid.',
+        'items.*.material_id.exists' => 'Bahan yang dipilih tidak valid.',
+        'items.*.unit_id.required' => 'Satuan item wajib diisi.',
+        'items.*.unit_id.exists' => 'Satuan item tidak valid.',
+        'items.*.qty.required' => 'Qty wajib diisi.',
+        'items.*.qty.integer' => 'Qty harus berupa angka bulat.',
+        'items.*.qty.min' => 'Qty minimal 1.',
+        'items.*.length_cm.numeric' => 'Panjang harus berupa angka.',
+        'items.*.length_cm.min' => 'Panjang tidak boleh kurang dari 0.',
+        'items.*.width_cm.numeric' => 'Lebar harus berupa angka.',
+        'items.*.width_cm.min' => 'Lebar tidak boleh kurang dari 0.',
+        'items.*.price.integer' => 'Harga jual harus berupa angka bulat.',
+        'items.*.price.min' => 'Harga jual tidak boleh kurang dari 0.',
+        'items.*.discount.integer' => 'Diskon harus berupa angka bulat.',
+        'items.*.discount.min' => 'Diskon tidak boleh kurang dari 0.',
+        'items.*.finish_ids.array' => 'Finishing harus berupa daftar.',
+        'items.*.finish_ids.*.exists' => 'Finishing yang dipilih tidak valid.',
+        'payments.array' => 'Pembayaran harus berupa daftar.',
+        'payments.*.amount.integer' => 'Jumlah pembayaran harus berupa angka bulat.',
+        'payments.*.amount.min' => 'Jumlah pembayaran tidak boleh kurang dari 0.',
+        'payments.*.method.string' => 'Metode pembayaran tidak valid.',
+        'payments.*.paid_at.date' => 'Tanggal pembayaran tidak valid.',
+        'payments.*.notes.string' => 'Catatan pembayaran harus berupa teks.',
+    ];
+
+    protected array $validationAttributes = [
+        'customer_id' => 'Customer',
+        'status' => 'Status',
+        'order_date' => 'Tanggal order',
+        'deadline' => 'Deadline',
+        'notes' => 'Catatan',
+        'items' => 'Item order',
+        'items.*.product_id' => 'Produk',
+        'items.*.material_id' => 'Bahan',
+        'items.*.unit_id' => 'Satuan',
+        'items.*.qty' => 'Qty',
+        'items.*.length_cm' => 'Panjang',
+        'items.*.width_cm' => 'Lebar',
+        'items.*.price' => 'Harga jual',
+        'items.*.discount' => 'Diskon',
+        'items.*.finish_ids' => 'Finishing',
+        'items.*.finish_ids.*' => 'Finishing',
+        'payments' => 'Pembayaran',
+        'payments.*.amount' => 'Jumlah pembayaran',
+        'payments.*.method' => 'Metode pembayaran',
+        'payments.*.paid_at' => 'Tanggal pembayaran',
+        'payments.*.notes' => 'Catatan pembayaran',
+    ];
+
     protected OrderService $service;
 
     public function mount(OrderService $service): void
@@ -82,9 +143,9 @@ class Create extends Component
 
     public function save(): void
     {
-        $data = $this->validate();
-
         try {
+            $data = $this->validate();
+
             $order = $this->service->store([
                 'customer_id' => $data['customer_id'] ?? null,
                 'status' => $data['status'],
@@ -107,6 +168,18 @@ class Create extends Component
             report($th);
             $this->toastError($th, 'Terjadi kesalahan saat menambahkan order.');
         }
+    }
+
+    protected function toastValidation(ValidationException $e, ?string $fallback = null): void
+    {
+        $errors = $e->validator->errors()->all();
+        if (!empty($errors)) {
+            $message = "Periksa input:\n• " . implode("\n• ", $errors);
+        } else {
+            $message = $fallback ?: 'Periksa kembali input. Ada data yang belum sesuai.';
+        }
+
+        $this->dispatch('toast', message: $message, type: 'warning');
     }
 
     public function render()
