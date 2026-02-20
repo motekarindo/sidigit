@@ -4,19 +4,21 @@ namespace App\Livewire\Admin\Finishes;
 
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\FinishForm;
-use App\Models\Unit;
 use App\Services\FinishService;
+use App\Services\UnitService;
 use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
 {
     protected FinishService $service;
+    protected UnitService $unitService;
 
     public FinishForm $form;
 
-    public function boot(FinishService $service): void
+    public function boot(FinishService $service, UnitService $unitService): void
     {
         $this->service = $service;
+        $this->unitService = $unitService;
     }
 
     protected function query()
@@ -26,7 +28,7 @@ class Table extends BaseTable
 
     public function getUnitOptionsProperty()
     {
-        return Unit::orderBy('name')->get();
+        return $this->unitService->query()->orderBy('name')->get();
     }
 
     protected function resetForm(): void

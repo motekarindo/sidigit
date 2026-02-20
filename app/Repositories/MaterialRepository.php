@@ -4,9 +4,15 @@ namespace App\Repositories;
 
 use App\Models\Material;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class MaterialRepository
 {
+    public function query(): Builder
+    {
+        return Material::query();
+    }
+
     public function paginate(int $perPage = 10): LengthAwarePaginator
     {
         return Material::query()

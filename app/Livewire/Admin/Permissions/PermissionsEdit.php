@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Admin\Permissions;
 
-use App\Models\Menu;
-use App\Models\Permission;
+use App\Services\MenuService;
+use App\Services\PermissionService;
 use App\Traits\WithErrorToast;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
@@ -19,27 +19,36 @@ class PermissionsEdit extends Component
     use AuthorizesRequests;
     use WithErrorToast;
 
-    public Permission $permission;
+    public int $permissionId;
+    protected MenuService $menuService;
+    protected PermissionService $permissionService;
     public string $name = '';
     public string $slug = '';
     public ?int $menu_id = null;
 
-    public function mount(Permission $permission): void
+    public function boot(MenuService $menuService, PermissionService $permissionService): void
+    {
+        $this->menuService = $menuService;
+        $this->permissionService = $permissionService;
+    }
+
+    public function mount(int $permission): void
     {
         $this->authorize('permission.edit');
 
-        $this->permission = $permission;
+        $this->permissionId = $permission;
+        $permissionModel = $this->permissionService->find($this->permissionId);
 
-        $this->name = $permission->name;
-        $this->slug = $permission->slug;
-        $this->menu_id = $permission->menu_id;
+        $this->name = $permissionModel->name;
+        $this->slug = $permissionModel->slug;
+        $this->menu_id = $permissionModel->menu_id;
     }
 
     protected function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', Rule::unique(Permission::class, 'slug')->ignore($this->permission->id)],
+            'slug' => ['required', 'string', 'max:255', Rule::unique('permissions', 'slug')->ignore($this->permissionId)],
             'menu_id' => ['required', 'integer', 'exists:menus,id'],
         ];
     }
@@ -49,7 +58,7 @@ class PermissionsEdit extends Component
         $data = $this->validate();
 
         try {
-            $this->permission->update($data);
+            $this->permissionService->update($this->permissionId, $data);
 
             session()->flash('success', 'Permission berhasil diperbarui.');
 
@@ -66,7 +75,7 @@ class PermissionsEdit extends Component
     public function render()
     {
         return view('livewire.admin.permissions.edit', [
-            'menus' => Menu::orderBy('name')->get(),
+            'menus' => $this->menuService->parentOptions(),
         ])->layoutData([
             'title' => 'Edit Permission',
         ]);

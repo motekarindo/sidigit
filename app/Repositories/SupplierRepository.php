@@ -4,9 +4,15 @@ namespace App\Repositories;
 
 use App\Models\Supplier;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class SupplierRepository
 {
+    public function query(): Builder
+    {
+        return Supplier::query();
+    }
+
     public function paginate(int $perPage = 10): LengthAwarePaginator
     {
         return Supplier::query()

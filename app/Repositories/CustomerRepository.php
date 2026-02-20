@@ -4,9 +4,15 @@ namespace App\Repositories;
 
 use App\Models\Customer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class CustomerRepository
 {
+    public function query(): Builder
+    {
+        return Customer::query();
+    }
+
     public function paginate(int $perPage = 10): LengthAwarePaginator
     {
         return Customer::query()

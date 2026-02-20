@@ -4,10 +4,12 @@ namespace App\Livewire\Admin\AuditLogs;
 
 use App\Livewire\BaseTable;
 use Spatie\Activitylog\Models\Activity;
-use App\Models\User;
+use App\Services\UserService;
 
 class Table extends BaseTable
 {
+    protected UserService $userService;
+
     public string $sortField = 'created_at';
     public string $sortDirection = 'desc';
 
@@ -15,6 +17,11 @@ class Table extends BaseTable
         'log_name' => null,
         'causer_id' => null,
     ];
+
+    public function boot(UserService $userService): void
+    {
+        $this->userService = $userService;
+    }
 
     protected function query()
     {
@@ -47,7 +54,7 @@ class Table extends BaseTable
 
     public function getUserOptionsProperty()
     {
-        return User::query()
+        return $this->userService->query()
             ->select('id', 'name', 'email')
             ->orderBy('name')
             ->get()

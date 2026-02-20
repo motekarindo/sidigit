@@ -3,14 +3,19 @@
 namespace App\Services;
 
 use App\Models\EmployeeAttendance;
+use App\Repositories\EmployeeAttendanceRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
 class EmployeeAttendanceService
 {
+    public function __construct(
+        protected EmployeeAttendanceRepository $repository
+    ) {}
+
     public function query(): Builder
     {
-        return EmployeeAttendance::query()->with('employee');
+        return $this->repository->query()->with('employee');
     }
 
     public function getPaginated(int $perPage = 10): LengthAwarePaginator
@@ -20,21 +25,19 @@ class EmployeeAttendanceService
 
     public function store(array $data): EmployeeAttendance
     {
-        return EmployeeAttendance::create($data);
+        return $this->repository->create($data);
     }
 
     public function update(int $id, array $data): EmployeeAttendance
     {
-        $attendance = EmployeeAttendance::findOrFail($id);
-        $attendance->update($data);
-
-        return $attendance;
+        $attendance = $this->repository->findOrFail($id);
+        return $this->repository->update($attendance, $data);
     }
 
     public function destroy(int $id): void
     {
-        $attendance = EmployeeAttendance::findOrFail($id);
-        $attendance->delete();
+        $attendance = $this->repository->findOrFail($id);
+        $this->repository->delete($attendance);
     }
 
     public function destroyMany(array $ids): void
@@ -44,11 +47,11 @@ class EmployeeAttendanceService
             return;
         }
 
-        EmployeeAttendance::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 
     public function find(int $id): EmployeeAttendance
     {
-        return EmployeeAttendance::with('employee')->findOrFail($id);
+        return $this->repository->query()->with('employee')->findOrFail($id);
     }
 }

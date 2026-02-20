@@ -3,37 +3,40 @@
 namespace App\Services;
 
 use App\Models\Permission;
+use App\Repositories\PermissionRepository;
 use Illuminate\Database\Eloquent\Builder;
 
 class PermissionService
 {
+    public function __construct(
+        protected PermissionRepository $repository
+    ) {}
+
     public function query(): Builder
     {
-        return Permission::query()->with('menu');
+        return $this->repository->query()->with('menu');
     }
 
     public function find(int $id): Permission
     {
-        return Permission::findOrFail($id);
+        return $this->repository->findOrFail($id);
     }
 
     public function store(array $data): Permission
     {
-        return Permission::create($data);
+        return $this->repository->create($data);
     }
 
     public function update(int $id, array $data): Permission
     {
-        $permission = $this->find($id);
-        $permission->update($data);
-
-        return $permission;
+        $permission = $this->repository->findOrFail($id);
+        return $this->repository->update($permission, $data);
     }
 
     public function destroy(int $id): void
     {
-        $permission = $this->find($id);
-        $permission->delete();
+        $permission = $this->repository->findOrFail($id);
+        $this->repository->delete($permission);
     }
 
     public function destroyMany(array $ids): void
@@ -43,6 +46,6 @@ class PermissionService
             return;
         }
 
-        Permission::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 }

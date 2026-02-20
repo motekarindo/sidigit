@@ -22,7 +22,7 @@ class WarehouseService
 
     public function query(): Builder
     {
-        return Warehouse::query();
+        return $this->repository->query();
     }
 
     public function store(array $data): Warehouse
@@ -51,7 +51,7 @@ class WarehouseService
             return;
         }
 
-        Warehouse::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 
     public function find(int $id): Warehouse

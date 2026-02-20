@@ -28,7 +28,7 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Menu Induk</label>
                     <div class="mt-2">
                         <livewire:components.searchable-select
-                            wire:key="parent-menu-select-edit-{{ $menu->id }}"
+                            wire:key="parent-menu-select-edit-{{ $menuId }}"
                             wire:model="parent_id"
                             :options="$parentMenuOptions"
                             placeholder="Tanpa Induk"

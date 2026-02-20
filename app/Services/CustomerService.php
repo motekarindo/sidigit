@@ -23,12 +23,12 @@ class CustomerService
 
     public function query(): Builder
     {
-        return Customer::query();
+        return $this->repository->query();
     }
 
     public function queryTrashed(): Builder
     {
-        return Customer::onlyTrashed();
+        return $this->repository->query()->onlyTrashed();
     }
 
     public function store(array $data): Customer
@@ -61,12 +61,12 @@ class CustomerService
             return;
         }
 
-        Customer::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 
     public function restore(int $id): void
     {
-        $customer = Customer::withTrashed()->findOrFail($id);
+        $customer = $this->repository->query()->withTrashed()->findOrFail($id);
         $customer->restore();
     }
 
@@ -77,7 +77,7 @@ class CustomerService
             return;
         }
 
-        Customer::withTrashed()->whereIn('id', $ids)->restore();
+        $this->repository->query()->withTrashed()->whereIn('id', $ids)->restore();
     }
 
     public function find(int $id): Customer

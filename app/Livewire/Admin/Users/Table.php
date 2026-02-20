@@ -4,19 +4,21 @@ namespace App\Livewire\Admin\Users;
 
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\UserForm;
-use App\Models\Role;
 use App\Services\UserService;
+use App\Services\RoleService;
 use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
 {
     protected UserService $service;
+    protected RoleService $roleService;
 
     public UserForm $form;
 
-    public function boot(UserService $service): void
+    public function boot(UserService $service, RoleService $roleService): void
     {
         $this->service = $service;
+        $this->roleService = $roleService;
     }
 
     protected function query()
@@ -26,7 +28,7 @@ class Table extends BaseTable
 
     public function getAvailableRolesProperty()
     {
-        return Role::orderBy('name')->get();
+        return $this->roleService->all();
     }
 
     protected function resetForm(): void

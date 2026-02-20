@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Admin\Permissions;
 
-use App\Models\Menu;
-use App\Models\Permission;
+use App\Services\MenuService;
+use App\Services\PermissionService;
 use App\Traits\WithErrorToast;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
@@ -19,9 +19,18 @@ class PermissionsCreate extends Component
     use AuthorizesRequests;
     use WithErrorToast;
 
+    protected MenuService $menuService;
+    protected PermissionService $permissionService;
+
     public string $name = '';
     public string $slug = '';
     public ?int $menu_id = null;
+
+    public function boot(MenuService $menuService, PermissionService $permissionService): void
+    {
+        $this->menuService = $menuService;
+        $this->permissionService = $permissionService;
+    }
 
     public function mount(): void
     {
@@ -32,7 +41,7 @@ class PermissionsCreate extends Component
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', Rule::unique(Permission::class, 'slug')],
+            'slug' => ['required', 'string', 'max:255', Rule::unique('permissions', 'slug')],
             'menu_id' => ['required', 'integer', 'exists:menus,id'],
         ];
     }
@@ -42,7 +51,7 @@ class PermissionsCreate extends Component
         $data = $this->validate();
 
         try {
-            Permission::create($data);
+            $this->permissionService->store($data);
 
             session()->flash('success', 'Permission berhasil dibuat.');
 
@@ -59,7 +68,7 @@ class PermissionsCreate extends Component
     public function render()
     {
         return view('livewire.admin.permissions.create', [
-            'menus' => Menu::orderBy('name')->get(),
+            'menus' => $this->menuService->parentOptions(),
         ])->layoutData([
             'title' => 'Tambah Permission',
         ]);

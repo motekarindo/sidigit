@@ -3,7 +3,6 @@
 namespace App\Livewire\Forms;
 
 use App\Models\StockMovement;
-use App\Models\Material;
 use App\Services\StockMovementService;
 use Livewire\Form;
 
@@ -27,11 +26,11 @@ class StockMovementForm extends Form
         ];
     }
 
-    public function fillFromModel(StockMovement $movement): void
+    public function fillFromModel(StockMovement $movement, ?int $materialUnitId = null): void
     {
         $this->id = $movement->id;
         $this->material_id = $movement->material_id;
-        $this->unit_id = Material::find($movement->material_id)?->unit_id;
+        $this->unit_id = $materialUnitId;
         $this->type = $movement->type;
         $this->qty = $movement->qty;
         $this->notes = $movement->notes;

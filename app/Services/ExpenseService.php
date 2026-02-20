@@ -5,15 +5,20 @@ namespace App\Services;
 use App\Models\Expense;
 use App\Models\Material;
 use App\Models\StockMovement;
+use App\Repositories\ExpenseRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class ExpenseService
 {
+    public function __construct(
+        protected ExpenseRepository $repository
+    ) {}
+
     public function query(): Builder
     {
-        return Expense::query()->with(['material', 'supplier']);
+        return $this->repository->query()->with(['material', 'supplier']);
     }
 
     public function queryByType(string $type): Builder
@@ -31,7 +36,7 @@ class ExpenseService
         $payload = $this->normalize($data);
 
         return DB::transaction(function () use ($payload) {
-            $expense = Expense::create($payload);
+            $expense = $this->repository->create($payload);
             $this->syncStock($expense, $payload);
 
             return $expense;
@@ -43,8 +48,8 @@ class ExpenseService
         $payload = $this->normalize($data);
 
         return DB::transaction(function () use ($id, $payload) {
-            $expense = Expense::findOrFail($id);
-            $expense->update($payload);
+            $expense = $this->repository->findOrFail($id);
+            $this->repository->update($expense, $payload);
 
             StockMovement::query()
                 ->where('ref_type', 'expense')
@@ -60,12 +65,12 @@ class ExpenseService
     public function destroy(int $id): void
     {
         DB::transaction(function () use ($id) {
-            $expense = Expense::findOrFail($id);
+            $expense = $this->repository->findOrFail($id);
             StockMovement::query()
                 ->where('ref_type', 'expense')
                 ->where('ref_id', $expense->id)
                 ->delete();
-            $expense->delete();
+            $this->repository->delete($expense);
         });
     }
 
@@ -81,13 +86,13 @@ class ExpenseService
                 ->where('ref_type', 'expense')
                 ->whereIn('ref_id', $ids)
                 ->delete();
-            Expense::query()->whereIn('id', $ids)->delete();
+            $this->repository->query()->whereIn('id', $ids)->delete();
         });
     }
 
     public function find(int $id): Expense
     {
-        return Expense::with(['material', 'supplier'])->findOrFail($id);
+        return $this->repository->query()->with(['material', 'supplier'])->findOrFail($id);
     }
 
     protected function syncStock(Expense $expense, array $payload): void

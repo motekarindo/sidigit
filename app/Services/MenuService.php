@@ -3,37 +3,55 @@
 namespace App\Services;
 
 use App\Models\Menu;
+use App\Repositories\MenuRepository;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class MenuService
 {
+    public function __construct(
+        protected MenuRepository $repository
+    ) {}
+
     public function query(): Builder
     {
-        return Menu::query()->with('parent');
+        return $this->repository->query()->with('parent');
+    }
+
+    public function tree(): Collection
+    {
+        return $this->repository->tree();
+    }
+
+    public function treeWithPermissions(): Collection
+    {
+        return $this->repository->query()
+            ->whereNull('parent_id')
+            ->with(['children.permissions', 'permissions'])
+            ->orderBy('order')
+            ->get();
     }
 
     public function find(int $id): Menu
     {
-        return Menu::findOrFail($id);
+        return $this->repository->findOrFail($id);
     }
 
     public function store(array $data): Menu
     {
-        return Menu::create($data);
+        return $this->repository->create($data);
     }
 
     public function update(int $id, array $data): Menu
     {
-        $menu = $this->find($id);
-        $menu->update($data);
-
-        return $menu;
+        $menu = $this->repository->findOrFail($id);
+        return $this->repository->update($menu, $data);
     }
 
     public function destroy(int $id): void
     {
-        $menu = $this->find($id);
-        $menu->delete();
+        $menu = $this->repository->findOrFail($id);
+        $this->repository->delete($menu);
     }
 
     public function destroyMany(array $ids): void
@@ -43,6 +61,16 @@ class MenuService
             return;
         }
 
-        Menu::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
+    }
+
+    public function parentOptions(?int $excludeId = null)
+    {
+        $query = $this->repository->query()->orderBy('name');
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->get();
     }
 }

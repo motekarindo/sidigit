@@ -22,7 +22,7 @@ class CategoryService
 
     public function query(): Builder
     {
-        return Category::query();
+        return $this->repository->query();
     }
 
     public function store(array $data): Category
@@ -51,7 +51,7 @@ class CategoryService
             return;
         }
 
-        Category::query()->whereIn('id', $ids)->delete();
+        $this->repository->query()->whereIn('id', $ids)->delete();
     }
 
     public function find(int $id): Category

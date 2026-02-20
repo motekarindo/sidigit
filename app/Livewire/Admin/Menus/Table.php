@@ -5,7 +5,6 @@ namespace App\Livewire\Admin\Menus;
 use App\Helpers\IconHelper;
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\MenuForm;
-use App\Models\Menu;
 use App\Services\MenuService;
 use Illuminate\Validation\ValidationException;
 
@@ -27,10 +26,7 @@ class Table extends BaseTable
 
     public function getParentMenuOptionsProperty()
     {
-        return Menu::query()
-            ->when($this->activeId, fn($q) => $q->where('id', '!=', $this->activeId))
-            ->orderBy('name')
-            ->get();
+        return $this->service->parentOptions($this->activeId);
     }
 
     public function getIconOptionsProperty(): array

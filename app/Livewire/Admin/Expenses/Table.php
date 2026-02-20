@@ -4,16 +4,19 @@ namespace App\Livewire\Admin\Expenses;
 
 use App\Livewire\BaseTable;
 use App\Livewire\Forms\ExpenseForm;
-use App\Models\Material;
-use App\Models\Supplier;
-use App\Models\Unit;
 use App\Services\ExpenseService;
+use App\Services\MaterialService;
+use App\Services\SupplierService;
+use App\Services\UnitService;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
 
 class Table extends BaseTable
 {
     protected ExpenseService $service;
+    protected MaterialService $materialService;
+    protected SupplierService $supplierService;
+    protected UnitService $unitService;
 
     public ExpenseForm $form;
 
@@ -22,9 +25,12 @@ class Table extends BaseTable
     #[Url(except: null)]
     public ?int $edit = null;
 
-    public function boot(ExpenseService $service): void
+    public function boot(ExpenseService $service, MaterialService $materialService, SupplierService $supplierService, UnitService $unitService): void
     {
         $this->service = $service;
+        $this->materialService = $materialService;
+        $this->supplierService = $supplierService;
+        $this->unitService = $unitService;
     }
 
     public function mount(): void
@@ -44,24 +50,24 @@ class Table extends BaseTable
 
     public function getMaterialOptionsProperty()
     {
-        return Material::orderBy('name')->get();
+        return $this->materialService->query()->orderBy('name')->get();
     }
 
     public function getSupplierOptionsProperty()
     {
-        return Supplier::orderBy('name')->get();
+        return $this->supplierService->query()->orderBy('name')->get();
     }
 
     public function getUnitOptionsProperty()
     {
         $materialId = $this->form->material_id;
         if (!$materialId) {
-            return Unit::orderBy('name')->get();
+            return $this->unitService->query()->orderBy('name')->get();
         }
 
-        $material = Material::find($materialId);
+        $material = $this->materialService->query()->find($materialId);
         if (!$material) {
-            return Unit::orderBy('name')->get();
+            return $this->unitService->query()->orderBy('name')->get();
         }
 
         $ids = array_filter([$material->unit_id, $material->purchase_unit_id]);
@@ -69,7 +75,7 @@ class Table extends BaseTable
             return Unit::orderBy('name')->get();
         }
 
-        return Unit::query()->whereIn('id', $ids)->orderBy('name')->get();
+        return $this->unitService->query()->whereIn('id', $ids)->orderBy('name')->get();
     }
 
     protected function resetForm(): void
@@ -85,7 +91,7 @@ class Table extends BaseTable
             return;
         }
 
-        $material = Material::find($value);
+        $material = $this->materialService->query()->find($value);
         if ($material) {
             $this->form->unit_id = $material->purchase_unit_id ?: $material->unit_id;
         }

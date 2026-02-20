@@ -4,9 +4,15 @@ namespace App\Repositories;
 
 use App\Models\Employee;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class EmployeeRepository
 {
+    public function query(): Builder
+    {
+        return Employee::query();
+    }
+
     public function paginate(int $perPage = 10): LengthAwarePaginator
     {
         return Employee::query()
