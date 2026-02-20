@@ -84,9 +84,9 @@ class PermissionsCreate extends Component
 
     public function save(): void
     {
-        $data = $this->validate();
-
         try {
+            $data = $this->validate();
+
             $this->permissionService->store($data);
 
             session()->flash('success', 'Permission berhasil dibuat.');

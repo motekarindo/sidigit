@@ -22,6 +22,23 @@ class RolesCreate extends Component
     use WithErrorToast;
     use WithPageMeta;
 
+    protected array $messages = [
+        'name.required' => 'Nama role wajib diisi.',
+        'name.string' => 'Nama role harus berupa teks.',
+        'name.max' => 'Nama role maksimal 255 karakter.',
+        'name.unique' => 'Nama role sudah digunakan.',
+        'permissions.array' => 'Izin harus berupa daftar.',
+        'permissions.*.exists' => 'Izin yang dipilih tidak valid.',
+        'menus.array' => 'Menu harus berupa daftar.',
+        'menus.*.exists' => 'Menu yang dipilih tidak valid.',
+    ];
+
+    protected array $validationAttributes = [
+        'name' => 'Nama role',
+        'permissions' => 'Izin',
+        'menus' => 'Menu',
+    ];
+
     protected MenuService $menuService;
     protected RoleService $roleService;
 
@@ -63,29 +80,6 @@ class RolesCreate extends Component
             'permissions.*' => ['exists:permissions,id'],
             'menus' => ['nullable', 'array'],
             'menus.*' => ['exists:menus,id'],
-        ];
-    }
-
-    protected function messages(): array
-    {
-        return [
-            'name.required' => 'Nama role wajib diisi.',
-            'name.string' => 'Nama role harus berupa teks.',
-            'name.max' => 'Nama role maksimal 255 karakter.',
-            'name.unique' => 'Nama role sudah digunakan.',
-            'permissions.array' => 'Izin harus berupa daftar.',
-            'permissions.*.exists' => 'Izin yang dipilih tidak valid.',
-            'menus.array' => 'Menu harus berupa daftar.',
-            'menus.*.exists' => 'Menu yang dipilih tidak valid.',
-        ];
-    }
-
-    protected function validationAttributes(): array
-    {
-        return [
-            'name' => 'Nama role',
-            'permissions' => 'Izin',
-            'menus' => 'Menu',
         ];
     }
 
@@ -250,9 +244,9 @@ class RolesCreate extends Component
 
     public function save(): void
     {
-        $data = $this->validate();
-
         try {
+            $data = $this->validate();
+
             $role = $this->roleService->store([
                 'name' => $data['name'],
             ]);

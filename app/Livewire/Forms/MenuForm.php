@@ -14,7 +14,7 @@ class MenuForm extends Form
     public ?int $parent_id = null;
     public ?string $route_name = null;
     public ?string $icon = null;
-    public int $order = 0;
+    public ?int $order = null;
 
     protected function rules(): array
     {
