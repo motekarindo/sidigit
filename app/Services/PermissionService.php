@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\Builder;
 
 class PermissionService
 {
-    public function __construct(
-        protected PermissionRepository $repository
-    ) {}
+    protected PermissionRepository $repository;
+
+    public function __construct(PermissionRepository $repository)
+    {
+        $this->repository = $repository;
+    }
 
     public function query(): Builder
     {

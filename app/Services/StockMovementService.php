@@ -10,9 +10,12 @@ use Illuminate\Database\Eloquent\Builder;
 
 class StockMovementService
 {
-    public function __construct(
-        protected StockMovementRepository $repository
-    ) {}
+    protected StockMovementRepository $repository;
+
+    public function __construct(StockMovementRepository $repository)
+    {
+        $this->repository = $repository;
+    }
 
     public function query(): Builder
     {

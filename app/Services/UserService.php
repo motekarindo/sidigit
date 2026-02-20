@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\Builder;
 
 class UserService
 {
-    public function __construct(
-        protected UserRepository $repository
-    ) {}
+    protected UserRepository $repository;
+
+    public function __construct(UserRepository $repository)
+    {
+        $this->repository = $repository;
+    }
 
     public function query(): Builder
     {

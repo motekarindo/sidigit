@@ -9,9 +9,12 @@ use Illuminate\Database\Eloquent\Builder;
 
 class EmployeeLoanService
 {
-    public function __construct(
-        protected EmployeeLoanRepository $repository
-    ) {}
+    protected EmployeeLoanRepository $repository;
+
+    public function __construct(EmployeeLoanRepository $repository)
+    {
+        $this->repository = $repository;
+    }
 
     public function query(): Builder
     {

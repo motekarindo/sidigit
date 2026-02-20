@@ -9,9 +9,12 @@ use Illuminate\Support\Collection;
 
 class MenuService
 {
-    public function __construct(
-        protected MenuRepository $repository
-    ) {}
+    protected MenuRepository $repository;
+
+    public function __construct(MenuRepository $repository)
+    {
+        $this->repository = $repository;
+    }
 
     public function query(): Builder
     {
