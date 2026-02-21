@@ -24,6 +24,10 @@
         .meta-label { width: 32%; background: #f3f4f6; color: #374151; font-weight: 700; }
         .text-right { text-align: right; }
         .totals td { border-bottom: none; }
+        .payment-box { border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; padding: 8px; }
+        .payment-list { margin: 6px 0 0; padding: 0; list-style: none; }
+        .payment-list li { margin-bottom: 4px; }
+        .qr-box { width: 70px; height: 70px; border: 1px dashed #cbd5e1; display: inline-block; text-align: center; line-height: 70px; color: #6b7280; font-weight: 700; font-size: 10px; background: #fff; border-radius: 6px; }
     </style>
 </head>
 
@@ -47,6 +51,7 @@
         ][$status] ?? ucfirst($status);
         $paidAmount = (float) ($order->paid_amount ?? 0);
         $balance = max(0, (float) ($order->grand_total ?? 0) - $paidAmount);
+        $bankAccounts = $bankAccounts ?? collect();
     @endphp
 
     <table class="row">
@@ -127,18 +132,57 @@
     </div>
 
     <div class="section">
-        <table class="meta-table" style="width: 45%; margin-left: auto; border: 1px solid #e5e7eb;">
+        <table class="row">
             <tr>
-                <td class="meta-label">Total Harga</td>
-                <td class"text"><strong>Rp {{ number_format((float) $order->total_price, 0, ',', '.') }}</strong></td>
-            </tr>
-            <tr>
-                <td class="meta-label">Diskon</td>
-                <td><strong>Rp {{ number_format((float) $order->total_discount, 0, ',', '.') }}</strong></td>
-            </tr>
-            <tr>
-                <td class="meta-label">Grand Total</td>
-                <td><strong>Rp {{ number_format((float) $order->grand_total, 0, ',', '.') }}</strong></td>
+                <td class="col" style="width: 55%; vertical-align: top;">
+                    <div class="payment-box">
+                        <h2>Rekening Pembayaran</h2>
+                        <table style="width: 100%;">
+                            <tr>
+                                <td style="vertical-align: top;">
+                                    <ul class="payment-list">
+                                        @forelse ($bankAccounts as $account)
+                                            <li>
+                                                <strong>{{ $account->bank_name }}</strong>
+                                                &bull; {{ $account->rekening_number }}
+                                                &bull; a.n. {{ $account->account_name }}
+                                            </li>
+                                        @empty
+                                            <li class="text-muted">Belum ada rekening bank.</li>
+                                        @endforelse
+                                    </ul>
+                                </td>
+                                <td style="width: 80px; text-align: right; vertical-align: top;">
+                                    <div class="qr-box">QRIS</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+                <td class="col" style="width: 45%; vertical-align: top;">
+                    <table class="meta-table" style="border: 1px solid #e5e7eb;">
+                        <tr>
+                            <td class="meta-label">Total Harga</td>
+                            <td class="text-right"><strong>Rp {{ number_format((float) $order->total_price, 0, ',', '.') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Diskon</td>
+                            <td class="text-right"><strong>Rp {{ number_format((float) $order->total_discount, 0, ',', '.') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Grand Total</td>
+                            <td class="text-right"><strong>Rp {{ number_format((float) $order->grand_total, 0, ',', '.') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Terbayar</td>
+                            <td class="text-right"><strong>Rp {{ number_format($paidAmount, 0, ',', '.') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Sisa</td>
+                            <td class="text-right"><strong>Rp {{ number_format($balance, 0, ',', '.') }}</strong></td>
+                        </tr>
+                    </table>
+                </td>
             </tr>
         </table>
     </div>
