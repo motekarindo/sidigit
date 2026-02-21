@@ -24,7 +24,6 @@
         .meta-label { width: 32%; background: #f3f4f6; color: #374151; font-weight: 700; }
         .text-right { text-align: right; }
         .totals td { border-bottom: none; }
-        .header-sep { width: 100%; height: 5px; background: #e5e7eb; margin-top: 6px; }
     </style>
 </head>
 
@@ -81,7 +80,6 @@
             </td>
         </tr>
     </table>
-    {{-- <div class="header-sep"></div> --}}
 
     <div class="section">
         <table>
@@ -132,15 +130,15 @@
         <table class="meta-table" style="width: 45%; margin-left: auto; border: 1px solid #e5e7eb;">
             <tr>
                 <td class="meta-label">Total Harga</td>
-                <td class="text-right"><strong>Rp {{ number_format((float) $order->total_price, 0, ',', '.') }}</strong></td>
+                <td class"text"><strong>Rp {{ number_format((float) $order->total_price, 0, ',', '.') }}</strong></td>
             </tr>
             <tr>
                 <td class="meta-label">Diskon</td>
-                <td class="text-right"><strong>Rp {{ number_format((float) $order->total_discount, 0, ',', '.') }}</strong></td>
+                <td><strong>Rp {{ number_format((float) $order->total_discount, 0, ',', '.') }}</strong></td>
             </tr>
             <tr>
                 <td class="meta-label">Grand Total</td>
-                <td class="text-right"><strong>Rp {{ number_format((float) $order->grand_total, 0, ',', '.') }}</strong></td>
+                <td><strong>Rp {{ number_format((float) $order->grand_total, 0, ',', '.') }}</strong></td>
             </tr>
         </table>
     </div>

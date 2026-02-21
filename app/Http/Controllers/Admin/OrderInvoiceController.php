@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\BankAccountService;
 use App\Services\OrderService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -12,10 +13,12 @@ class OrderInvoiceController extends Controller
     use AuthorizesRequests;
 
     protected OrderService $service;
+    protected BankAccountService $bankAccountService;
 
-    public function __construct(OrderService $service)
+    public function __construct(OrderService $service, BankAccountService $bankAccountService)
     {
         $this->service = $service;
+        $this->bankAccountService = $bankAccountService;
     }
 
     public function show(Request $request, int $order)
@@ -32,9 +35,16 @@ class OrderInvoiceController extends Controller
         }
         $print = $request->boolean('print');
 
+        $bankAccounts = $this->bankAccountService
+            ->query()
+            ->orderBy('bank_name')
+            ->orderBy('rekening_number')
+            ->get(['bank_name', 'rekening_number', 'account_name']);
+
         return view('admin.orders.invoice', [
             'order' => $orderModel,
             'print' => $print,
+            'bankAccounts' => $bankAccounts,
         ]);
     }
 
