@@ -17,6 +17,10 @@ class UserForm extends Form
     public string $password = '';
     public string $password_confirmation = '';
     public ?int $role_id = null;
+    public ?int $branch_id = null;
+    public array $branch_ids = [];
+    public ?int $employee_id = null;
+    public bool $without_employee = true;
 
     public bool $requirePassword = true;
 
@@ -34,12 +38,25 @@ class UserForm extends Form
             ? ['required', 'string', 'confirmed', Password::min(8)]
             : ['nullable', 'string', 'confirmed', Password::min(8)];
 
+        $uniqueEmployee = Rule::unique(User::class, 'employee_id');
+        if (! empty($this->id)) {
+            $uniqueEmployee = $uniqueEmployee->ignore($this->id);
+        }
+
+        $employeeRules = $this->without_employee
+            ? ['nullable', 'integer', 'exists:mst_employees,id', $uniqueEmployee]
+            : ['required', 'integer', 'exists:mst_employees,id', $uniqueEmployee];
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', $uniqueUsername],
             'email' => ['required', 'string', 'email', 'max:255', $uniqueEmail],
             'password' => $passwordRules,
             'role_id' => ['required', 'integer', 'exists:roles,id'],
+            'branch_id' => ['required', 'integer', 'exists:branches,id'],
+            'branch_ids' => ['required', 'array', 'min:1'],
+            'branch_ids.*' => ['exists:branches,id'],
+            'employee_id' => $employeeRules,
         ];
     }
 
@@ -62,6 +79,16 @@ class UserForm extends Form
             'password.min' => 'Password minimal 8 karakter.',
             'role_id.required' => 'Role wajib dipilih.',
             'role_id.exists' => 'Role yang dipilih tidak valid.',
+            'branch_id.required' => 'Cabang default wajib dipilih.',
+            'branch_id.exists' => 'Cabang default tidak valid.',
+            'branch_ids.required' => 'Pilih minimal 1 cabang.',
+            'branch_ids.array' => 'Cabang harus berupa daftar.',
+            'branch_ids.min' => 'Pilih minimal 1 cabang.',
+            'branch_ids.*.exists' => 'Cabang yang dipilih tidak valid.',
+            'employee_id.required' => 'Pegawai wajib dipilih.',
+            'employee_id.integer' => 'Pegawai tidak valid.',
+            'employee_id.exists' => 'Pegawai yang dipilih tidak valid.',
+            'employee_id.unique' => 'Pegawai sudah memiliki akun.',
         ];
     }
 
@@ -73,6 +100,9 @@ class UserForm extends Form
             'email' => 'Email',
             'password' => 'Password',
             'role_id' => 'Role',
+            'branch_id' => 'Cabang Default',
+            'branch_ids' => 'Akses Cabang',
+            'employee_id' => 'Pegawai',
         ];
     }
 
@@ -83,6 +113,13 @@ class UserForm extends Form
         $this->username = $user->username;
         $this->email = $user->email;
         $this->role_id = $user->roles->first()?->id;
+        $this->branch_id = $user->branch_id;
+        $this->branch_ids = $user->branches->pluck('id')->map(fn ($id) => (int) $id)->toArray();
+        if ($this->branch_id && !in_array($this->branch_id, $this->branch_ids, true)) {
+            $this->branch_ids[] = $this->branch_id;
+        }
+        $this->employee_id = $user->employee_id;
+        $this->without_employee = $user->employee_id === null;
         $this->password = '';
         $this->password_confirmation = '';
     }
@@ -90,15 +127,21 @@ class UserForm extends Form
     public function store(UserService $service): User
     {
         $this->validate();
+        if (!in_array($this->branch_id, $this->branch_ids, true)) {
+            $this->branch_ids[] = $this->branch_id;
+        }
 
         $user = $service->store([
             'name' => $this->name,
             'username' => $this->username,
             'email' => $this->email,
             'password' => $this->password,
+            'branch_id' => $this->branch_id,
+            'employee_id' => $this->without_employee ? null : $this->employee_id,
         ]);
 
         $user->roles()->sync([$this->role_id]);
+        $service->syncBranches($user->id, $this->branch_ids);
 
         return $user;
     }
@@ -106,11 +149,16 @@ class UserForm extends Form
     public function update(UserService $service): User
     {
         $this->validate();
+        if (!in_array($this->branch_id, $this->branch_ids, true)) {
+            $this->branch_ids[] = $this->branch_id;
+        }
 
         $data = [
             'name' => $this->name,
             'username' => $this->username,
             'email' => $this->email,
+            'branch_id' => $this->branch_id,
+            'employee_id' => $this->without_employee ? null : $this->employee_id,
         ];
 
         if (! empty($this->password)) {
@@ -119,6 +167,7 @@ class UserForm extends Form
 
         $user = $service->update($this->id, $data);
         $user->roles()->sync([$this->role_id]);
+        $service->syncBranches($user->id, $this->branch_ids);
 
         return $user;
     }

@@ -16,6 +16,7 @@ class CustomerRequest extends FormRequest
     public function rules(): array
     {
         $customerId = $this->route('customer');
+        $branchId = auth()->user()?->branch_id;
 
         return [
             'name' => ['required', 'string', 'max:32'],
@@ -25,7 +26,9 @@ class CustomerRequest extends FormRequest
                 'nullable',
                 'email',
                 'max:64',
-                Rule::unique('mst_customers', 'email')->ignore($customerId),
+                Rule::unique('mst_customers', 'email')
+                    ->where(fn ($query) => $query->where('branch_id', $branchId))
+                    ->ignore($customerId),
             ],
             'member_type' => ['required', Rule::enum(CustomerMemberType::class)],
         ];

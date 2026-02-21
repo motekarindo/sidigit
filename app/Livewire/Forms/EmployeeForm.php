@@ -26,6 +26,8 @@ class EmployeeForm extends Form
 
     public function rules(): array
     {
+        $branchId = auth()->user()?->branch_id;
+
         return [
             'name' => ['required', 'string', 'max:32'],
             'address' => ['nullable', 'string', 'max:128'],
@@ -34,7 +36,9 @@ class EmployeeForm extends Form
                 'nullable',
                 'email',
                 'max:64',
-                Rule::unique('mst_employees', 'email')->ignore($this->id),
+                Rule::unique('mst_employees', 'email')
+                    ->where(fn ($query) => $query->where('branch_id', $branchId))
+                    ->ignore($this->id),
             ],
             'photo' => ['nullable', 'array'],
             'salary' => ['nullable', 'integer', 'min:0'],

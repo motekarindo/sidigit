@@ -61,6 +61,7 @@ class MenuSeeder extends Seeder
         Menu::updateOrCreate(['route_name' => 'finishes.index'], ['parent_id' => $masterData->id, 'name' => 'Finishing', 'order' => 6]);
         Menu::updateOrCreate(['route_name' => 'attendances.index'], ['parent_id' => $masterData->id, 'name' => 'Absensi', 'order' => 7]);
         Menu::updateOrCreate(['route_name' => 'employee-loans.index'], ['parent_id' => $masterData->id, 'name' => 'Kasbon', 'order' => 8]);
+        Menu::updateOrCreate(['route_name' => 'branches.index'], ['parent_id' => $masterData->id, 'name' => 'Cabang', 'order' => 9]);
 
         // --- LAPORAN ---
         $reportMenu = Menu::updateOrCreate(['name' => 'Laporan'], ['icon' => 'bi bi-graph-up', 'order' => 7]);

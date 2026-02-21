@@ -27,7 +27,11 @@
         .payment-box { border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; padding: 8px; }
         .payment-list { margin: 6px 0 0; padding: 0; list-style: none; }
         .payment-list li { margin-bottom: 4px; }
-        .qr-box { width: 70px; height: 70px; border: 1px dashed #cbd5e1; display: inline-block; text-align: center; line-height: 70px; color: #6b7280; font-weight: 700; font-size: 10px; background: #fff; border-radius: 6px; }
+        .qr-box { width: 70px; height: 70px; border: 1px dashed #cbd5e1; background: #fff; border-radius: 6px; }
+        .qr-inner { width: 100%; height: 100%; display: table; }
+        .qr-inner span { display: table-cell; vertical-align: middle; text-align: center; }
+        .qr-placeholder { color: #6b7280; font-weight: 700; font-size: 10px; }
+        .qr-box img { max-width: 100%; max-height: 100%; width: auto; height: auto; display: inline-block; }
     </style>
 </head>
 
@@ -52,6 +56,24 @@
         $paidAmount = (float) ($order->paid_amount ?? 0);
         $balance = max(0, (float) ($order->grand_total ?? 0) - $paidAmount);
         $bankAccounts = $bankAccounts ?? collect();
+        $branch = $order->branch;
+        $qrisUrl = null;
+        if (!empty($branch?->qris_path)) {
+            $disk = 'public';
+            try {
+                $storage = Storage::disk($disk);
+                $driver = config("filesystems.disks.{$disk}.driver");
+                if ($driver === 'local') {
+                    $qrisUrl = public_path('storage/' . $branch->qris_path);
+                } elseif ($driver === 's3') {
+                    $qrisUrl = $storage->temporaryUrl($branch->qris_path, now()->addMinutes(10));
+                } else {
+                    $qrisUrl = $storage->url($branch->qris_path);
+                }
+            } catch (\Throwable $e) {
+                $qrisUrl = null;
+            }
+        }
     @endphp
 
     <table class="row">
@@ -153,7 +175,17 @@
                                     </ul>
                                 </td>
                                 <td style="width: 80px; text-align: right; vertical-align: top;">
-                                    <div class="qr-box">QRIS</div>
+                                    <div class="qr-box">
+                                        <div class="qr-inner">
+                                            <span>
+                                                @if ($qrisUrl)
+                                                    <img src="{{ $qrisUrl }}" alt="QRIS">
+                                                @else
+                                                    <span class="qr-placeholder">QRIS</span>
+                                                @endif
+                                            </span>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         </table>

@@ -37,6 +37,7 @@ class OrderInvoiceController extends Controller
 
         $bankAccounts = $this->bankAccountService
             ->query()
+            ->where('branch_id', $orderModel->branch_id)
             ->orderBy('bank_name')
             ->orderBy('rekening_number')
             ->get(['bank_name', 'rekening_number', 'account_name']);
@@ -72,6 +73,7 @@ class OrderInvoiceController extends Controller
 
         $bankAccounts = $this->bankAccountService
             ->query()
+            ->where('branch_id', $orderModel->branch_id)
             ->orderBy('bank_name')
             ->orderBy('rekening_number')
             ->get(['bank_name', 'rekening_number', 'account_name']);

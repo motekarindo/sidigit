@@ -3,9 +3,11 @@
 namespace App\Livewire\Layout;
 
 use App\Dto\MenuItemData;
+use App\Models\Branch;
 use App\Services\MenuCacheService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -56,8 +58,10 @@ class Sidebar extends Component
 
     public function render()
     {
+        $activeBranch = $this->resolveActiveBranch();
         return view('livewire.layout.sidebar', [
             'sidebarMenus' => $this->withActiveState($this->sidebarMenus),
+            'branchLogoUrl' => $this->resolveBranchLogoUrl($activeBranch),
         ]);
     }
 
@@ -143,5 +147,40 @@ class Sidebar extends Component
     protected function urlsMatch(string $current, string $target): bool
     {
         return rtrim($current, '/') === rtrim($target, '/');
+    }
+
+    protected function resolveActiveBranch(): ?Branch
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return null;
+        }
+
+        $activeId = session('active_branch_id') ?? $user->branch_id;
+        if (! $activeId) {
+            return null;
+        }
+
+        return Branch::query()->whereKey($activeId)->first();
+    }
+
+    protected function resolveBranchLogoUrl(?Branch $branch): ?string
+    {
+        if (! $branch || empty($branch->logo_path)) {
+            return null;
+        }
+
+        $disk = 'public';
+
+        try {
+            $storage = Storage::disk($disk);
+            $driver = config("filesystems.disks.{$disk}.driver");
+
+            return $driver === 's3'
+                ? $storage->temporaryUrl($branch->logo_path, now()->addMinutes(10))
+                : $storage->url($branch->logo_path);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

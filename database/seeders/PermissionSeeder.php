@@ -152,6 +152,12 @@ class PermissionSeeder extends Seeder
             'employee-loan.edit' => ['name' => 'Edit Kasbon', 'menu_id' => $menuId('Kasbon')],
             'employee-loan.delete' => ['name' => 'Hapus Kasbon', 'menu_id' => $menuId('Kasbon')],
 
+            // Cabang
+            'branch.view' => ['name' => 'Lihat Cabang', 'menu_id' => $menuId('Cabang')],
+            'branch.create' => ['name' => 'Tambah Cabang', 'menu_id' => $menuId('Cabang')],
+            'branch.edit' => ['name' => 'Edit Cabang', 'menu_id' => $menuId('Cabang')],
+            'branch.delete' => ['name' => 'Hapus Cabang', 'menu_id' => $menuId('Cabang')],
+
             // Laporan
             'report.sales.view' => ['name' => 'Lihat Laporan Penjualan', 'menu_id' => $menuId('Laporan Penjualan')],
             'report.expense.view' => ['name' => 'Lihat Laporan Pengeluaran', 'menu_id' => $menuId('Laporan Pengeluaran')],

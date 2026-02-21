@@ -15,12 +15,15 @@ class ProductRequest extends FormRequest
     public function rules(): array
     {
         $productId = (int) $this->route('product');
+        $branchId = auth()->user()?->branch_id;
         return [
             'sku' => [
                 'required',
                 'string',
                 'max:64',
-                Rule::unique('mst_products', 'sku')->ignore($productId),
+                Rule::unique('mst_products', 'sku')
+                    ->where(fn ($query) => $query->where('branch_id', $branchId))
+                    ->ignore($productId),
             ],
             'name' => ['required', 'string', 'max:128'],
             'base_price' => ['required', 'integer', 'min:0'],

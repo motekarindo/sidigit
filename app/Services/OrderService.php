@@ -243,6 +243,7 @@ class OrderService
                 'method' => $payment['method'] ?? 'cash',
                 'paid_at' => $payment['paid_at'] ?? now(),
                 'notes' => $payment['notes'] ?? null,
+                'branch_id' => $order->branch_id,
             ]);
         }
     }
@@ -344,6 +345,7 @@ class OrderService
             'ref_type' => 'order',
             'ref_id' => $orderItem->order_id,
             'notes' => $note,
+            'branch_id' => $orderItem->order?->branch_id,
         ]);
     }
 

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Branch;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Support\Facades\Hash;
@@ -25,18 +26,35 @@ class UserSeeder extends Seeder
             return;
         }
 
-        // 2. Buat User Admin dan berikan peran Admin
-        $adminUser = User::factory()->create([
-            'name' => 'Admin User',
-            'username' => 'admin',
-            'email' => 'admin@gmail.com',
-            'password' => Hash::make('password'),
-        ]);
-        $adminUser->roles()->attach($adminRole->id);
+        $mainBranch = Branch::where('is_main', true)->first();
+        if (!$mainBranch) {
+            $mainBranch = Branch::create([
+                'name' => config('app.name', 'Percetakan') . ' (Induk)',
+                'address' => config('app.company_address', 'Alamat belum diatur.'),
+                'phone' => config('app.company_phone', '-'),
+                'email' => config('mail.from.address', '-'),
+                'is_main' => true,
+            ]);
+        }
+
+        // 2. Buat/User admin dan berikan peran Admin
+        $adminUser = User::updateOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'name' => 'Admin User',
+                'username' => 'admin',
+                'password' => Hash::make('password'),
+                'branch_id' => $mainBranch->id,
+            ]
+        );
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
+        $adminUser->branches()->syncWithoutDetaching([$mainBranch->id]);
 
         // 3. Buat 10 User biasa dan berikan peran User menggunakan Factory Callback
-        User::factory(10)->afterCreating(function (User $user) use ($userRole) {
+        User::factory(5)->afterCreating(function (User $user) use ($userRole, $mainBranch) {
             $user->roles()->attach($userRole->id);
+            $user->update(['branch_id' => $mainBranch->id]);
+            $user->branches()->syncWithoutDetaching([$mainBranch->id]);
         })->create();
     }
 }

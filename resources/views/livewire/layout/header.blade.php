@@ -49,6 +49,7 @@
         </div>
 
         <div class="flex items-center gap-3">
+            <livewire:layout.branch-switcher />
             <button @click.prevent="darkMode = !darkMode"
                 class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-800">
                 <svg class="hidden dark:block" width="20" height="20" viewBox="0 0 20 20" fill="none"

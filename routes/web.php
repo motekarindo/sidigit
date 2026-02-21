@@ -24,6 +24,7 @@ use App\Livewire\Admin\Warehouses\WarehousesEdit;
 use App\Livewire\Admin\Employees\EmployeesIndex;
 use App\Livewire\Admin\Employees\EmployeesCreate;
 use App\Livewire\Admin\Employees\EmployeesEdit;
+use App\Livewire\Admin\Branches\BranchesIndex;
 use App\Livewire\Admin\Customers\CustomersIndex;
 use App\Livewire\Admin\Customers\CustomersCreate;
 use App\Livewire\Admin\Customers\CustomersEdit;
@@ -149,6 +150,7 @@ Route::middleware('guest')->group(function () {
         Route::get('/create', WarehousesCreate::class)->name('create');
         Route::get('/{warehouse}/edit', WarehousesEdit::class)->name('edit');
     });
+    Route::get('branches', BranchesIndex::class)->name('branches.index');
     // -----------------------------------------
 
     // --- RUTE UNTUK PROFILE ---

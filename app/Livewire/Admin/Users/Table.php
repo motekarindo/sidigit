@@ -6,19 +6,27 @@ use App\Livewire\BaseTable;
 use App\Livewire\Forms\UserForm;
 use App\Services\UserService;
 use App\Services\RoleService;
+use App\Services\BranchService;
+use App\Services\EmployeeService;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
+use App\Models\User;
 
 class Table extends BaseTable
 {
     protected UserService $service;
     protected RoleService $roleService;
+    protected BranchService $branchService;
+    protected EmployeeService $employeeService;
 
     public UserForm $form;
 
-    public function boot(UserService $service, RoleService $roleService): void
+    public function boot(UserService $service, RoleService $roleService, BranchService $branchService, EmployeeService $employeeService): void
     {
         $this->service = $service;
         $this->roleService = $roleService;
+        $this->branchService = $branchService;
+        $this->employeeService = $employeeService;
     }
 
     protected function query()
@@ -31,10 +39,39 @@ class Table extends BaseTable
         return $this->roleService->all();
     }
 
+    public function getAvailableBranchesProperty()
+    {
+        return $this->branchService->query()->orderBy('name')->get();
+    }
+
+    public function getAvailableEmployeesProperty()
+    {
+        $assigned = $this->service->query()->whereNotNull('employee_id')->pluck('employee_id')->all();
+        $currentEmployeeId = $this->form->employee_id;
+        if ($currentEmployeeId) {
+            $assigned = array_values(array_filter($assigned, fn ($id) => (int) $id !== (int) $currentEmployeeId));
+        }
+
+        return $this->employeeService->query()
+            ->when(!empty($assigned), fn ($query) => $query->whereNotIn('id', $assigned))
+            ->orderBy('name')
+            ->get()
+            ->map(function ($employee) {
+                $label = $employee->email ? "{$employee->name} - {$employee->email}" : $employee->name;
+                return ['id' => $employee->id, 'name' => $label];
+            });
+    }
+
     protected function resetForm(): void
     {
         $this->form->reset();
         $this->form->requirePassword = true;
+        $this->form->without_employee = true;
+        $this->form->employee_id = null;
+        $defaultBranchId = auth()->user()?->branch_id
+            ?? $this->branchService->query()->where('is_main', true)->value('id');
+        $this->form->branch_id = $defaultBranchId;
+        $this->form->branch_ids = $defaultBranchId ? [$defaultBranchId] : [];
     }
 
     protected function toastValidation(ValidationException $e, ?string $fallback = null): void
@@ -52,9 +89,49 @@ class Table extends BaseTable
     protected function loadForm(int $id): void
     {
         $user = $this->service->find($id);
-        $user->load('roles');
+        $user->load('roles', 'branches');
         $this->form->fillFromModel($user);
         $this->form->requirePassword = false;
+    }
+
+    public function updatedFormWithoutEmployee(bool $value): void
+    {
+        if ($value) {
+            $this->form->employee_id = null;
+        }
+    }
+
+    public function updatedFormEmployeeId(?int $value): void
+    {
+        if (empty($value)) {
+            return;
+        }
+
+        $employee = $this->employeeService->find($value);
+        $this->form->name = $employee->name ?? $this->form->name;
+        $this->form->username = $this->suggestUsername($employee->name, $this->form->id);
+        $this->form->email = $employee->email ?? '';
+    }
+
+    protected function suggestUsername(string $name, ?int $ignoreId): string
+    {
+        $base = Str::slug($name, '.');
+        $base = $base !== '' ? $base : 'user';
+
+        $username = $base;
+        $suffix = 1;
+
+        $exists = fn ($value) => User::query()
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->where('username', $value)
+            ->exists();
+
+        while ($exists($username)) {
+            $suffix++;
+            $username = $base . $suffix;
+        }
+
+        return $username;
     }
 
     public function create(): void

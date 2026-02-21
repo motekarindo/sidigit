@@ -10,12 +10,21 @@
     <div :class="sidebarToggle ? 'justify-center' : 'justify-between'" class="flex items-center gap-2 pt-8 pb-7">
         <a href="{{ Route::has('dashboard') ? route('dashboard') : '#' }}" class="flex items-center gap-3">
             <span class="logo" :class="sidebarToggle ? 'lg:hidden' : ''">
-                <img class="h-8 dark:hidden" src="{{ asset('assets/tailadmin/images/logo/logo.svg') }}" alt="Logo">
-                <img class="hidden h-8 dark:block" src="{{ asset('assets/tailadmin/images/logo/logo-dark.svg') }}"
-                    alt="Logo">
+                @if (!empty($branchLogoUrl))
+                    <img class="h-8" src="{{ $branchLogoUrl }}" alt="Logo cabang">
+                @else
+                    <img class="h-8 dark:hidden" src="{{ asset('assets/tailadmin/images/logo/logo.svg') }}" alt="Logo">
+                    <img class="hidden h-8 dark:block" src="{{ asset('assets/tailadmin/images/logo/logo-dark.svg') }}"
+                        alt="Logo">
+                @endif
             </span>
-            <img class="logo-icon h-8" :class="sidebarToggle ? 'hidden lg:block' : 'hidden'"
-                src="{{ asset('assets/tailadmin/images/logo/logo-icon.svg') }}" alt="Logo icon">
+            @if (!empty($branchLogoUrl))
+                <img class="logo-icon h-8" :class="sidebarToggle ? 'hidden lg:block' : 'hidden'"
+                    src="{{ $branchLogoUrl }}" alt="Logo cabang">
+            @else
+                <img class="logo-icon h-8" :class="sidebarToggle ? 'hidden lg:block' : 'hidden'"
+                    src="{{ asset('assets/tailadmin/images/logo/logo-icon.svg') }}" alt="Logo icon">
+            @endif
         </a>
     </div>
 

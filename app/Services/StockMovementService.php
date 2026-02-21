@@ -98,6 +98,7 @@ class StockMovementService
             'ref_type' => $data['ref_type'] ?? null,
             'ref_id' => $data['ref_id'] ?? null,
             'notes' => $data['notes'] ?? null,
+            'branch_id' => $data['branch_id'] ?? null,
         ];
     }
 

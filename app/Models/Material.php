@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\LogsAllActivity;
+use App\Traits\BranchScoped;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -10,7 +11,7 @@ use RichanFongdasen\EloquentBlameable\BlameableTrait;
 
 class Material extends Model
 {
-    use HasFactory, LogsAllActivity, BlameableTrait, SoftDeletes;
+    use HasFactory, LogsAllActivity, BranchScoped, BlameableTrait, SoftDeletes;
 
     protected $table = 'mst_materials';
 
@@ -23,6 +24,7 @@ class Material extends Model
         'cost_price',
         'conversion_qty',
         'reorder_level',
+        'branch_id',
     ];
 
     protected $casts = [

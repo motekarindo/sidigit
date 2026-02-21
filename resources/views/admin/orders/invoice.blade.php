@@ -38,6 +38,7 @@
         .payment-list { margin: 6px 0 0; padding: 0; list-style: none; }
         .payment-list li { margin-bottom: 4px; }
         .qr-box { width: 90px; height: 90px; border: 1px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; color: #6b7280; font-weight: 700; font-size: 10px; background: #fff; border-radius: 6px; }
+        .qr-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
         @media (min-width: 768px) {
             .page { padding: 32px; }
             .paper { padding: 20px 24px; }
@@ -64,6 +65,20 @@
         $payments = $order->payments?->sortBy('paid_at') ?? collect();
         $paidAmount = (float) ($order->paid_amount ?? 0);
         $balance = max(0, (float) ($order->grand_total ?? 0) - $paidAmount);
+        $branch = $order->branch;
+        $qrisUrl = null;
+        if (!empty($branch?->qris_path)) {
+            $disk = 'public';
+            try {
+                $storage = Storage::disk($disk);
+                $driver = config("filesystems.disks.{$disk}.driver");
+                $qrisUrl = $driver === 's3'
+                    ? $storage->temporaryUrl($branch->qris_path, now()->addMinutes(10))
+                    : $storage->url($branch->qris_path);
+            } catch (\Throwable $e) {
+                $qrisUrl = null;
+            }
+        }
         $statusLabel = [
             'draft' => 'Draft',
             'quotation' => 'Quotation',
@@ -192,7 +207,14 @@
                                 @endforelse
                             </ul>
                         </div>
-                        <div class="qr-box">QRIS</div>
+                        <div class="qr-box">
+                            @if ($qrisUrl)
+                                <img src="{{ $qrisUrl }}" alt="QRIS"
+                                    onerror="this.onerror=null;this.parentElement.textContent='QRIS';">
+                            @else
+                                QRIS
+                            @endif
+                        </div>
                     </div>
                 </div>
 
