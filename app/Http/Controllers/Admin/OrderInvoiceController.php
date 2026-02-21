@@ -70,8 +70,15 @@ class OrderInvoiceController extends Controller
                 ->header('X-Pdf-Generator', 'missing');
         }
 
+        $bankAccounts = $this->bankAccountService
+            ->query()
+            ->orderBy('bank_name')
+            ->orderBy('rekening_number')
+            ->get(['bank_name', 'rekening_number', 'account_name']);
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.invoice-pdf', [
             'order' => $orderModel,
+            'bankAccounts' => $bankAccounts,
         ]);
 
         return $pdf->download('Invoice-' . $orderModel->order_no . '.pdf');
