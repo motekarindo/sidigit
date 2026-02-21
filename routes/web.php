@@ -67,6 +67,8 @@ Route::middleware('guest')->group(function () {
             Route::get('/{order}/edit', \App\Livewire\Admin\Orders\Edit::class)->name('edit');
             Route::get('/{order}/invoice', [\App\Http\Controllers\Admin\OrderInvoiceController::class, 'show'])->name('invoice');
             Route::get('/{order}/invoice/pdf', [\App\Http\Controllers\Admin\OrderInvoiceController::class, 'pdf'])->name('invoice.pdf');
+            Route::get('/{order}/quotation', [\App\Http\Controllers\Admin\OrderInvoiceController::class, 'quotation'])->name('quotation');
+            Route::get('/{order}/quotation/pdf', [\App\Http\Controllers\Admin\OrderInvoiceController::class, 'quotationPdf'])->name('quotation.pdf');
             Route::get('/trashed', \App\Livewire\Admin\Orders\Trashed::class)->name('trashed');
         });
 
@@ -75,6 +77,7 @@ Route::middleware('guest')->group(function () {
         Route::get('/out', StockOutIndex::class)->name('stocks.out');
         Route::get('/opname', StockOpnameIndex::class)->name('stocks.opname');
         Route::get('/balances', StockBalanceIndex::class)->name('stocks.balances');
+        Route::get('/reservations', \App\Livewire\Admin\Stocks\ReservationsIndex::class)->name('stocks.reservations');
     });
 
     Route::get('expenses/materials', MaterialExpenseIndex::class)->name('expenses.materials.index');
