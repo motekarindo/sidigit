@@ -9,6 +9,12 @@
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $description }}</p>
                 </div>
                 <div class="flex items-center gap-3">
+                    @if (($status ?? 'draft') !== 'draft')
+                        <a href="{{ route('orders.quotation', ['order' => $orderId, 'print' => 1]) }}" target="_blank"
+                            class="btn btn-secondary">
+                            Print Quotation
+                        </a>
+                    @endif
                     <button type="submit" wire:loading.attr="disabled" wire:target="save" class="btn btn-primary">
                         <span wire:loading.remove wire:target="save">Simpan</span>
                         <span wire:loading wire:target="save">Menyimpan...</span>

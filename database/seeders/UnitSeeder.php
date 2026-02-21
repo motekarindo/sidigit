@@ -12,11 +12,13 @@ class UnitSeeder extends Seeder
     {
         $units = [
             ['name' => 'CM', 'is_dimension' => true],
-            ['name' => 'M', 'is_dimension' => true],
-            ['name' => 'MM', 'is_dimension' => true],
+            ['name' => 'Lembar', 'is_dimension' => false],
+            ['name' => 'Pack', 'is_dimension' => false],
             ['name' => 'PCS', 'is_dimension' => false],
+            ['name' => 'Box', 'is_dimension' => false],
             ['name' => 'RIM', 'is_dimension' => false],
             ['name' => 'SET', 'is_dimension' => false],
+            ['name' => 'Lusin', 'is_dimension' => false],
         ];
 
         foreach ($units as $unit) {

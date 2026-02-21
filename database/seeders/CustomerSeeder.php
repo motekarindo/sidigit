@@ -13,8 +13,8 @@ class CustomerSeeder extends Seeder
             'email' => 'customer@example.com',
         ], [
             'name' => 'Customer Umum',
-            'address' => 'Alamat customer belum diisi.',
-            'phone_number' => '0800000000',
+            'address' => 'Cibatok',
+            'phone_number' => '081212656699',
             'member_type' => 'umum',
         ]);
     }

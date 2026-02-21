@@ -114,6 +114,13 @@
                                             x-ref="panel" :style="style">
                                             <ul class="py-1">
                                                 @foreach ($rowActions as $action)
+                                                    @php
+                                                        $isVisible = $action['visible'] ?? true;
+                                                        $isVisible = is_callable($isVisible) ? $isVisible($row) : $isVisible;
+                                                    @endphp
+                                                    @if (!$isVisible)
+                                                        @continue
+                                                    @endif
                                                     <li>
                                                         @if (!empty($action['url']))
                                                             @php

@@ -52,6 +52,7 @@ class OrderService
             $this->syncItems($order, $items);
             $this->syncPayments($order, $payments);
             $this->recalculateTotals($order);
+            $this->syncStockByStatus($order);
             $order->statusLogs()->create([
                 'status' => $order->status,
                 'changed_by' => auth()->id(),
@@ -79,6 +80,7 @@ class OrderService
             $this->syncPayments($order, $payments);
 
             $this->recalculateTotals($order);
+            $this->syncStockByStatus($order);
 
             if ($oldStatus !== $order->status) {
                 $order->statusLogs()->create([
@@ -145,6 +147,28 @@ class OrderService
             ->findOrFail($id);
     }
 
+    public function updateStatus(int $id, string $status, ?string $note = null): Order
+    {
+        return DB::transaction(function () use ($id, $status, $note) {
+            $order = $this->repository->findOrFail($id);
+            $oldStatus = $order->status;
+
+            $this->repository->update($order, ['status' => $status]);
+
+            if ($oldStatus !== $order->status) {
+                $order->statusLogs()->create([
+                    'status' => $order->status,
+                    'changed_by' => auth()->id(),
+                    'note' => $note ?? 'Status diperbarui.',
+                ]);
+            }
+
+            $this->syncStockByStatus($order);
+
+            return $order->fresh(['customer', 'items']);
+        });
+    }
+
     protected function syncItems(Order $order, array $items): void
     {
         foreach ($items as $item) {
@@ -174,7 +198,6 @@ class OrderService
             ]);
 
             $this->syncFinishes($orderItem, $finishIds);
-            $this->createStockMovement($orderItem, $material);
         }
     }
 
@@ -299,7 +322,7 @@ class OrderService
         return 0;
     }
 
-    protected function createStockMovement(OrderItem $orderItem, ?Material $material): void
+    protected function createStockMovement(OrderItem $orderItem, ?Material $material, string $type, string $note): void
     {
         if (!$material) {
             return;
@@ -315,13 +338,48 @@ class OrderService
 
         app(StockMovementService::class)->store([
             'material_id' => $material->id,
-            'type' => 'out',
+            'type' => $type,
             'qty' => $usage,
             'unit_id' => $material->unit_id,
             'ref_type' => 'order',
             'ref_id' => $orderItem->order_id,
-            'notes' => 'Pemakaian bahan untuk order',
+            'notes' => $note,
         ]);
+    }
+
+    protected function syncStockByStatus(Order $order): void
+    {
+        StockMovement::query()
+            ->where('ref_type', 'order')
+            ->where('ref_id', $order->id)
+            ->delete();
+
+        $status = $order->status;
+        $reserveStatuses = ['approval', 'approve'];
+        $outStatuses = ['produksi', 'finishing', 'qc', 'siap', 'diambil', 'selesai'];
+
+        $type = null;
+        $note = null;
+
+        if (in_array($status, $reserveStatuses, true)) {
+            $type = 'reserve';
+            $note = 'Reservasi bahan untuk order';
+        } elseif (in_array($status, $outStatuses, true)) {
+            $type = 'out';
+            $note = 'Pemakaian bahan untuk order';
+        } else {
+            return;
+        }
+
+        $order->loadMissing('items.material');
+        foreach ($order->items as $orderItem) {
+            $material = $orderItem->material ?: ($orderItem->material_id ? Material::find($orderItem->material_id) : null);
+            if (!$material) {
+                continue;
+            }
+
+            $this->createStockMovement($orderItem, $material, $type, $note);
+        }
     }
 
     protected function recalculateTotals(Order $order): void

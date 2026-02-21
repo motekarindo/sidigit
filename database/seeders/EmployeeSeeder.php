@@ -13,7 +13,7 @@ class EmployeeSeeder extends Seeder
             'email' => 'employee@example.com',
         ], [
             'name' => 'Karyawan Utama',
-            'address' => 'Alamat karyawan belum diisi.',
+            'address' => 'Leuwiliang',
             'phone_number' => '0800000001',
             'salary' => 0,
             'status' => 'active',
