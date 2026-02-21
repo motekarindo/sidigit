@@ -1,192 +1,253 @@
-@extends('layouts.invoice')
+<!doctype html>
+<html lang="id">
 
-@section('title', 'Invoice ' . ($order->order_no ?? ''))
+<head>
+    <meta charset="utf-8">
+    <title>Invoice {{ $order->order_no }}</title>
+    <style>
+        @page { size: A5 landscape; margin: 6mm; }
+        * { box-sizing: border-box; }
+        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 9px; color: #111827; margin: 0; background: #f3f4f6; }
+        h1 { font-size: 14px; margin: 0; }
+        h2 { font-size: 11px; margin: 0 0 3px; }
+        .text-muted { color: #6b7280; }
+        .section { margin-top: 10px; }
+        .row { width: 100%; }
+        .col { vertical-align: top; }
+        .card { border: 1px solid #e5e7eb; padding: 6px; border-radius: 6px; background: #f9fafb; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 4px; border-bottom: 1px solid #e5e7eb; }
+        th { text-align: left; color: #6b7280; font-weight: 600; }
+        .meta-table { width: 100%; border-collapse: collapse; }
+        .meta-table td { padding: 4px 6px; border-bottom: 1px dotted #e5e7eb; }
+        .meta-label { width: 32%; background: #f3f4f6; color: #374151; font-weight: 700; }
+        .text-right { text-align: right; }
+        .totals td { border-bottom: none; }
+        .no-print { display: block; }
+        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px; }
+        .action-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; padding: 8px 16px; font-size: 14px; font-weight: 600; text-decoration: none; border: 1px solid #e5e7eb; color: #374151; background: #fff; box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06); }
+        .btn-primary { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+        .page { max-width: 210mm; width: 100%; margin: 0 auto; padding: 16px; }
+        .paper { background: #fff; border-radius: 16px; box-shadow: 0 10px 24px rgba(17, 24, 39, 0.08); border: 1px solid #e5e7eb; padding: 16px; min-height: 148mm; }
+        .payment-grid { display: flex; gap: 12px; align-items: stretch; justify-content: space-between; }
+        .payment-box { border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; padding: 8px; }
+        .totals-box { border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; padding: 0; overflow: hidden; }
+        .totals-box .meta-table { height: 100%; }
+        .totals-box .meta-table tr { height: 20%; }
+        .payment-list { margin: 6px 0 0; padding: 0; list-style: none; }
+        .payment-list li { margin-bottom: 4px; }
+        .qr-box { width: 90px; height: 90px; border: 1px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; color: #6b7280; font-weight: 700; font-size: 10px; background: #fff; border-radius: 6px; }
+        @media (min-width: 768px) {
+            .page { padding: 32px; }
+            .paper { padding: 20px 24px; }
+        }
+        @media print {
+            .no-print { display: none; }
+            body { background: #fff; }
+            .page { margin: 0; padding: 0; }
+            .paper { box-shadow: none; border: 0; padding: 0; border-radius: 0; min-height: auto; }
+        }
+    </style>
+</head>
+ 
+<body>
+    @php
+        $companyName = config('app.name', 'Sidigit');
+        $companyEmail = config('mail.from.address', '-');
+        $companyPhone = config('app.company_phone', '-');
+        $companyAddress = config('app.company_address', 'Alamat belum diatur.');
+        $customer = $order->customer;
+        $issuedAt = $order->order_date?->format('d M Y') ?? now()->format('d M Y');
+        $dueAt = $order->deadline?->format('d M Y') ?? '-';
+        $status = $order->status ?? 'draft';
+        $payments = $order->payments?->sortBy('paid_at') ?? collect();
+        $paidAmount = (float) ($order->paid_amount ?? 0);
+        $balance = max(0, (float) ($order->grand_total ?? 0) - $paidAmount);
+        $statusLabel = [
+            'draft' => 'Draft',
+            'quotation' => 'Quotation',
+            'approval' => 'Approved',
+            'approve' => 'Approved',
+            'desain' => 'Desain',
+            'produksi' => 'Produksi',
+            'finishing' => 'Finishing',
+            'qc' => 'QC',
+            'siap' => 'Siap Diambil/Dikirim',
+            'diambil' => 'Diambil',
+            'selesai' => 'Selesai',
+            'dibatalkan' => 'Dibatalkan',
+        ][$status] ?? ucfirst($status);
 
-@php
-    $customer = $order->customer;
-    $issuedAt = $order->order_date?->format('d M Y') ?? now()->format('d M Y');
-    $dueAt = $order->deadline?->format('d M Y') ?? '-';
-    $status = $order->status ?? 'draft';
-    $payments = $order->payments?->sortBy('paid_at') ?? collect();
-    $paidAmount = (float) ($order->paid_amount ?? 0);
-    $balance = max(0, (float) ($order->grand_total ?? 0) - $paidAmount);
-    $statusLabel = [
-        'draft' => 'Draft',
-        'desain' => 'Desain',
-        'approve' => 'Approve',
-        'produksi' => 'Produksi',
-        'diambil' => 'Diambil',
-        'selesai' => 'Selesai',
-    ][$status] ?? ucfirst($status);
-@endphp
+        $bankAccounts = $bankAccounts ?? collect();
+    @endphp
 
-@section('content')
-    <div class="flex flex-wrap items-center justify-between gap-3 no-print">
-        <a href="{{ route('orders.index') }}"
-            class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:border-brand-200 hover:text-brand-600">
-            Kembali ke Order
-        </a>
-        <div class="flex flex-wrap items-center gap-2">
-            <a href="{{ route('orders.invoice', ['order' => $order->id, 'print' => 1]) }}" target="_blank"
-                class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:border-brand-200 hover:text-brand-600">
-                Print Invoice
-            </a>
-            <a href="{{ route('orders.invoice.pdf', $order->id) }}" target="_blank"
-                class="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-600">
-                Download PDF
-            </a>
-        </div>
-    </div>
-
-    <div class="mt-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-                <p class="text-lg font-semibold text-gray-900">{{ config('app.name', 'Sidigit') }}</p>
-                <p class="text-[10px] text-gray-500">Invoice untuk order percetakan digital</p>
-                <p class="text-[10px] text-gray-500">Email: {{ config('mail.from.address', '-') }}</p>
-            </div>
-            <div class="text-left lg:text-right">
-                <p class="text-base font-semibold text-gray-900">INVOICE</p>
-                <p class="text-[10px] text-gray-500">Invoice No</p>
-                <p class="text-sm font-semibold text-gray-900">{{ $order->order_no }}</p>
-                <p class="mt-1 text-[10px] text-gray-500">Status: <span class="font-semibold text-gray-900">{{ $statusLabel }}</span></p>
-                <p class="text-[10px] text-gray-500">Issued: <span class="font-semibold text-gray-900">{{ $issuedAt }}</span></p>
-                <p class="text-[10px] text-gray-500">Due: <span class="font-semibold text-gray-900">{{ $dueAt }}</span></p>
-            </div>
-        </div>
-
-        <div class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3 text-[10px]">
-            <div>
-                <p class="font-semibold uppercase text-gray-500">From</p>
-                <p class="mt-1 font-semibold text-gray-900">{{ config('app.name', 'Sidigit') }}</p>
-                <p class="text-gray-500">Alamat belum diatur.</p>
-                <p class="text-gray-500">{{ config('mail.from.address', '-') }}</p>
-            </div>
-            <div>
-                <p class="font-semibold uppercase text-gray-500">To</p>
-                <p class="mt-1 font-semibold text-gray-900">{{ $customer?->name ?? 'Umum' }}</p>
-                <p class="text-gray-500">{{ $customer?->address ?? '-' }}</p>
-                <p class="text-gray-500">{{ $customer?->phone_number ?? '-' }}</p>
-                <p class="text-gray-500">{{ $customer?->email ?? '-' }}</p>
-            </div>
-            <div>
-                <p class="font-semibold uppercase text-gray-500">Ringkasan</p>
-                <div class="mt-1 space-y-0.5 text-[10px] text-gray-600">
-                    <div class="flex items-center justify-between">
-                        <span>Sub Total</span>
-                        <span class="font-semibold text-gray-900">Rp {{ number_format((float) $order->total_price, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Diskon</span>
-                        <span class="font-semibold text-gray-900">Rp {{ number_format((float) $order->total_discount, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Total</span>
-                        <span class="font-semibold text-gray-900">Rp {{ number_format((float) $order->grand_total, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Terbayar</span>
-                        <span class="font-semibold text-gray-900">Rp {{ number_format($paidAmount, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Sisa</span>
-                        <span class="font-semibold text-gray-900">Rp {{ number_format($balance, 0, ',', '.') }}</span>
-                    </div>
+    <div class="page">
+        @if (empty($print))
+            <div class="action-bar no-print">
+                <a href="{{ route('orders.index') }}" class="btn">Kembali ke Order</a>
+                <div class="action-group">
+                    <a href="{{ route('orders.invoice', ['order' => $order->id, 'print' => 1]) }}" target="_blank" class="btn">
+                        Print Invoice
+                    </a>
+                    <a href="{{ route('orders.invoice.pdf', $order->id) }}" target="_blank" class="btn btn-primary">
+                        Download PDF
+                    </a>
                 </div>
             </div>
-        </div>
+        @endif
 
-        <div class="mt-3 overflow-x-auto">
-            <table class="w-full min-w-[640px] text-[10px]">
-                <thead>
-                    <tr class="border-b border-gray-200 text-left text-gray-500">
-                        <th class="pb-2">S.No</th>
-                        <th class="pb-2">Produk</th>
-                        <th class="pb-2">Bahan</th>
-                        <th class="pb-2">Ukuran</th>
-                        <th class="pb-2 text-right">Qty</th>
-                        <th class="pb-2 text-right">Unit Cost</th>
-                        <th class="pb-2 text-right">Diskon</th>
-                        <th class="pb-2 text-right">Total</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @foreach ($order->items as $item)
-                        @php
-                            $size = $item->length_cm && $item->width_cm
-                                ? number_format((float) $item->length_cm, 2, ',', '.') . ' x ' . number_format((float) $item->width_cm, 2, ',', '.') . ' cm'
-                                : '-';
-                            $finishNames = $item->finishes
-                                ->map(fn ($finish) => $finish->finish?->name)
-                                ->filter()
-                                ->implode(', ');
-                        @endphp
-                        <tr>
-                            <td class="py-1 text-gray-600">{{ $loop->iteration }}</td>
-                            <td class="py-1">
-                                <p class="font-semibold text-gray-900">{{ $item->product?->name ?? '-' }}</p>
-                                @if (!empty($finishNames))
-                                    <p class="text-[9px] text-gray-500">Finishing: {{ $finishNames }}</p>
-                                @endif
-                            </td>
-                            <td class="py-1 text-gray-600">{{ $item->material?->name ?? '-' }}</td>
-                            <td class="py-1 text-gray-600">{{ $size }}</td>
-                            <td class="py-1 text-right text-gray-600">{{ number_format((float) $item->qty, 0, ',', '.') }}</td>
-                            <td class="py-1 text-right text-gray-600">Rp {{ number_format((float) $item->price, 0, ',', '.') }}</td>
-                            <td class="py-1 text-right text-gray-600">Rp {{ number_format((float) $item->discount, 0, ',', '.') }}</td>
-                            <td class="py-1 text-right font-semibold text-gray-900">Rp {{ number_format((float) $item->total, 0, ',', '.') }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
+        <div class="paper">
+            <table class="row">
+                <tr>
+                    <td class="col" style="width: 55%;">
+                        <h1>{{ $companyName }}</h1>
+                        <p class="text-muted">Invoice untuk order percetakan digital</p>
+                        <p class="text-muted">{{ $companyAddress }}</p>
+                        <p class="text-muted">{{ $companyPhone }} · {{ $companyEmail }}</p>
+                        <p class="text-muted">{{ $issuedAt }}</p>
+                    </td>
+                    <td class="col" style="width: 45%;">
+                        <table class="meta-table" style="border: 1px solid #e5e7eb;">
+                            <tr>
+                                <td class="meta-label">Kepada Yth.</td>
+                                <td><strong>{{ $customer?->name ?? 'Umum' }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="meta-label">Telp</td>
+                                <td>{{ $customer?->phone_number ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="meta-label">Alamat</td>
+                                <td>{{ $customer?->address ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="meta-label">No Invoice</td>
+                                <td><strong>{{ $order->order_no }}</strong></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
             </table>
-        </div>
 
-        <div class="mt-2 text-[10px] text-gray-600">
-            <span class="font-semibold text-gray-700">Catatan:</span>
-            {{ $order->notes ?: 'Tidak ada catatan.' }}
-        </div>
-
-        <div class="mt-4 flex flex-wrap items-center justify-between gap-3 no-print">
-            <a href="{{ route('orders.edit', $order->id) }}"
-                class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:border-brand-200 hover:text-brand-600">
-                Lanjutkan Pembayaran
-            </a>
-            <button type="button" onclick="window.print()"
-                class="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-600">
-                Print
-            </button>
-        </div>
-
-        <div class="mt-4">
-            <div class="flex items-center justify-between">
-                <h3 class="text-sm font-semibold text-gray-900">Riwayat Pembayaran</h3>
-                <span class="text-[9px] font-semibold text-gray-500">Total: Rp {{ number_format($paidAmount, 0, ',', '.') }}</span>
-            </div>
-            <div class="mt-1 overflow-x-auto rounded-2xl border border-gray-200">
-                <table class="w-full min-w-[520px] text-[10px]">
-                    <thead class="bg-gray-50 text-left text-gray-500">
+            <div class="section">
+                <table>
+                    <thead>
                         <tr>
-                            <th class="px-2 py-1.5">Tanggal</th>
-                            <th class="px-2 py-1.5">Metode</th>
-                            <th class="px-2 py-1.5">Catatan</th>
-                            <th class="px-2 py-1.5 text-right">Jumlah</th>
+                            <th>No</th>
+                            <th>Produk</th>
+                            <th>Bahan</th>
+                            <th>Ukuran</th>
+                            <th class="text-right">Qty</th>
+                            <th class="text-right">Unit Cost</th>
+                            <th class="text-right">Diskon</th>
+                            <th class="text-right">Total</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody>
+                        @foreach ($order->items as $item)
+                            @php
+                                $size = $item->length_cm && $item->width_cm
+                                    ? number_format((float) $item->length_cm, 2, ',', '.') . ' x ' . number_format((float) $item->width_cm, 2, ',', '.') . ' cm'
+                                    : '-';
+                                $finishNames = $item->finishes
+                                    ->map(fn ($finish) => $finish->finish?->name)
+                                    ->filter()
+                                    ->implode(', ');
+                            @endphp
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>
+                                    <strong>{{ $item->product?->name ?? '-' }}</strong><br>
+                                    @if (!empty($finishNames))
+                                        <span class="text-muted">Finishing: {{ $finishNames }}</span>
+                                    @endif
+                                </td>
+                                <td>{{ $item->material?->name ?? '-' }}</td>
+                                <td>{{ $size }}</td>
+                                <td class="text-right">{{ number_format((float) $item->qty, 0, ',', '.') }}</td>
+                                <td class="text-right">Rp {{ number_format((float) $item->price, 0, ',', '.') }}</td>
+                                <td class="text-right">Rp {{ number_format((float) $item->discount, 0, ',', '.') }}</td>
+                                <td class="text-right"><strong>Rp {{ number_format((float) $item->total, 0, ',', '.') }}</strong></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section payment-grid">
+                <div class="payment-box" style="width: 55%;">
+                    <h2>Rekening Pembayaran</h2>
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <ul class="payment-list">
+                                @forelse ($bankAccounts as $account)
+                                    <li>
+                                        <strong>{{ $account->bank_name }}</strong>
+                                        &bull; {{ $account->rekening_number }}
+                                        &bull; a.n. {{ $account->account_name }}
+                                    </li>
+                                @empty
+                                    <li class="text-muted">Belum ada rekening bank.</li>
+                                @endforelse
+                            </ul>
+                        </div>
+                        <div class="qr-box">QRIS</div>
+                    </div>
+                </div>
+
+                <div style="width: 45%;" class="totals-box">
+                    <table class="meta-table">
+                        <tr>
+                            <td class="meta-label">Total Harga</td>
+                            <td class="text-right"><strong>Rp {{ number_format((float) $order->total_price, 0, ',', '.') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Diskon</td>
+                            <td class="text-right"><strong>Rp {{ number_format((float) $order->total_discount, 0, ',', '.') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Grand Total</td>
+                            <td class="text-right"><strong>Rp {{ number_format((float) $order->grand_total, 0, ',', '.') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Terbayar</td>
+                            <td class="text-right"><strong>Rp {{ number_format($paidAmount, 0, ',', '.') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Sisa</td>
+                            <td class="text-right"><strong>Rp {{ number_format($balance, 0, ',', '.') }}</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section">
+                <p class="text-muted"><strong>Catatan:</strong> {{ $order->notes ?: 'Tidak ada catatan.' }}</p>
+            </div>
+
+            <div class="section">
+                <h2>Riwayat Pembayaran</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Metode</th>
+                            <th>Catatan</th>
+                            <th class="text-right">Jumlah</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         @forelse ($payments as $payment)
                             <tr>
-                                <td class="px-2 py-1.5 text-gray-600">{{ $payment->paid_at?->format('d M Y H:i') ?? '-' }}</td>
-                                <td class="px-2 py-1.5 text-gray-600">{{ ucfirst($payment->method ?? '-') }}</td>
-                                <td class="px-2 py-1.5 text-gray-600">{{ $payment->notes ?? '-' }}</td>
-                                <td class="px-2 py-1.5 text-right font-semibold text-gray-900">
-                                    Rp {{ number_format((float) $payment->amount, 0, ',', '.') }}
-                                </td>
+                                <td>{{ $payment->paid_at?->format('d M Y H:i') ?? '-' }}</td>
+                                <td>{{ ucfirst($payment->method ?? '-') }}</td>
+                                <td>{{ $payment->notes ?? '-' }}</td>
+                                <td class="text-right"><strong>Rp {{ number_format((float) $payment->amount, 0, ',', '.') }}</strong></td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-2 py-2 text-center text-gray-500">
-                                    Belum ada pembayaran.
-                                </td>
+                                <td colspan="4" class="text-muted">Belum ada pembayaran.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -196,12 +257,10 @@
     </div>
 
     @if (!empty($print))
-        @push('scripts')
-            <script>
-                window.addEventListener('DOMContentLoaded', () => {
-                    setTimeout(() => window.print(), 300);
-                });
-            </script>
-        @endpush
+        <script>
+            window.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => window.print(), 300);
+            });
+        </script>
     @endif
-@endsection
+</body>
