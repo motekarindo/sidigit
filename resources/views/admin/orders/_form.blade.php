@@ -37,6 +37,7 @@
                 @php
                     $statusOptions = collect([
                         ['value' => 'draft', 'label' => 'Draft'],
+                        ['value' => 'quotation', 'label' => 'Quotation'],
                         ['value' => 'menunggu-dp', 'label' => 'Menunggu DP'],
                         ['value' => 'desain', 'label' => 'Desain'],
                         ['value' => 'approval', 'label' => 'Approval Customer'],
@@ -111,7 +112,7 @@
                 @php
                     $calc = $this->calculateItemPreview($item);
                     $selectedProduct = collect($products ?? [])->firstWhere('id', (int) ($item['product_id'] ?? 0));
-                    $materialIds = $selectedProduct['material_ids'] ?? [];
+                    $materialIds = $item['material_ids'] ?? ($selectedProduct['material_ids'] ?? []);
                     $materialOptions = !empty($materialIds)
                         ? collect($materialsAll ?? [])->whereIn('id', $materialIds)->values()->all()
                         : [];

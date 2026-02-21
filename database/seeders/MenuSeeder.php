@@ -41,6 +41,10 @@ class MenuSeeder extends Seeder
             ['parent_id' => $stockMenu->id, 'name' => 'Saldo Stok'],
             ['route_name' => 'stocks.balances', 'order' => 4]
         );
+        Menu::updateOrCreate(
+            ['parent_id' => $stockMenu->id, 'name' => 'Reservasi Stok'],
+            ['route_name' => 'stocks.reservations', 'order' => 5]
+        );
 
         // --- PENGELUARAN ---
         $expenseMenu = Menu::updateOrCreate(['name' => 'Pengeluaran'], ['icon' => 'bi bi-wallet2', 'order' => 5]);

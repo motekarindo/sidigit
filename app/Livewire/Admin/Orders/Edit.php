@@ -57,6 +57,7 @@ class Edit extends Component
             return [
                 'product_id' => $item->product_id,
                 'material_id' => $item->material_id,
+                'material_ids' => $this->productMaterialMap[$item->product_id] ?? [],
                 'unit_id' => $item->unit_id,
                 'qty' => (float) $item->qty,
                 'length_cm' => $item->length_cm,

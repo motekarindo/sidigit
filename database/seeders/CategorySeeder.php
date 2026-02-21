@@ -15,6 +15,7 @@ class CategorySeeder extends Seeder
             'Outdoor',
             'Merchandise',
             'Mesin A3+',
+            'Stationery',
         ];
 
         foreach ($categories as $name) {

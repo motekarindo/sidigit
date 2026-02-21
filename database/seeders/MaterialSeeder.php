@@ -20,15 +20,36 @@ class MaterialSeeder extends Seeder
             ->keyBy(fn ($row) => strtolower($row->name));
 
         $materials = [
-            ['name' => 'Flexy Cina 280 GSM', 'category' => 'outdoor', 'unit' => 'cm', 'cost_price' => 20000],
-            ['name' => 'Flexy Korea 380 GSM', 'category' => 'outdoor', 'unit' => 'cm', 'cost_price' => 28000],
-            [
-                'name' => 'Art Paper 150 GSM',
-                'category' => 'indoor',
-                'unit' => 'pcs',
-                'purchase_unit' => 'rim',
-                'conversion_qty' => 500,
-                'cost_price' => 1500,
+            //indoor
+                ['name' => 'Albatros', 'category' => 'indoor', 'unit' => 'cm', 'purchase_unit' => 'roll', 'conversion_qty' => 500000, 'cost_price' => 12000],
+                ['name' => 'Backlite', 'category' => 'indoor', 'unit' => 'cm', 'purchase_unit' => 'roll', 'conversion_qty' => 500000, 'cost_price' => 12000],
+
+            //outdoor
+                ['name' => 'Flexy Cina 240 GSM', 'category' => 'outdoor', 'unit' => 'cm', 'purchase_unit' => 'roll', 'conversion_qty' => 2100000, 'cost_price' => 12000],
+                ['name' => 'Flexy Cina 280 GSM', 'category' => 'outdoor', 'unit' => 'cm', 'purchase_unit' => 'roll', 'conversion_qty' => 2100000, 'cost_price' => 15000],
+                ['name' => 'Flexy Korea 380 GSM', 'category' => 'outdoor', 'unit' => 'cm', 'purchase_unit' => 'roll', 'conversion_qty' => 2100000, 'cost_price' => 23000],
+
+            //mesin a3+
+                ['name' => 'Art Paper 150 GSM', 'category' => 'mesin a3+', 'unit' => 'lembar', 'purchase_unit' => 'rim', 'conversion_qty' => 500, 'cost_price' => 1500,
+                ['name' => 'Art Paper 120 GSM', 'category' => 'mesin a3+', 'unit' => 'lembar', 'purchase_unit' => 'rim', 'conversion_qty' => 500, 'cost_price' => 1500,
+                ['name' => 'Art Cartoon 210 GSM', 'category' => 'mesin a3+', 'unit' => 'lembar', 'purchase_unit' => 'rim', 'conversion_qty' => 500, 'cost_price' => 1500,
+                ['name' => 'Art Cartoon 230 GSM', 'category' => 'mesin a3+', 'unit' => 'lembar', 'purchase_unit' => 'rim', 'conversion_qty' => 500, 'cost_price' => 1500,
+                ['name' => 'Art Cartoon 250 GSM', 'category' => 'mesin a3+', 'unit' => 'lembar', 'purchase_unit' => 'rim', 'conversion_qty' => 500, 'cost_price' => 1500,
+                ['name' => 'Art Cartoon 310 GSM', 'category' => 'mesin a3+', 'unit' => 'lembar', 'purchase_unit' => 'rim', 'conversion_qty' => 500, 'cost_price' => 1500,
+                ['name' => 'BW 250 GSM', 'category' => 'mesin a3+', 'unit' => 'lembar', 'purchase_unit' => 'rim', 'conversion_qty' => 500, 'cost_price' => 1500,
+                ['name' => 'HVS 80 GSM', 'category' => 'mesin a3+', 'unit' => 'lembar', 'purchase_unit' => 'rim', 'conversion_qty' => 500, 'cost_price' => 1500,
+                ['name' => 'Sticker Cromo', 'category' => 'mesin a3+', 'unit' => 'lembar', 'purchase_unit' => 'rim', 'conversion_qty' => 500, 'cost_price' => 1500,
+                ['name' => 'Sticker Vinyl', 'category' => 'mesin a3+', 'unit' => 'lembar', 'purchase_unit' => 'rim', 'conversion_qty' => 500, 'cost_price' => 1500,
+
+            //merchandise
+                ['name' => 'Mug', 'category' => 'merchandise', 'unit' => 'pcs', 'purchase_unit' => 'box', 'conversion_qty' => 10, 'cost_price' => 1500,
+                ['name' => 'Gantungan Kunci Bulat 2.5', 'category' => 'merchandise', 'unit' => 'pcs', 'purchase_unit' => 'pack', 'conversion_qty' => 50, 'cost_price' => 1500,
+                ['name' => 'Gantungan Kunci Bulat 3.2', 'category' => 'merchandise', 'unit' => 'pcs', 'purchase_unit' => 'pack', 'conversion_qty' => 50, 'cost_price' => 1500,
+                ['name' => 'Gantungan Kunci Bulat 4.4', 'category' => 'merchandise', 'unit' => 'pcs', 'purchase_unit' => 'pack', 'conversion_qty' => 50, 'cost_price' => 1500,
+                ['name' => 'Gantungan Kunci Bulat 5.8', 'category' => 'merchandise', 'unit' => 'pcs', 'purchase_unit' => 'pack', 'conversion_qty' => 50, 'cost_price' => 1500,
+                ['name' => 'Tumbler Stainless 330ML', 'category' => 'merchandise', 'unit' => 'pcs', 'purchase_unit' => 'box', 'conversion_qty' => 50, 'cost_price' => 20000,
+                ['name' => 'Tumbler Stainless 500ML', 'category' => 'merchandise', 'unit' => 'pcs', 'purchase_unit' => 'box', 'conversion_qty' => 50, 'cost_price' => 25000,
+
             ],
         ];
 

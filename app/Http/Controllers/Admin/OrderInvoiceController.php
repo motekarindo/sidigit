@@ -23,6 +23,13 @@ class OrderInvoiceController extends Controller
         $this->authorize('order.view');
 
         $orderModel = $this->service->find($order);
+        if ($orderModel->status === 'quotation') {
+            session()->flash('toast', [
+                'message' => 'Invoice hanya bisa dibuat setelah quotation disetujui.',
+                'type' => 'warning',
+            ]);
+            return redirect()->route('orders.index');
+        }
         $print = $request->boolean('print');
 
         return view('admin.orders.invoice', [
@@ -36,6 +43,13 @@ class OrderInvoiceController extends Controller
         $this->authorize('order.view');
 
         $orderModel = $this->service->find($order);
+        if ($orderModel->status === 'quotation') {
+            session()->flash('toast', [
+                'message' => 'Invoice hanya bisa dibuat setelah quotation disetujui.',
+                'type' => 'warning',
+            ]);
+            return redirect()->route('orders.index');
+        }
 
         if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
             return response()
@@ -51,5 +65,55 @@ class OrderInvoiceController extends Controller
         ]);
 
         return $pdf->download('Invoice-' . $orderModel->order_no . '.pdf');
+    }
+
+    public function quotation(Request $request, int $order)
+    {
+        $this->authorize('order.view');
+
+        $orderModel = $this->service->find($order);
+        if ($orderModel->status === 'draft') {
+            session()->flash('toast', [
+                'message' => 'Quotation belum dibuat.',
+                'type' => 'warning',
+            ]);
+            return redirect()->route('orders.index');
+        }
+
+        $print = $request->boolean('print');
+
+        return view('admin.orders.quotation', [
+            'order' => $orderModel,
+            'print' => $print,
+        ]);
+    }
+
+    public function quotationPdf(int $order)
+    {
+        $this->authorize('order.view');
+
+        $orderModel = $this->service->find($order);
+        if ($orderModel->status === 'draft') {
+            session()->flash('toast', [
+                'message' => 'Quotation belum dibuat.',
+                'type' => 'warning',
+            ]);
+            return redirect()->route('orders.index');
+        }
+
+        if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            return response()
+                ->view('admin.orders.quotation', [
+                    'order' => $orderModel,
+                    'print' => true,
+                ], 200)
+                ->header('X-Pdf-Generator', 'missing');
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.orders.quotation-pdf', [
+            'order' => $orderModel,
+        ]);
+
+        return $pdf->download('Quotation-' . $orderModel->order_no . '.pdf');
     }
 }

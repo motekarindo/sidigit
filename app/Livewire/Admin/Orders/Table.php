@@ -78,6 +78,40 @@ class Table extends BaseTable
         $this->redirectRoute('orders.trashed');
     }
 
+    public function makeQuotation(int $id): void
+    {
+        try {
+            $order = $this->service->find($id);
+            if ($order->status !== 'draft') {
+                $this->dispatch('toast', message: 'Quotation hanya bisa dibuat dari status Draft.', type: 'warning');
+                return;
+            }
+
+            $this->service->updateStatus($id, 'quotation', 'Quotation dibuat.');
+            $this->dispatch('toast', message: 'Quotation berhasil dibuat.', type: 'success');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->toastError($e, 'Gagal membuat quotation.');
+        }
+    }
+
+    public function approveQuotation(int $id): void
+    {
+        try {
+            $order = $this->service->find($id);
+            if ($order->status !== 'quotation') {
+                $this->dispatch('toast', message: 'Approve hanya tersedia untuk quotation.', type: 'warning');
+                return;
+            }
+
+            $this->service->updateStatus($id, 'approval', 'Quotation disetujui.');
+            $this->dispatch('toast', message: 'Quotation berhasil disetujui.', type: 'success');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->toastError($e, 'Gagal menyetujui quotation.');
+        }
+    }
+
     protected function formView(): ?string
     {
         return null;
@@ -87,11 +121,34 @@ class Table extends BaseTable
     {
         return [
             [
+                'label' => 'Buat Quotation',
+                'method' => 'makeQuotation',
+                'class' => 'text-amber-600',
+                'icon' => 'file-text',
+                'visible' => fn ($row) => $row->status === 'draft',
+            ],
+            [
+                'label' => 'Approve Quotation',
+                'method' => 'approveQuotation',
+                'class' => 'text-emerald-600',
+                'icon' => 'check',
+                'visible' => fn ($row) => $row->status === 'quotation',
+            ],
+            [
+                'label' => 'Print Quotation',
+                'url' => fn ($row) => route('orders.quotation', ['order' => $row->id, 'print' => 1]),
+                'target' => '_blank',
+                'class' => 'text-gray-700',
+                'icon' => 'file-text',
+                'visible' => fn ($row) => $row->status !== 'draft',
+            ],
+            [
                 'label' => 'Print Invoice',
                 'url' => fn ($row) => route('orders.invoice', ['order' => $row->id, 'print' => 1]),
                 'target' => '_blank',
                 'class' => 'text-gray-700',
                 'icon' => 'printer',
+                'visible' => fn ($row) => $row->status !== 'quotation',
             ],
             ['label' => 'Edit', 'method' => 'goEdit', 'class' => 'text-brand-500', 'icon' => 'pencil'],
             ['label' => 'Delete', 'method' => 'confirmDelete', 'class' => 'text-red-600', 'icon' => 'trash-2'],
@@ -118,7 +175,7 @@ class Table extends BaseTable
         return [
             ['label' => 'Order No', 'field' => 'order_no', 'sortable' => true],
             ['label' => 'Customer', 'field' => 'customer.name', 'sortable' => false],
-            ['label' => 'Status', 'field' => 'status', 'sortable' => false],
+            ['label' => 'Status', 'view' => 'livewire.admin.orders.columns.status', 'sortable' => false],
             [
                 'label' => 'Total',
                 'field' => 'grand_total',

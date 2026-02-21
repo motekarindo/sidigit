@@ -14,6 +14,8 @@ class FinishSeeder extends Seeder
             ['name' => 'Laminasi Glossy', 'price' => 5000, 'is_active' => true],
             ['name' => 'Eyelet', 'price' => 3000, 'is_active' => true],
             ['name' => 'Potong', 'price' => 2000, 'is_active' => true],
+            ['name' => 'Mata Ayam', 'price' => 0, 'is_active' => true],
+            ['name' => 'Tanpa Finishing', 'price' => 0, 'is_active' => true],
         ];
 
         foreach ($finishes as $finish) {

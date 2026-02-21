@@ -13,6 +13,7 @@ trait HandlesOrderForm
     public array $customers = [];
     public array $products = [];
     public array $materialsAll = [];
+    public array $productMaterialMap = [];
     public array $units = [];
     public array $finishes = [];
     public array $dimensionUnitIds = [];
@@ -28,7 +29,7 @@ trait HandlesOrderForm
             ])
             ->toArray();
 
-        $materialMap = app(ProductService::class)->getMaterialIdsByProduct();
+        $this->productMaterialMap = app(ProductService::class)->getMaterialIdsByProduct();
 
         $this->products = app(ProductService::class)->query()
             ->with([
@@ -36,7 +37,7 @@ trait HandlesOrderForm
             ])
             ->orderBy('name')
             ->get(['id', 'name', 'category_id', 'unit_id', 'sale_price', 'base_price'])
-            ->map(function ($product) use ($materialMap) {
+            ->map(function ($product) {
                 $unitName = $product->unit?->name ?? 'Tanpa satuan';
 
                 return [
@@ -47,7 +48,7 @@ trait HandlesOrderForm
                 'unit_id' => $product->unit_id,
                 'sale_price' => (float) $product->sale_price,
                 'base_price' => (float) $product->base_price,
-                'material_ids' => $materialMap[$product->id] ?? [],
+                'material_ids' => $this->productMaterialMap[$product->id] ?? [],
             ];
             })
             ->toArray();
@@ -98,6 +99,7 @@ trait HandlesOrderForm
         return [
             'product_id' => null,
             'material_id' => null,
+            'material_ids' => [],
             'unit_id' => null,
             'qty' => 1,
             'length_cm' => null,
@@ -157,6 +159,7 @@ trait HandlesOrderForm
             $this->items[$index]['product_id'] = null;
             $this->items[$index]['unit_id'] = null;
             $this->items[$index]['material_id'] = null;
+            $this->items[$index]['material_ids'] = [];
             $this->items[$index]['price'] = null;
             $this->items[$index]['price_source'] = 'auto';
             return;
@@ -165,6 +168,7 @@ trait HandlesOrderForm
         $this->items[$index]['product_id'] = (int) $productId;
         $this->items[$index]['unit_id'] = $product['unit_id'];
         $this->items[$index]['material_id'] = null;
+        $this->items[$index]['material_ids'] = $this->productMaterialMap[(int) $productId] ?? [];
         $this->items[$index]['price_source'] = $this->items[$index]['price_source'] ?? 'auto';
 
         if (!in_array((int) $product['unit_id'], $this->dimensionUnitIds, true)) {
