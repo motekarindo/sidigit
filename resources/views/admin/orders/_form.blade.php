@@ -272,7 +272,7 @@
         @php
             $isEditing = property_exists($this, 'orderId') && !empty($this->orderId);
         @endphp
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
+        <div class="rounded-2xl border border-gray-200 bg-gray-50/60 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900/40">
             <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Pembayaran</h2>
@@ -367,7 +367,7 @@
         </div>
     </div>
 
-    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
+    <div class="rounded-2xl border border-gray-200 bg-gray-50/60 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900/40">
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Ringkasan</h2>
