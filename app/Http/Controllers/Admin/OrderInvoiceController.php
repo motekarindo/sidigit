@@ -26,9 +26,10 @@ class OrderInvoiceController extends Controller
         $this->authorize('order.view');
 
         $orderModel = $this->service->find($order);
-        if ($orderModel->status === 'quotation') {
+        $allowedStatuses = ['draft', 'approval'];
+        if (!in_array($orderModel->status, $allowedStatuses, true)) {
             session()->flash('toast', [
-                'message' => 'Invoice hanya bisa dibuat setelah quotation disetujui.',
+                'message' => 'Invoice hanya bisa dibuat dari Draft atau Quotation yang sudah Approved.',
                 'type' => 'warning',
             ]);
             return redirect()->route('orders.index');
@@ -54,9 +55,10 @@ class OrderInvoiceController extends Controller
         $this->authorize('order.view');
 
         $orderModel = $this->service->find($order);
-        if ($orderModel->status === 'quotation') {
+        $allowedStatuses = ['draft', 'approval'];
+        if (!in_array($orderModel->status, $allowedStatuses, true)) {
             session()->flash('toast', [
-                'message' => 'Invoice hanya bisa dibuat setelah quotation disetujui.',
+                'message' => 'Invoice hanya bisa dibuat dari Draft atau Quotation yang sudah Approved.',
                 'type' => 'warning',
             ]);
             return redirect()->route('orders.index');

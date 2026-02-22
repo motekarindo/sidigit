@@ -7,6 +7,7 @@ use App\Traits\WithErrorToast;
 use App\Traits\WithModal;
 use App\Traits\WithTablePagination;
 use App\Traits\WithTableSearch;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -63,6 +64,13 @@ abstract class BaseTable extends Component
     protected function selectionColumnCheckbox(): bool
     {
         return false;
+    }
+
+    #[On('branch-updated')]
+    public function refreshBranch(): void
+    {
+        $this->resetPage();
+        $this->reset(['selected', 'selectAll']);
     }
 
     public function render()

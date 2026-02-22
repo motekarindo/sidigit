@@ -10,6 +10,7 @@ class BranchSwitcher extends Component
 {
     public ?int $activeBranchId = null;
     public array $branches = [];
+    public bool $isSuperAdmin = false;
 
     public function mount(): void
     {
@@ -18,6 +19,7 @@ class BranchSwitcher extends Component
             return;
         }
 
+        $this->isSuperAdmin = method_exists($user, 'isBranchSuperAdmin') && $user->isBranchSuperAdmin();
         $branches = $this->resolveBranches($user);
         $this->branches = $branches
             ->map(fn (Branch $branch) => [
@@ -55,6 +57,13 @@ class BranchSwitcher extends Component
         $allowedIds = $branches->pluck('id')->map(fn ($id) => (int) $id)->all();
         $fallback = $user?->branch_id ?: ($branches->first()?->id ?? null);
 
+        if ($this->isSuperAdmin) {
+            if ($sessionId && in_array((int) $sessionId, $allowedIds, true)) {
+                return (int) $sessionId;
+            }
+            return null;
+        }
+
         $activeId = $sessionId && in_array((int) $sessionId, $allowedIds, true)
             ? (int) $sessionId
             : ($fallback ? (int) $fallback : null);
@@ -76,8 +85,15 @@ class BranchSwitcher extends Component
 
     public function updatedActiveBranchId($value): void
     {
-        $value = (int) $value;
-        if (! $value) {
+        $value = is_numeric($value) ? (int) $value : null;
+
+        if (empty($value)) {
+            if ($this->isSuperAdmin) {
+                session()->forget('active_branch_id');
+                $this->activeBranchId = null;
+                $this->dispatch('toast', message: 'Menampilkan semua cabang.', type: 'success');
+                $this->redirect(url()->current(), navigate: false);
+            }
             return;
         }
 
@@ -92,13 +108,8 @@ class BranchSwitcher extends Component
         }
 
         session(['active_branch_id' => $value]);
-        session()->flash('toast', [
-            'message' => 'Cabang aktif berhasil diubah.',
-            'type' => 'success',
-        ]);
-
-        $redirectTo = url()->previous() ?: route('dashboard');
-        $this->redirect($redirectTo, navigate: true);
+        $this->dispatch('toast', message: 'Cabang aktif berhasil diubah.', type: 'success');
+        $this->redirect(url()->current(), navigate: false);
     }
 
     public function render()

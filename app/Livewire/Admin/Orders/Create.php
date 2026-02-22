@@ -175,6 +175,12 @@ class Create extends Component
         }
     }
 
+    public function saveWithStatus(string $status): void
+    {
+        $this->status = $status;
+        $this->save();
+    }
+
     protected function toastValidation(ValidationException $e, ?string $fallback = null): void
     {
         $errors = $e->validator->errors()->all();

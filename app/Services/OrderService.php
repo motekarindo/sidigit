@@ -357,7 +357,7 @@ class OrderService
             ->delete();
 
         $status = $order->status;
-        $reserveStatuses = ['approval', 'approve'];
+        $reserveStatuses = ['approval'];
         $outStatuses = ['produksi', 'finishing', 'qc', 'siap', 'diambil', 'selesai'];
 
         $type = null;

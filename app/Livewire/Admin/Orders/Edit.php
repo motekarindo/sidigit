@@ -151,6 +151,40 @@ class Edit extends Component
         }
     }
 
+    public function makeQuotation(): void
+    {
+        try {
+            if ($this->status !== 'draft') {
+                $this->dispatch('toast', message: 'Quotation hanya bisa dibuat dari status Draft.', type: 'warning');
+                return;
+            }
+
+            $this->service->updateStatus($this->orderId, 'quotation', 'Quotation dibuat.');
+            $this->status = 'quotation';
+            $this->dispatch('toast', message: 'Quotation berhasil dibuat.', type: 'success');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->toastError($e, 'Gagal membuat quotation.');
+        }
+    }
+
+    public function approveQuotation(): void
+    {
+        try {
+            if ($this->status !== 'quotation') {
+                $this->dispatch('toast', message: 'Approve hanya tersedia untuk quotation.', type: 'warning');
+                return;
+            }
+
+            $this->service->updateStatus($this->orderId, 'approval', 'Quotation disetujui.');
+            $this->status = 'approval';
+            $this->dispatch('toast', message: 'Quotation berhasil disetujui.', type: 'success');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->toastError($e, 'Gagal menyetujui quotation.');
+        }
+    }
+
     public function render()
     {
         return view('livewire.admin.orders.edit');

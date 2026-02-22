@@ -57,7 +57,6 @@
             'draft' => 'Draft',
             'quotation' => 'Quotation',
             'approval' => 'Approved',
-            'approve' => 'Approved',
             'desain' => 'Desain',
             'produksi' => 'Produksi',
             'finishing' => 'Finishing',

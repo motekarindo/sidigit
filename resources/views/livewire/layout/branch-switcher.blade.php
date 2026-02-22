@@ -11,6 +11,9 @@
         @if (count($branches) > 1)
             <select wire:model="activeBranchId"
                 class="bg-transparent text-sm font-semibold text-gray-800 focus:outline-none dark:text-gray-100">
+                @if ($isSuperAdmin)
+                    <option value="">Semua Cabang</option>
+                @endif
                 @foreach ($branches as $branch)
                     <option value="{{ $branch['id'] }}">
                         {{ $branch['name'] }}{{ $branch['is_main'] ? ' (Induk)' : '' }}

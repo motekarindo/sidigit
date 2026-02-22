@@ -48,7 +48,6 @@
         $statusLabel = [
             'draft' => 'Draft',
             'desain' => 'Desain',
-            'approve' => 'Approve',
             'produksi' => 'Produksi',
             'diambil' => 'Diambil',
             'selesai' => 'Selesai',

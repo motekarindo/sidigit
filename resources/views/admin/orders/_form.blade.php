@@ -38,13 +38,14 @@
                     $statusOptions = collect([
                         ['value' => 'draft', 'label' => 'Draft'],
                         ['value' => 'quotation', 'label' => 'Quotation'],
+                        ['value' => 'approval', 'label' => 'Approval Customer'],
                         ['value' => 'menunggu-dp', 'label' => 'Menunggu DP'],
                         ['value' => 'desain', 'label' => 'Desain'],
-                        ['value' => 'approval', 'label' => 'Approval Customer'],
                         ['value' => 'produksi', 'label' => 'Produksi'],
                         ['value' => 'finishing', 'label' => 'Finishing'],
                         ['value' => 'qc', 'label' => 'QC'],
                         ['value' => 'siap', 'label' => 'Siap Diambil/Dikirim'],
+                        ['value' => 'diambil', 'label' => 'Diambil'],
                         ['value' => 'selesai', 'label' => 'Selesai'],
                         ['value' => 'dibatalkan', 'label' => 'Dibatalkan'],
                     ]);
