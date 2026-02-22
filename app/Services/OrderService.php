@@ -94,6 +94,26 @@ class OrderService
         });
     }
 
+    public function addPayment(int $orderId, array $data): Payment
+    {
+        return DB::transaction(function () use ($orderId, $data) {
+            $order = $this->repository->findOrFail($orderId);
+
+            $payment = Payment::create([
+                'order_id' => $order->id,
+                'amount' => $data['amount'],
+                'method' => $data['method'] ?? 'cash',
+                'paid_at' => $data['paid_at'] ?? now(),
+                'notes' => $data['notes'] ?? null,
+                'branch_id' => $order->branch_id,
+            ]);
+
+            $this->recalculateTotals($order);
+
+            return $payment;
+        });
+    }
+
     public function destroy(int $id): void
     {
         $order = $this->repository->findOrFail($id);

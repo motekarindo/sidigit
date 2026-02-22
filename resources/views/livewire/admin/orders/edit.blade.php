@@ -24,6 +24,9 @@
                             Buat Invoice
                         </a>
                     @endif
+                    <a href="{{ route('orders.payments.create', ['order' => $orderId]) }}" class="btn btn-secondary">
+                        Input Pembayaran
+                    </a>
                     @if (($status ?? 'draft') !== 'draft')
                         <a href="{{ route('orders.quotation', ['order' => $orderId, 'print' => 1]) }}" target="_blank"
                             class="btn btn-secondary">

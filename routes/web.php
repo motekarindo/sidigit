@@ -46,6 +46,7 @@ use App\Livewire\Admin\EmployeeLoans\Index as EmployeeLoansIndex;
 use App\Livewire\Admin\Reports\SalesReport as SalesReport;
 use App\Livewire\Admin\Reports\ExpenseReport as ExpenseReport;
 use App\Livewire\Admin\Reports\BranchReport as BranchReport;
+use App\Livewire\Admin\Orders\AddPayment as OrderAddPayment;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -66,6 +67,7 @@ Route::middleware('guest')->group(function () {
         Route::prefix('orders')->name('orders.')->group(function () {
             Route::get('/', \App\Livewire\Admin\Orders\Index::class)->name('index');
             Route::get('/create', \App\Livewire\Admin\Orders\Create::class)->name('create');
+            Route::get('/{order}/payments', OrderAddPayment::class)->name('payments.create');
             Route::get('/{order}/edit', \App\Livewire\Admin\Orders\Edit::class)->name('edit');
             Route::get('/{order}/invoice', [\App\Http\Controllers\Admin\OrderInvoiceController::class, 'show'])->name('invoice');
             Route::get('/{order}/invoice/pdf', [\App\Http\Controllers\Admin\OrderInvoiceController::class, 'pdf'])->name('invoice.pdf');

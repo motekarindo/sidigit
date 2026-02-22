@@ -135,6 +135,12 @@ class Table extends BaseTable
                 'visible' => fn ($row) => $row->status === 'quotation',
             ],
             [
+                'label' => 'Input Pembayaran',
+                'url' => fn ($row) => route('orders.payments.create', ['order' => $row->id]),
+                'class' => 'text-emerald-600',
+                'icon' => 'wallet',
+            ],
+            [
                 'label' => 'Lihat Quotation',
                 'url' => fn ($row) => route('orders.quotation', ['order' => $row->id]),
                 'class' => 'text-gray-700',

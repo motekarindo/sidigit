@@ -255,15 +255,20 @@
         @endphp
         <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Pembayaran</h2>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Catat cicilan atau pelunasan.</p>
-                </div>
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Pembayaran</h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Catat cicilan atau pelunasan.</p>
+            </div>
             @if (!$isEditing)
                 <button type="button" wire:click="addPayment"
                     class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
                     + Tambah Pembayaran
                 </button>
+            @else
+                <a href="{{ route('orders.payments.create', ['order' => $orderId]) }}"
+                    class="inline-flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50 dark:border-brand-700/50 dark:text-brand-300 dark:hover:bg-brand-500/10">
+                    Input Pembayaran
+                </a>
             @endif
             </div>
 
