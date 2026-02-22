@@ -164,6 +164,7 @@ class PermissionSeeder extends Seeder
             // Laporan
             'report.sales.view' => ['name' => 'Lihat Laporan Penjualan', 'menu_id' => $menuId('Laporan Penjualan')],
             'report.expense.view' => ['name' => 'Lihat Laporan Pengeluaran', 'menu_id' => $menuId('Laporan Pengeluaran')],
+            'report.branch.view' => ['name' => 'Lihat Laporan Per Cabang', 'menu_id' => $menuId('Laporan Per Cabang')],
         ];
 
         // Buat Permissions

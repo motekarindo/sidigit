@@ -32,6 +32,7 @@ class RolePermissionSeeder extends Seeder
             'Stok', 'Stok Masuk', 'Stok Keluar', 'Stok Opname', 'Reservasi Stok',
             'Pengeluaran', 'Expense Bahan','Expense Umum',
             'Laporan', 'Laporan Penjualan', 'Laporan Pengeluaran',
+            'Laporan Per Cabang',
             'Master', 'Supplier', 'Gudang', 'Finishing'])->pluck('id');
         $kasirRole->menus()->sync($kasirMenu);
 
@@ -55,6 +56,7 @@ class RolePermissionSeeder extends Seeder
             'supplier.view', 'supplier.create', 'supplier.edit', 'supplier.delete',
             'warehouse.view', 'warehouse.create', 'warehouse.edit', 'warehouse.delete',
             'finish.view', 'finish.create', 'finish.edit', 'finish.delete',
+            'report.sales.view', 'report.expense.view', 'report.branch.view',
         ])->pluck('id');
         $kasirRole->permissions()->sync($kasirPermissions);
     }

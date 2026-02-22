@@ -45,6 +45,7 @@ use App\Livewire\Admin\Attendances\Index as AttendancesIndex;
 use App\Livewire\Admin\EmployeeLoans\Index as EmployeeLoansIndex;
 use App\Livewire\Admin\Reports\SalesReport as SalesReport;
 use App\Livewire\Admin\Reports\ExpenseReport as ExpenseReport;
+use App\Livewire\Admin\Reports\BranchReport as BranchReport;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -61,7 +62,7 @@ Route::middleware('guest')->group(function () {
 
 
 // Grup untuk Rute yang Membutuhkan Autentikasi
-    Route::middleware('auth')->group(function () {
+    Route::middleware(['auth', 'route.permission'])->group(function () {
         Route::prefix('orders')->name('orders.')->group(function () {
             Route::get('/', \App\Livewire\Admin\Orders\Index::class)->name('index');
             Route::get('/create', \App\Livewire\Admin\Orders\Create::class)->name('create');
@@ -158,6 +159,7 @@ Route::middleware('guest')->group(function () {
 
     Route::get('reports/sales', SalesReport::class)->name('reports.sales');
     Route::get('reports/expenses', ExpenseReport::class)->name('reports.expenses');
+    Route::get('reports/branches', BranchReport::class)->name('reports.branches');
 
     Route::get('audit-logs', AuditLogsIndex::class)->name('audit-logs.index');
 
