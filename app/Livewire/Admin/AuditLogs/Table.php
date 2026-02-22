@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\AuditLogs;
 use App\Livewire\BaseTable;
 use Spatie\Activitylog\Models\Activity;
 use App\Services\UserService;
+use Illuminate\Support\Str;
 
 class Table extends BaseTable
 {
@@ -16,6 +17,7 @@ class Table extends BaseTable
     public array $filters = [
         'log_name' => null,
         'causer_id' => null,
+        'subject_id' => null,
     ];
 
     public function boot(UserService $userService): void
@@ -35,6 +37,10 @@ class Table extends BaseTable
 
         if (!empty($this->filters['causer_id'])) {
             $query->where('causer_id', $this->filters['causer_id']);
+        }
+
+        if (!empty($this->filters['subject_id'])) {
+            $query->where('subject_id', (int) $this->filters['subject_id']);
         }
 
         return $query;
@@ -100,6 +106,12 @@ class Table extends BaseTable
     {
         return [
             [
+                'label' => 'ID Log',
+                'field' => 'id',
+                'sortable' => true,
+                'format' => fn ($row) => '#' . $row->id,
+            ],
+            [
                 'label' => 'Waktu',
                 'field' => 'created_at',
                 'sortable' => true,
@@ -109,14 +121,17 @@ class Table extends BaseTable
                 'label' => 'User',
                 'field' => 'causer.name',
                 'sortable' => false,
-                'format' => fn ($row) => $row->causer?->name ?? 'Sistem',
+                'format' => function ($row) {
+                    $name = $row->causer?->name ?? 'Sistem';
+                    return $row->causer_id ? $name . ' #' . $row->causer_id : $name;
+                },
             ],
             ['label' => 'Aktivitas', 'field' => 'description', 'sortable' => false],
             [
                 'label' => 'Objek',
                 'field' => 'log_name',
                 'sortable' => false,
-                'format' => fn ($row) => $row->log_name ?? '-',
+                'format' => fn ($row) => $this->formatSubject($row),
             ],
             [
                 'label' => 'Detail',
@@ -142,7 +157,21 @@ class Table extends BaseTable
         $this->filters = [
             'log_name' => null,
             'causer_id' => null,
+            'subject_id' => null,
         ];
         $this->resetPage();
+    }
+
+    protected function formatSubject(Activity $activity): string
+    {
+        $subjectName = filled($activity->subject_type)
+            ? Str::of($activity->subject_type)->afterLast('\\')->toString()
+            : ($activity->log_name ?: '-');
+
+        if (! empty($activity->subject_id)) {
+            return $subjectName . ' #' . $activity->subject_id;
+        }
+
+        return $subjectName;
     }
 }

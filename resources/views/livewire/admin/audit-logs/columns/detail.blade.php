@@ -1,5 +1,6 @@
 @php
     $hasDetail = $row->properties?->has('old') || $row->properties?->has('attributes');
+    $subjectLabel = $row->subject_type ? class_basename($row->subject_type) : ($row->log_name ?? '-');
 @endphp
 
 @if ($hasDetail)
@@ -43,6 +44,37 @@
                                 {{ $row->created_at?->format('d M Y, H:i') }} •
                                 {{ $row->causer?->name ?? 'Sistem' }}
                             </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/40">
+                    <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Metadata
+                    </h3>
+                    <div class="mt-3 grid grid-cols-1 gap-3 text-sm text-gray-700 dark:text-gray-300 md:grid-cols-2">
+                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
+                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Activity ID</span>
+                            <div class="font-semibold">#{{ $row->id }}</div>
+                        </div>
+                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
+                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Event</span>
+                            <div class="font-semibold">{{ $row->event ?: '-' }}</div>
+                        </div>
+                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
+                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Objek</span>
+                            <div class="font-semibold">{{ $subjectLabel }}</div>
+                        </div>
+                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
+                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Objek ID</span>
+                            <div class="font-semibold">{{ $row->subject_id ? '#' . $row->subject_id : '-' }}</div>
+                        </div>
+                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
+                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">User ID</span>
+                            <div class="font-semibold">{{ $row->causer_id ? '#' . $row->causer_id : '-' }}</div>
+                        </div>
+                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
+                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Log Name</span>
+                            <div class="font-semibold">{{ $row->log_name ?: '-' }}</div>
                         </div>
                     </div>
                 </div>
