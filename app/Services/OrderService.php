@@ -14,6 +14,7 @@ use App\Repositories\OrderRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
@@ -67,11 +68,34 @@ class OrderService
     {
         $items = $data['items'] ?? [];
         $payments = $data['payments'] ?? [];
-        unset($data['items'], $data['payments']);
+        $revisionReason = $data['revision_reason'] ?? null;
+        unset($data['items'], $data['payments'], $data['revision_reason']);
 
-        return DB::transaction(function () use ($id, $data, $items, $payments) {
+        return DB::transaction(function () use ($id, $data, $items, $payments, $revisionReason) {
             $order = $this->repository->findOrFail($id);
             $oldStatus = $order->status;
+
+            if ($this->isLockedStatus($oldStatus)) {
+                $nextStatus = (string) ($data['status'] ?? $oldStatus);
+                $this->ensureRevisionReasonIfRequired($oldStatus, $nextStatus, $revisionReason);
+
+                $this->repository->update($order, [
+                    'status' => $nextStatus,
+                ]);
+
+                if ($oldStatus !== $order->status) {
+                    $order->statusLogs()->create([
+                        'status' => $order->status,
+                        'changed_by' => auth()->id(),
+                        'note' => $this->buildStatusLogNote($oldStatus, $order->status, 'Status diperbarui.', $revisionReason),
+                    ]);
+                }
+
+                $this->syncStockByStatus($order);
+
+                return $order->fresh(['customer', 'items']);
+            }
+
             $this->repository->update($order, $data);
 
             $this->clearItems($order);
@@ -163,23 +187,33 @@ class OrderService
     public function find(int $id): Order
     {
         return $this->repository->query()
-            ->with(['customer', 'items', 'items.product', 'items.material', 'items.finishes.finish', 'payments'])
+            ->with([
+                'customer',
+                'items',
+                'items.product',
+                'items.material',
+                'items.finishes.finish',
+                'payments',
+                'statusLogs' => fn ($query) => $query->latest('created_at'),
+                'statusLogs.changedByUser:id,name',
+            ])
             ->findOrFail($id);
     }
 
-    public function updateStatus(int $id, string $status, ?string $note = null): Order
+    public function updateStatus(int $id, string $status, ?string $note = null, ?string $revisionReason = null): Order
     {
-        return DB::transaction(function () use ($id, $status, $note) {
+        return DB::transaction(function () use ($id, $status, $note, $revisionReason) {
             $order = $this->repository->findOrFail($id);
             $oldStatus = $order->status;
 
+            $this->ensureRevisionReasonIfRequired($oldStatus, $status, $revisionReason);
             $this->repository->update($order, ['status' => $status]);
 
             if ($oldStatus !== $order->status) {
                 $order->statusLogs()->create([
                     'status' => $order->status,
                     'changed_by' => auth()->id(),
-                    'note' => $note ?? 'Status diperbarui.',
+                    'note' => $this->buildStatusLogNote($oldStatus, $order->status, $note, $revisionReason),
                 ]);
             }
 
@@ -187,6 +221,22 @@ class OrderService
 
             return $order->fresh(['customer', 'items']);
         });
+    }
+
+    public function requiresRevisionReason(string $fromStatus, string $toStatus): bool
+    {
+        if (!$this->isLockedStatus($fromStatus)) {
+            return false;
+        }
+
+        $fromOrder = $this->statusOrder($fromStatus);
+        $toOrder = $this->statusOrder($toStatus);
+
+        if ($fromOrder === null || $toOrder === null) {
+            return false;
+        }
+
+        return $toOrder < $fromOrder;
     }
 
     protected function syncItems(Order $order, array $items): void
@@ -433,5 +483,67 @@ class OrderService
         $count = Order::query()->whereDate('created_at', now()->toDateString())->count() + 1;
 
         return sprintf('ORD-%s-%04d', $date, $count);
+    }
+
+    protected function isLockedStatus(string $status): bool
+    {
+        return in_array($status, [
+            'approval',
+            'menunggu-dp',
+            'desain',
+            'produksi',
+            'finishing',
+            'qc',
+            'siap',
+            'diambil',
+            'selesai',
+        ], true);
+    }
+
+    protected function statusOrder(string $status): ?int
+    {
+        return match ($status) {
+            'draft' => 10,
+            'quotation' => 20,
+            'approval' => 30,
+            'menunggu-dp' => 40,
+            'desain' => 50,
+            'produksi' => 60,
+            'finishing' => 70,
+            'qc' => 80,
+            'siap' => 90,
+            'diambil' => 100,
+            'selesai' => 110,
+            default => null,
+        };
+    }
+
+    protected function ensureRevisionReasonIfRequired(string $oldStatus, string $newStatus, ?string $revisionReason): void
+    {
+        if (!$this->requiresRevisionReason($oldStatus, $newStatus)) {
+            return;
+        }
+
+        if (blank(trim((string) $revisionReason))) {
+            throw ValidationException::withMessages([
+                'revision_reason' => 'Alasan revisi wajib diisi saat menurunkan status dari fase Approval ke tahap sebelumnya.',
+            ]);
+        }
+    }
+
+    protected function buildStatusLogNote(string $oldStatus, string $newStatus, ?string $defaultNote = null, ?string $revisionReason = null): string
+    {
+        $note = $defaultNote ?? 'Status diperbarui.';
+
+        if (!$this->requiresRevisionReason($oldStatus, $newStatus)) {
+            return $note;
+        }
+
+        $reason = trim((string) $revisionReason);
+        if ($reason === '') {
+            return $note;
+        }
+
+        return "{$note} Alasan revisi: {$reason}";
     }
 }

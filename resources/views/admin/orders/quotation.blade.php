@@ -53,10 +53,11 @@
         $issuedAt = $order->order_date?->format('d M Y') ?? now()->format('d M Y');
         $dueAt = $order->deadline?->format('d M Y') ?? '-';
         $status = $order->status ?? 'draft';
-        $statusLabel = [
+        $statusLabels = [
             'draft' => 'Draft',
             'quotation' => 'Quotation',
             'approval' => 'Approved',
+            'menunggu-dp' => 'Menunggu DP',
             'desain' => 'Desain',
             'produksi' => 'Produksi',
             'finishing' => 'Finishing',
@@ -64,7 +65,10 @@
             'siap' => 'Siap Diambil/Dikirim',
             'diambil' => 'Diambil',
             'selesai' => 'Selesai',
-        ][$status] ?? ucfirst($status);
+            'dibatalkan' => 'Dibatalkan',
+        ];
+        $statusLabel = $statusLabels[$status] ?? ucfirst($status);
+        $statusHistory = $order->statusLogs ?? collect();
     @endphp
 
     <div class="page">
@@ -176,6 +180,42 @@
                     </tr>
                 </table>
             </div>
+
+            @if (empty($print))
+                <div class="section no-print">
+                    <h2>Riwayat Status</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Status</th>
+                                <th>User</th>
+                                <th>Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($statusHistory as $log)
+                                @php
+                                    $logStatus = $statusLabels[$log->status] ?? ucfirst((string) $log->status);
+                                    $logUser = $log->changedByUser?->name
+                                        ? $log->changedByUser->name . ' (#' . ($log->changed_by ?? '-') . ')'
+                                        : 'User #' . ($log->changed_by ?? '-');
+                                @endphp
+                                <tr>
+                                    <td>{{ $log->created_at?->format('d M Y H:i') ?? '-' }}</td>
+                                    <td>{{ $logStatus }}</td>
+                                    <td>{{ $logUser }}</td>
+                                    <td>{{ $log->note ?? '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-muted">Belum ada riwayat status.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            @endif
         </div>
     </div>
 

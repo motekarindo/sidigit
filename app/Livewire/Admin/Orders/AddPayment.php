@@ -28,7 +28,7 @@ class AddPayment extends Component
     public float $grandTotal = 0;
     public float $paidAmount = 0;
 
-    public int $amount = 0;
+    public ?int $amount = null;
     public string $method = 'cash';
     public string $paid_at;
     public ?string $notes = null;
@@ -70,6 +70,12 @@ class AddPayment extends Component
     public function save(): void
     {
         try {
+            if ($this->remainingAmount() <= 0) {
+                $this->amount = null;
+                $this->dispatch('toast', message: 'Tagihan sudah lunas. Jika ada selisih bayar, nilainya dihitung sebagai kembalian.', type: 'warning');
+                return;
+            }
+
             $data = $this->validate();
 
             $this->service->addPayment($this->orderId, [
@@ -79,7 +85,7 @@ class AddPayment extends Component
                 'notes' => $data['notes'] ?? null,
             ]);
 
-            $this->amount = 0;
+            $this->amount = null;
             $this->method = 'cash';
             $this->paid_at = now()->format('Y-m-d\TH:i');
             $this->notes = null;
@@ -95,6 +101,19 @@ class AddPayment extends Component
         }
     }
 
+    public function fillRemainingAmount(): void
+    {
+        $remaining = $this->remainingAmount();
+
+        if ($remaining <= 0) {
+            $this->amount = null;
+            $this->dispatch('toast', message: 'Order ini sudah lunas. Selisih minus diperlakukan sebagai kembalian.', type: 'warning');
+            return;
+        }
+
+        $this->amount = $remaining;
+    }
+
     protected function refreshOrderState(): void
     {
         $order = $this->service->find($this->orderId);
@@ -103,6 +122,15 @@ class AddPayment extends Component
         $this->status = $order->status;
         $this->grandTotal = (float) $order->grand_total;
         $this->paidAmount = (float) $order->paid_amount;
+
+        if ($this->remainingAmount() <= 0) {
+            $this->amount = null;
+        }
+    }
+
+    protected function remainingAmount(): int
+    {
+        return max(0, (int) ceil($this->grandTotal - $this->paidAmount));
     }
 
     protected function toastValidation(ValidationException $e, ?string $fallback = null): void

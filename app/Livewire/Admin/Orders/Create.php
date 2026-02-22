@@ -165,6 +165,17 @@ class Create extends Component
                 'message' => "Order {$order->order_no} berhasil dibuat.",
                 'type' => 'success',
             ]);
+
+            if (($order->status ?? 'draft') === 'quotation') {
+                $this->redirectRoute('orders.quotation', ['order' => $order->id]);
+                return;
+            }
+
+            if (($order->status ?? 'draft') === 'draft') {
+                $this->redirectRoute('orders.edit', ['order' => $order->id]);
+                return;
+            }
+
             $this->redirectRoute('orders.invoice', ['order' => $order->id]);
         } catch (ValidationException $e) {
             $this->toastValidation($e);

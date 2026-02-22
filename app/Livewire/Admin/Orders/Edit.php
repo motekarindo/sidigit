@@ -28,6 +28,7 @@ class Edit extends Component
     public string $order_date;
     public ?string $deadline = null;
     public ?string $notes = null;
+    public bool $isApprovalLocked = false;
 
     public array $items = [];
     public array $payments = [];
@@ -52,6 +53,7 @@ class Edit extends Component
         $this->order_date = $orderModel->order_date?->format('Y-m-d') ?? now()->format('Y-m-d');
         $this->deadline = $orderModel->deadline?->format('Y-m-d');
         $this->notes = $orderModel->notes;
+        $this->isApprovalLocked = $this->isLockedStatus($orderModel->status);
 
         $this->items = $orderModel->items->map(function ($item) {
             return [
@@ -84,12 +86,14 @@ class Edit extends Component
         }
 
         $this->setPageMeta(
-            'Edit Order',
-            'Perbarui data order dan item.',
+            $this->isApprovalLocked ? 'Lihat Order' : 'Edit Order',
+            $this->isApprovalLocked
+                ? 'Order status approval ke atas bersifat read-only. Ubah status melalui aksi di daftar order.'
+                : 'Perbarui data order dan item.',
             [
                 ['label' => 'Dashboard', 'url' => Route::has('dashboard') ? route('dashboard') : '#', 'icon' => true],
                 ['label' => 'Order', 'url' => route('orders.index')],
-                ['label' => 'Edit', 'current' => true],
+                ['label' => $this->isApprovalLocked ? 'Lihat' : 'Edit', 'current' => true],
             ]
         );
     }
@@ -122,11 +126,69 @@ class Edit extends Component
         ];
     }
 
+    protected function messages(): array
+    {
+        return [
+            'required' => ':attribute wajib diisi.',
+            'exists' => ':attribute tidak ditemukan.',
+            'date' => ':attribute harus berupa tanggal yang valid.',
+            'numeric' => ':attribute harus berupa angka.',
+            'integer' => ':attribute harus berupa angka bulat.',
+            'string' => ':attribute harus berupa teks.',
+            'array' => ':attribute tidak valid.',
+
+            'items.min' => 'Minimal harus ada 1 item order.',
+            'items.*.qty.min' => 'Qty minimal 1.',
+            'items.*.length_cm.min' => 'Panjang minimal 0.',
+            'items.*.width_cm.min' => 'Lebar minimal 0.',
+            'items.*.price.min' => 'Harga jual minimal 0.',
+            'items.*.discount.min' => 'Diskon minimal 0.',
+
+        ];
+    }
+
+    protected function validationAttributes(): array
+    {
+        return [
+            'customer_id' => 'customer',
+            'status' => 'status',
+            'order_date' => 'tanggal order',
+            'deadline' => 'deadline',
+            'notes' => 'catatan',
+
+            'items' => 'item order',
+            'items.*.product_id' => 'produk',
+            'items.*.material_id' => 'bahan',
+            'items.*.unit_id' => 'satuan',
+            'items.*.qty' => 'qty',
+            'items.*.length_cm' => 'panjang',
+            'items.*.width_cm' => 'lebar',
+            'items.*.price' => 'harga jual',
+            'items.*.discount' => 'diskon',
+            'items.*.finish_ids' => 'finishing',
+            'items.*.finish_ids.*' => 'finishing',
+
+            'payments.*.amount' => 'jumlah pembayaran',
+            'payments.*.method' => 'metode pembayaran',
+            'payments.*.paid_at' => 'tanggal pembayaran',
+            'payments.*.notes' => 'catatan pembayaran',
+        ];
+    }
+
     public function save(): void
     {
-        $data = $this->validate();
-
         try {
+            if ($this->isApprovalLocked) {
+                $this->dispatch(
+                    'toast',
+                    message: 'Order status Approval ke atas hanya dapat dilihat. Ubah status lewat aksi pada daftar order.',
+                    type: 'warning'
+                );
+                return;
+            }
+
+            $data = $this->validate();
+
             $order = $this->service->update($this->orderId, [
                 'customer_id' => $data['customer_id'] ?? null,
                 'status' => $data['status'],
@@ -136,6 +198,8 @@ class Edit extends Component
                 'items' => $data['items'],
                 'payments' => $data['payments'] ?? [],
             ]);
+
+            $this->syncStatusState($order->status);
 
             session()->flash('toast', [
                 'message' => "Order {$order->order_no} berhasil diperbarui.",
@@ -151,6 +215,21 @@ class Edit extends Component
         }
     }
 
+    protected function isLockedStatus(string $status): bool
+    {
+        return in_array($status, [
+            'approval',
+            'menunggu-dp',
+            'desain',
+            'produksi',
+            'finishing',
+            'qc',
+            'siap',
+            'diambil',
+            'selesai',
+        ], true);
+    }
+
     public function makeQuotation(): void
     {
         try {
@@ -159,8 +238,8 @@ class Edit extends Component
                 return;
             }
 
-            $this->service->updateStatus($this->orderId, 'quotation', 'Quotation dibuat.');
-            $this->status = 'quotation';
+            $order = $this->service->updateStatus($this->orderId, 'quotation', 'Quotation dibuat.');
+            $this->syncStatusState($order->status);
             $this->dispatch('toast', message: 'Quotation berhasil dibuat.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
@@ -176,13 +255,19 @@ class Edit extends Component
                 return;
             }
 
-            $this->service->updateStatus($this->orderId, 'approval', 'Quotation disetujui.');
-            $this->status = 'approval';
+            $order = $this->service->updateStatus($this->orderId, 'approval', 'Quotation disetujui.');
+            $this->syncStatusState($order->status);
             $this->dispatch('toast', message: 'Quotation berhasil disetujui.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->toastError($e, 'Gagal menyetujui quotation.');
         }
+    }
+
+    protected function syncStatusState(string $status): void
+    {
+        $this->status = $status;
+        $this->isApprovalLocked = $this->isLockedStatus($status);
     }
 
     public function render()

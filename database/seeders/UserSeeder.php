@@ -6,7 +6,6 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\Branch;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
@@ -50,13 +49,20 @@ class UserSeeder extends Seeder
         $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
         $adminUser->branches()->syncWithoutDetaching([$mainBranch->id]);
 
-        // 3. Buat 10 User biasa dan berikan peran User menggunakan Factory Callback
+        // 3. Buat/update user kasir default
         if ($kasirRole) {
-            User::factory(1)->afterCreating(function (User $user) use ($kasirRole, $mainBranch) {
-                $user->roles()->attach($kasirRole->id);
-                $user->update(['branch_id' => $mainBranch->id]);
-                $user->branches()->syncWithoutDetaching([$mainBranch->id]);
-            })->create();
+            $kasirUser = User::updateOrCreate(
+                ['email' => 'kasir@gmail.com'],
+                [
+                    'name' => 'kasir',
+                    'username' => 'kasir',
+                    'password' => Hash::make('password'),
+                    'branch_id' => $mainBranch->id,
+                ]
+            );
+
+            $kasirUser->roles()->syncWithoutDetaching([$kasirRole->id]);
+            $kasirUser->branches()->syncWithoutDetaching([$mainBranch->id]);
         }
     }
 }

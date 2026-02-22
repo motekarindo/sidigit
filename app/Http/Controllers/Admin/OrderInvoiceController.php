@@ -26,10 +26,9 @@ class OrderInvoiceController extends Controller
         $this->authorize('order.view');
 
         $orderModel = $this->service->find($order);
-        $allowedStatuses = ['draft', 'approval'];
-        if (!in_array($orderModel->status, $allowedStatuses, true)) {
+        if (!$this->canAccessInvoice($orderModel->status)) {
             session()->flash('toast', [
-                'message' => 'Invoice hanya bisa dibuat dari Draft atau Quotation yang sudah Approved.',
+                'message' => 'Invoice hanya tersedia mulai status Approval. Status Draft dan Quotation belum bisa melihat invoice.',
                 'type' => 'warning',
             ]);
             return redirect()->route('orders.index');
@@ -55,10 +54,9 @@ class OrderInvoiceController extends Controller
         $this->authorize('order.view');
 
         $orderModel = $this->service->find($order);
-        $allowedStatuses = ['draft', 'approval'];
-        if (!in_array($orderModel->status, $allowedStatuses, true)) {
+        if (!$this->canAccessInvoice($orderModel->status)) {
             session()->flash('toast', [
-                'message' => 'Invoice hanya bisa dibuat dari Draft atau Quotation yang sudah Approved.',
+                'message' => 'Invoice hanya tersedia mulai status Approval. Status Draft dan Quotation belum bisa melihat invoice.',
                 'type' => 'warning',
             ]);
             return redirect()->route('orders.index');
@@ -136,5 +134,10 @@ class OrderInvoiceController extends Controller
         ]);
 
         return $pdf->download('Quotation-' . $orderModel->order_no . '.pdf');
+    }
+
+    protected function canAccessInvoice(?string $status): bool
+    {
+        return !in_array((string) $status, ['draft', 'quotation'], true);
     }
 }

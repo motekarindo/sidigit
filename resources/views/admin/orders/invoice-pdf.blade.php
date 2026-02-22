@@ -53,7 +53,9 @@
             'selesai' => 'Selesai',
         ][$status] ?? ucfirst($status);
         $paidAmount = (float) ($order->paid_amount ?? 0);
-        $balance = max(0, (float) ($order->grand_total ?? 0) - $paidAmount);
+        $grandTotal = (float) ($order->grand_total ?? 0);
+        $balance = max(0, $grandTotal - $paidAmount);
+        $change = max(0, $paidAmount - $grandTotal);
         $bankAccounts = $bankAccounts ?? collect();
         $branch = $order->branch;
         $qrisUrl = null;
@@ -209,8 +211,12 @@
                             <td class="text-right"><strong>Rp {{ number_format($paidAmount, 0, ',', '.') }}</strong></td>
                         </tr>
                         <tr>
-                            <td class="meta-label">Sisa</td>
+                            <td class="meta-label">Sisa Tagihan</td>
                             <td class="text-right"><strong>Rp {{ number_format($balance, 0, ',', '.') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Kembalian</td>
+                            <td class="text-right"><strong>Rp {{ number_format($change, 0, ',', '.') }}</strong></td>
                         </tr>
                     </table>
                 </td>

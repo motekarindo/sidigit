@@ -4,14 +4,22 @@ namespace App\Livewire\Admin\Orders;
 
 use App\Livewire\BaseTable;
 use App\Services\OrderService;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
 {
     protected OrderService $service;
+    public string $statusCurrent = 'draft';
+    public string $statusNext = 'draft';
+    public ?string $statusRevisionReason = null;
+    public bool $statusRequiresReason = false;
+    public array $statusOptions = [];
 
     public function boot(OrderService $service): void
     {
         $this->service = $service;
+        $this->statusOptions = $this->statusOptionsList();
     }
 
     protected function query()
@@ -24,12 +32,19 @@ class Table extends BaseTable
 
     protected function resetForm(): void
     {
-        // No modal form.
+        $this->statusCurrent = 'draft';
+        $this->statusNext = 'draft';
+        $this->statusRevisionReason = null;
+        $this->statusRequiresReason = false;
     }
 
     protected function loadForm(int $id): void
     {
-        // No modal form.
+        $order = $this->service->find($id);
+        $this->statusCurrent = (string) $order->status;
+        $this->statusNext = (string) $order->status;
+        $this->statusRevisionReason = null;
+        $this->statusRequiresReason = false;
     }
 
     public function delete(): void
@@ -112,9 +127,113 @@ class Table extends BaseTable
         }
     }
 
+    public function openStatusModal(int $id): void
+    {
+        $this->openEdit($id);
+    }
+
+    public function updatedStatusNext($value): void
+    {
+        $nextStatus = (string) $value;
+        $this->statusRequiresReason = $this->service->requiresRevisionReason($this->statusCurrent, $nextStatus);
+
+        if (!$this->statusRequiresReason) {
+            $this->statusRevisionReason = null;
+        }
+    }
+
+    public function update(): void
+    {
+        if (!$this->activeId) {
+            return;
+        }
+
+        try {
+            $rules = [
+                'statusNext' => ['required', 'string', Rule::in($this->statusValues())],
+                'statusRevisionReason' => ['nullable', 'string', 'min:5', 'max:500'],
+            ];
+
+            if ($this->service->requiresRevisionReason($this->statusCurrent, $this->statusNext)) {
+                $rules['statusRevisionReason'] = ['required', 'string', 'min:5', 'max:500'];
+            }
+
+            $data = $this->validate($rules, [
+                'statusNext.required' => 'Status baru wajib dipilih.',
+                'statusNext.in' => 'Status baru tidak valid.',
+                'statusRevisionReason.required' => 'Alasan revisi wajib diisi saat menurunkan status.',
+                'statusRevisionReason.min' => 'Alasan revisi minimal :min karakter.',
+                'statusRevisionReason.max' => 'Alasan revisi maksimal :max karakter.',
+            ], [
+                'statusNext' => 'status baru',
+                'statusRevisionReason' => 'alasan revisi',
+            ]);
+
+            if ($this->statusCurrent === $data['statusNext']) {
+                $this->dispatch('toast', message: 'Status tidak berubah.', type: 'warning');
+                $this->closeModal();
+                return;
+            }
+
+            $order = $this->service->updateStatus(
+                $this->activeId,
+                $data['statusNext'],
+                'Status diperbarui dari daftar order.',
+                $data['statusRevisionReason'] ?? null
+            );
+
+            $this->closeModal();
+            $this->dispatch('toast', message: "Status order {$order->order_no} berhasil diperbarui.", type: 'success');
+        } catch (ValidationException $e) {
+            $this->toastValidation($e);
+            throw $e;
+        } catch (\Throwable $e) {
+            report($e);
+            $this->toastError($e, 'Gagal memperbarui status order.');
+        }
+    }
+
     protected function formView(): ?string
     {
-        return null;
+        return 'livewire.admin.orders.forms.status-change';
+    }
+
+    protected function editModalTitle(): string
+    {
+        return 'Ubah Status Order';
+    }
+
+    protected function editModalActionLabel(): string
+    {
+        return 'Simpan Status';
+    }
+
+    protected function editModalWidth(): string
+    {
+        return 'lg';
+    }
+
+    protected function statusValues(): array
+    {
+        return collect($this->statusOptionsList())->pluck('value')->all();
+    }
+
+    protected function statusOptionsList(): array
+    {
+        return [
+            ['value' => 'draft', 'label' => 'Draft'],
+            ['value' => 'quotation', 'label' => 'Quotation'],
+            ['value' => 'approval', 'label' => 'Approval Customer'],
+            ['value' => 'menunggu-dp', 'label' => 'Menunggu DP'],
+            ['value' => 'desain', 'label' => 'Desain'],
+            ['value' => 'produksi', 'label' => 'Produksi'],
+            ['value' => 'finishing', 'label' => 'Finishing'],
+            ['value' => 'qc', 'label' => 'QC'],
+            ['value' => 'siap', 'label' => 'Siap Diambil/Dikirim'],
+            ['value' => 'diambil', 'label' => 'Diambil'],
+            ['value' => 'selesai', 'label' => 'Selesai'],
+            ['value' => 'dibatalkan', 'label' => 'Dibatalkan'],
+        ];
     }
 
     protected function rowActions(): array
@@ -141,6 +260,26 @@ class Table extends BaseTable
                 'icon' => 'wallet',
             ],
             [
+                'label' => 'Ubah Status',
+                'method' => 'openStatusModal',
+                'class' => 'text-indigo-600',
+                'icon' => 'shuffle',
+            ],
+            [
+                'label' => 'Edit Order',
+                'method' => 'goEdit',
+                'class' => 'text-brand-500',
+                'icon' => 'pencil',
+                'visible' => fn ($row) => in_array($row->status, ['draft', 'quotation'], true),
+            ],
+            [
+                'label' => 'Lihat Order',
+                'method' => 'goEdit',
+                'class' => 'text-brand-500',
+                'icon' => 'eye',
+                'visible' => fn ($row) => !in_array($row->status, ['draft', 'quotation'], true),
+            ],
+            [
                 'label' => 'Lihat Quotation',
                 'url' => fn ($row) => route('orders.quotation', ['order' => $row->id]),
                 'class' => 'text-gray-700',
@@ -148,20 +287,12 @@ class Table extends BaseTable
                 'visible' => fn ($row) => $row->status !== 'draft',
             ],
             [
-                'label' => 'Buat Invoice',
-                'url' => fn ($row) => route('orders.invoice', ['order' => $row->id]),
-                'class' => 'text-brand-500',
-                'icon' => 'file-plus',
-                'visible' => fn ($row) => in_array($row->status, ['draft', 'approval'], true),
-            ],
-            [
                 'label' => 'Lihat Invoice',
                 'url' => fn ($row) => route('orders.invoice', ['order' => $row->id]),
                 'class' => 'text-gray-700',
                 'icon' => 'printer',
-                'visible' => fn ($row) => !in_array($row->status, ['draft', 'quotation', 'approval'], true),
+                'visible' => fn ($row) => !in_array($row->status, ['draft', 'quotation'], true),
             ],
-            ['label' => 'Edit', 'method' => 'goEdit', 'class' => 'text-brand-500', 'icon' => 'pencil'],
             ['label' => 'Delete', 'method' => 'confirmDelete', 'class' => 'text-red-600', 'icon' => 'trash-2'],
         ];
     }
