@@ -282,14 +282,14 @@ class Table extends BaseTable
             [
                 'label' => 'Lihat Quotation',
                 'url' => fn ($row) => route('orders.quotation', ['order' => $row->id]),
-                'class' => 'text-gray-700',
+                'class' => 'text-gray-700 dark:text-gray-200',
                 'icon' => 'file-text',
                 'visible' => fn ($row) => $row->status !== 'draft',
             ],
             [
                 'label' => 'Lihat Invoice',
                 'url' => fn ($row) => route('orders.invoice', ['order' => $row->id]),
-                'class' => 'text-gray-700',
+                'class' => 'text-gray-700 dark:text-gray-200',
                 'icon' => 'printer',
                 'visible' => fn ($row) => !in_array($row->status, ['draft', 'quotation'], true),
             ],
