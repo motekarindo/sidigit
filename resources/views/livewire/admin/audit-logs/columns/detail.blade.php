@@ -1,9 +1,22 @@
 @php
     $hasDetail = $row->properties?->has('old') || $row->properties?->has('attributes');
     $subjectLabel = $row->subject_type ? class_basename($row->subject_type) : ($row->log_name ?? '-');
+    $meta = data_get($row->properties, 'meta', []);
+    $userLabel = $row->causer?->name
+        ? $row->causer->name . ($row->causer_id ? ' (#' . $row->causer_id . ')' : '')
+        : (data_get($meta, 'user') ?: ($row->causer_id ? 'User #' . $row->causer_id : 'Sistem'));
+    $requestId = data_get($meta, 'request_id') ?: data_get($row->properties, 'request_id');
+    $ipAddress = data_get($meta, 'ip') ?: data_get($row->properties, 'ip') ?: data_get($row->properties, 'ip_address');
+    $requestUrl = data_get($meta, 'url') ?: data_get($row->properties, 'url') ?: data_get($row->properties, 'request.url');
+    $routeName = data_get($meta, 'route_name') ?: data_get($row->properties, 'route_name');
+    $userAgent = data_get($meta, 'user_agent') ?: data_get($row->properties, 'user_agent');
+    $activeBranchId = data_get($meta, 'active_branch_id');
+    $subjectBranchId = data_get($meta, 'subject_branch_id');
+    $businessKey = data_get($meta, 'business_key');
+    $canOpenDetail = $hasDetail || filled($requestId) || filled($ipAddress) || filled($requestUrl);
 @endphp
 
-@if ($hasDetail)
+@if ($canOpenDetail)
     <div x-data="{ isDetailOpen: false }" @keydown.escape.window="isDetailOpen = false">
         <button type="button" @click="isDetailOpen = true"
             class="inline-flex items-center gap-2 rounded-lg border border-brand-200 px-3 py-2 text-xs font-semibold text-brand-600 transition hover:border-brand-300 hover:text-brand-700 dark:border-brand-600/40 dark:text-brand-300 dark:hover:border-brand-500 dark:hover:text-brand-200">
@@ -15,7 +28,7 @@
             role="dialog" aria-modal="true" aria-labelledby="activityDetailTitle{{ $row->id }}"
             @click.self="isDetailOpen = false">
             <div x-show="isDetailOpen" x-transition.scale
-                class="w-full max-w-4xl rounded-3xl bg-white p-6 shadow-2xl dark:bg-gray-900">
+                class="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl dark:bg-gray-900">
                 <div class="relative w-full">
                     <button type="button" @click="isDetailOpen = false"
                         class="absolute right-0 top-0 inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-gray-500 transition hover:border-gray-300 hover:text-gray-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:text-white">
@@ -48,35 +61,58 @@
                     </div>
                 </div>
 
-                <div class="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/40">
-                    <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Metadata
-                    </h3>
-                    <div class="mt-3 grid grid-cols-1 gap-3 text-sm text-gray-700 dark:text-gray-300 md:grid-cols-2">
-                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
-                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Activity ID</span>
-                            <div class="font-semibold">#{{ $row->id }}</div>
+                <div class="mt-6 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900/30">
+                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Metadata</h3>
+                    <dl class="mt-2 grid grid-cols-1 gap-x-6 gap-y-2 text-sm md:grid-cols-2">
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="text-gray-500 dark:text-gray-400">User</dt>
+                            <dd class="font-medium text-gray-900 dark:text-gray-100 text-right">{{ $userLabel }}</dd>
                         </div>
-                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
-                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Event</span>
-                            <div class="font-semibold">{{ $row->event ?: '-' }}</div>
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="text-gray-500 dark:text-gray-400">Objek</dt>
+                            <dd class="font-medium text-gray-900 dark:text-gray-100 text-right">
+                                {{ $subjectLabel }}{{ $row->subject_id ? ' #' . $row->subject_id : '' }}
+                            </dd>
                         </div>
-                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
-                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Objek</span>
-                            <div class="font-semibold">{{ $subjectLabel }}</div>
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="text-gray-500 dark:text-gray-400">Request ID</dt>
+                            <dd class="font-medium text-gray-900 dark:text-gray-100 text-right break-all">{{ $requestId ?: '-' }}</dd>
                         </div>
-                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
-                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Objek ID</span>
-                            <div class="font-semibold">{{ $row->subject_id ? '#' . $row->subject_id : '-' }}</div>
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="text-gray-500 dark:text-gray-400">Event</dt>
+                            <dd class="font-medium text-gray-900 dark:text-gray-100 text-right">
+                                {{ ($row->event ?: '-') . ' • Log #' . $row->id }}
+                            </dd>
                         </div>
-                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
-                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">User ID</span>
-                            <div class="font-semibold">{{ $row->causer_id ? '#' . $row->causer_id : '-' }}</div>
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="text-gray-500 dark:text-gray-400">Route</dt>
+                            <dd class="font-medium text-gray-900 dark:text-gray-100 text-right break-all">{{ $routeName ?: '-' }}</dd>
                         </div>
-                        <div class="rounded-xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-950/40">
-                            <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Log Name</span>
-                            <div class="font-semibold">{{ $row->log_name ?: '-' }}</div>
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="text-gray-500 dark:text-gray-400">IP</dt>
+                            <dd class="font-medium text-gray-900 dark:text-gray-100 text-right">{{ $ipAddress ?: '-' }}</dd>
                         </div>
-                    </div>
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="text-gray-500 dark:text-gray-400">Cabang</dt>
+                            <dd class="font-medium text-gray-900 dark:text-gray-100 text-right">
+                                {{ filled($activeBranchId) ? '#' . $activeBranchId : '-' }} -> {{ filled($subjectBranchId) ? '#' . $subjectBranchId : '-' }}
+                            </dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="text-gray-500 dark:text-gray-400">Business Key</dt>
+                            <dd class="font-medium text-gray-900 dark:text-gray-100 text-right break-all">{{ $businessKey ?: '-' }}</dd>
+                        </div>
+                        <div class="md:col-span-2 flex items-start justify-between gap-3">
+                            <dt class="text-gray-500 dark:text-gray-400">URL</dt>
+                            <dd class="font-medium text-gray-900 dark:text-gray-100 text-right break-all">{{ $requestUrl ?: '-' }}</dd>
+                        </div>
+                        @if (filled($userAgent))
+                            <div class="md:col-span-2 flex items-start justify-between gap-3">
+                                <dt class="text-gray-500 dark:text-gray-400">User Agent</dt>
+                                <dd class="font-medium text-gray-900 dark:text-gray-100 text-right break-all">{{ $userAgent }}</dd>
+                            </div>
+                        @endif
+                    </dl>
                 </div>
 
                 <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
