@@ -83,7 +83,7 @@
             </div>
         </div>
 
-        <form wire:submit.prevent="save" class="mt-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-950/60">
+        <form wire:submit.prevent="save" class="mt-6 rounded-2xl border border-gray-200 bg-gray-50/60 p-5 dark:border-gray-800 dark:bg-gray-900/40">
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-4">
                 <div>
                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Jumlah <span class="text-red-500">*</span></label>
@@ -138,7 +138,7 @@
             </div>
         </form>
 
-        <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-950/60">
+        <div class="mt-6 rounded-2xl border border-gray-200 bg-gray-50/60 p-5 dark:border-gray-800 dark:bg-gray-900/40">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Riwayat Pembayaran</h2>
             <div class="mt-4 overflow-x-auto">
                 <table class="min-w-full text-sm">
