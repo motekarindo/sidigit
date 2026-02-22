@@ -53,6 +53,9 @@ class Table extends BaseTable
             $this->service->destroy($this->activeId);
             $this->closeModal();
             $this->dispatch('toast', message: 'Order berhasil dihapus.', type: 'success');
+        } catch (ValidationException $e) {
+            $this->toastValidation($e);
+            $this->closeModal();
         } catch (\Throwable $e) {
             report($e);
             $this->toastError($e, 'Gagal menghapus order.');
@@ -72,6 +75,9 @@ class Table extends BaseTable
             $this->selectAll = false;
             $this->closeModal();
             $this->dispatch('toast', message: 'Order terpilih berhasil dihapus.', type: 'success');
+        } catch (ValidationException $e) {
+            $this->toastValidation($e);
+            $this->closeModal();
         } catch (\Throwable $e) {
             report($e);
             $this->toastError($e, 'Gagal menghapus order terpilih.');
@@ -293,7 +299,14 @@ class Table extends BaseTable
                 'icon' => 'printer',
                 'visible' => fn ($row) => !in_array($row->status, ['draft', 'quotation'], true),
             ],
-            ['label' => 'Delete', 'method' => 'confirmDelete', 'class' => 'text-red-600', 'icon' => 'trash-2'],
+            [
+                'label' => 'Delete',
+                'method' => 'confirmDelete',
+                'class' => 'text-red-600',
+                'icon' => 'trash-2',
+                'visible' => fn ($row) => in_array((string) $row->status, ['draft', 'quotation'], true)
+                    && (float) ($row->paid_amount ?? 0) <= 0,
+            ],
         ];
     }
 

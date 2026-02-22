@@ -140,10 +140,14 @@ class OrderService
 
     public function destroy(int $id): void
     {
-        $order = $this->repository->findOrFail($id);
-        $order->items()->delete();
-        $order->payments()->delete();
-        $this->repository->delete($order);
+        DB::transaction(function () use ($id) {
+            $order = $this->repository->findOrFail($id);
+            $this->ensureCanBeDeleted($order);
+
+            $order->items()->delete();
+            $order->payments()->delete();
+            $this->repository->delete($order);
+        });
     }
 
     public function destroyMany(array $ids): void
@@ -153,12 +157,19 @@ class OrderService
             return;
         }
 
-        $orders = $this->repository->query()->whereIn('id', $ids)->get();
-        foreach ($orders as $order) {
-            $order->items()->delete();
-            $order->payments()->delete();
-            $this->repository->delete($order);
-        }
+        DB::transaction(function () use ($ids) {
+            $orders = $this->repository->query()->whereIn('id', $ids)->get();
+
+            foreach ($orders as $order) {
+                $this->ensureCanBeDeleted($order);
+            }
+
+            foreach ($orders as $order) {
+                $order->items()->delete();
+                $order->payments()->delete();
+                $this->repository->delete($order);
+            }
+        });
     }
 
     public function restore(int $id): void
@@ -527,6 +538,33 @@ class OrderService
         if (blank(trim((string) $revisionReason))) {
             throw ValidationException::withMessages([
                 'revision_reason' => 'Alasan revisi wajib diisi saat menurunkan status dari fase Approval ke tahap sebelumnya.',
+            ]);
+        }
+    }
+
+    protected function ensureCanBeDeleted(Order $order): void
+    {
+        if (!in_array((string) $order->status, ['draft', 'quotation'], true)) {
+            throw ValidationException::withMessages([
+                'order_delete' => "Order {$order->order_no} tidak bisa dihapus. Hanya status Draft atau Quotation yang boleh dihapus.",
+            ]);
+        }
+
+        $paidAmount = (float) $order->payments()->sum('amount');
+        if ($paidAmount > 0) {
+            throw ValidationException::withMessages([
+                'order_delete' => "Order {$order->order_no} tidak bisa dihapus karena sudah memiliki pembayaran.",
+            ]);
+        }
+
+        $hasStockMovements = StockMovement::query()
+            ->where('ref_type', 'order')
+            ->where('ref_id', $order->id)
+            ->exists();
+
+        if ($hasStockMovements) {
+            throw ValidationException::withMessages([
+                'order_delete' => "Order {$order->order_no} tidak bisa dihapus karena sudah memiliki pergerakan stok.",
             ]);
         }
     }
