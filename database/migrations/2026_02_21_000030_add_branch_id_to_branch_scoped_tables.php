@@ -14,7 +14,7 @@ return new class extends Migration
             if (!$hasMain) {
                 DB::table('branches')->insert([
                     'id' => 1,
-                    'name' => (string) config('app.name', 'Percetakan') . ' (Induk)',
+                    'name' => (string) config('app.name', 'Percetakan') . ' (Headquarter)',
                     'address' => config('app.company_address', 'Alamat belum diatur.'),
                     'phone' => config('app.company_phone', '-'),
                     'email' => config('mail.from.address', '-'),

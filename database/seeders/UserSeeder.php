@@ -19,10 +19,10 @@ class UserSeeder extends Seeder
         // 1. Ambil role yang dibutuhkan
         $adminRole = Role::where('name', 'Administrator')->first()
             ?? Role::where('slug', 'administrator')->first();
-        $userRole = Role::where('name', 'User')->first()
-            ?? Role::where('slug', 'user')->first();
+        $kasirRole = Role::where('name', 'Kasir')->first()
+            ?? Role::where('slug', 'kasir')->first();
 
-        if (!$adminRole || !$userRole) {
+        if (!$adminRole) {
             return;
         }
 
@@ -51,10 +51,12 @@ class UserSeeder extends Seeder
         $adminUser->branches()->syncWithoutDetaching([$mainBranch->id]);
 
         // 3. Buat 10 User biasa dan berikan peran User menggunakan Factory Callback
-        User::factory(5)->afterCreating(function (User $user) use ($userRole, $mainBranch) {
-            $user->roles()->attach($userRole->id);
-            $user->update(['branch_id' => $mainBranch->id]);
-            $user->branches()->syncWithoutDetaching([$mainBranch->id]);
-        })->create();
+        if ($kasirRole) {
+            User::factory(1)->afterCreating(function (User $user) use ($kasirRole, $mainBranch) {
+                $user->roles()->attach($kasirRole->id);
+                $user->update(['branch_id' => $mainBranch->id]);
+                $user->branches()->syncWithoutDetaching([$mainBranch->id]);
+            })->create();
+        }
     }
 }

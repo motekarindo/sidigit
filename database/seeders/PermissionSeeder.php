@@ -128,6 +128,9 @@ class PermissionSeeder extends Seeder
             // Saldo Stok
             'stock-balance.view' => ['name' => 'Lihat Saldo Stok', 'menu_id' => $menuId('Saldo Stok')],
 
+            // Reservasi Stok
+            'stock-reservation.view' => ['name' => 'Lihat Reservasi Stok', 'menu_id' => $menuId('Reservasi Stok')],
+
             // Expense Bahan
             'expense-material.view' => ['name' => 'Lihat Expense Bahan', 'menu_id' => $menuId('Expense Bahan')],
             'expense-material.create' => ['name' => 'Tambah Expense Bahan', 'menu_id' => $menuId('Expense Bahan')],

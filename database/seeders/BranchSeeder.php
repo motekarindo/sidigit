@@ -11,13 +11,13 @@ class BranchSeeder extends Seeder
     {
         $companyName = config('app.name', 'Percetakan');
 
-        Branch::firstOrCreate(
+        Branch::updateOrCreate(
             ['is_main' => true],
             [
-                'name' => $companyName . ' (Induk)',
-                'address' => config('app.company_address', 'Alamat belum diatur.'),
-                'phone' => config('app.company_phone', '-'),
-                'email' => config('mail.from.address', '-'),
+                'name' => $companyName . ' (Headquarter)',
+                'address' => config('app.company_address', 'Jalan Raya Leuwiliang - Jasinga'),
+                'phone' => config('app.company_phone', '081212656699'),
+                'email' => config('mail.from.address', 'cetak@example.com'),
             ]
         );
     }

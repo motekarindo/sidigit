@@ -10,11 +10,22 @@ class FinishSeeder extends Seeder
     public function run(): void
     {
         $finishes = [
-            ['name' => 'Laminasi Doff', 'price' => 5000, 'is_active' => true],
-            ['name' => 'Laminasi Glossy', 'price' => 5000, 'is_active' => true],
-            ['name' => 'Eyelet', 'price' => 3000, 'is_active' => true],
-            ['name' => 'Potong', 'price' => 2000, 'is_active' => true],
+            ['name' => 'Laminasi Doff', 'price' => 2000, 'is_active' => true],
+            ['name' => 'Laminasi Glossy', 'price' => 2000, 'is_active' => true],
+            ['name' => 'Potong 1/2', 'price' => 2000, 'is_active' => true],
+            ['name' => 'Potong 1/3', 'price' => 2000, 'is_active' => true],
             ['name' => 'Mata Ayam', 'price' => 0, 'is_active' => true],
+            ['name' => 'Varnish', 'price' => 0, 'is_active' => true],
+            ['name' => 'Emboss', 'price' => 0, 'is_active' => true],
+            ['name' => 'Poly', 'price' => 0, 'is_active' => true],
+            ['name' => 'Pond', 'price' => 0, 'is_active' => true],
+            ['name' => 'Jilid Steples', 'price' => 0, 'is_active' => true],
+            ['name' => 'Jilid Lem Panas', 'price' => 0, 'is_active' => true],
+            ['name' => 'Jilid Spiral', 'price' => 0, 'is_active' => true],
+            ['name' => 'Jilid Soft Cover', 'price' => 0, 'is_active' => true],
+            ['name' => 'Jilid Hard Cover', 'price' => 0, 'is_active' => true],
+            ['name' => 'Pond', 'price' => 0, 'is_active' => true],
+            ['name' => 'Rel', 'price' => 0, 'is_active' => true],
             ['name' => 'Tanpa Finishing', 'price' => 0, 'is_active' => true],
         ];
 
