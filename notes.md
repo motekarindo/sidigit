@@ -156,3 +156,4 @@
 - RolePermissionSeeder kasir disederhanakan: menu yang tampil hanya **Transaksi -> Order** dengan permission kasir fokus ke `order.view`, `order.create`, `order.edit`.
 - Maintainability `route.permission`: mapping di `config/route_permissions.php` **wajib ditambah manual** jika (1) nama route non-standar, contoh `stocks.in`/`orders.invoice.pdf`, (2) resource baru belum ada di `resource_prefixes`, atau (3) action baru belum ada di `resource_actions`.
 - Jika route mengikuti pola standar dan prefix+action sudah terdaftar, mapping permission akan ter-resolve otomatis.
+-
