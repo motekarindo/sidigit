@@ -19,10 +19,12 @@ use Illuminate\Validation\ValidationException;
 class OrderService
 {
     protected OrderRepository $repository;
+    protected OrderMaterialUsageService $materialUsageService;
 
-    public function __construct(OrderRepository $repository)
+    public function __construct(OrderRepository $repository, OrderMaterialUsageService $materialUsageService)
     {
         $this->repository = $repository;
+        $this->materialUsageService = $materialUsageService;
     }
 
     public function query(): Builder
@@ -252,10 +254,34 @@ class OrderService
 
     protected function syncItems(Order $order, array $items): void
     {
-        foreach ($items as $item) {
-            $product = Product::find($item['product_id'] ?? null);
+        foreach ($items as $index => $item) {
+            $product = Product::query()
+                ->with(['productMaterials' => fn ($query) => $query->whereNull('deleted_at')->select('id', 'product_id', 'material_id')])
+                ->find($item['product_id'] ?? null);
             if (!$product) {
                 continue;
+            }
+
+            $allowedMaterialIds = $product->productMaterials
+                ->pluck('material_id')
+                ->map(fn ($id) => (int) $id)
+                ->values()
+                ->all();
+            $selectedMaterialId = isset($item['material_id']) && $item['material_id'] !== ''
+                ? (int) $item['material_id']
+                : null;
+            $productType = (string) ($product->product_type ?? 'goods');
+
+            if ($productType === 'goods' && !empty($allowedMaterialIds) && !$selectedMaterialId) {
+                throw ValidationException::withMessages([
+                    "items.$index.material_id" => 'Bahan wajib dipilih untuk produk barang ini.',
+                ]);
+            }
+
+            if ($selectedMaterialId && !empty($allowedMaterialIds) && !in_array($selectedMaterialId, $allowedMaterialIds, true)) {
+                throw ValidationException::withMessages([
+                    "items.$index.material_id" => 'Bahan tidak sesuai dengan mapping bahan produk yang dipilih.',
+                ]);
             }
 
             $material = !empty($item['material_id']) ? Material::find($item['material_id']) : null;
@@ -368,12 +394,15 @@ class OrderService
             return 0;
         }
 
-        if ($lengthCm && $widthCm) {
-            $areaM2 = ($lengthCm / 100) * ($widthCm / 100);
-            return $cost * $areaM2 * $qty;
-        }
+        $usageQty = $this->materialUsageService->calculate(
+            $qty,
+            $lengthCm,
+            $widthCm,
+            $material->roll_width_cm !== null ? (float) $material->roll_width_cm : null,
+            $material->roll_waste_percent !== null ? (float) $material->roll_waste_percent : 0
+        );
 
-        return $cost * $qty;
+        return $cost * $usageQty;
     }
 
     protected function finishTotal(array $finishIds): float
@@ -414,9 +443,13 @@ class OrderService
         $lengthCm = $orderItem->length_cm !== null ? (float) $orderItem->length_cm : null;
         $widthCm = $orderItem->width_cm !== null ? (float) $orderItem->width_cm : null;
 
-        $usage = $lengthCm && $widthCm
-            ? ($lengthCm / 100) * ($widthCm / 100) * $qty
-            : $qty;
+        $usage = $this->materialUsageService->calculate(
+            $qty,
+            $lengthCm,
+            $widthCm,
+            $material->roll_width_cm !== null ? (float) $material->roll_width_cm : null,
+            $material->roll_waste_percent !== null ? (float) $material->roll_waste_percent : 0
+        );
 
         app(StockMovementService::class)->store([
             'material_id' => $material->id,

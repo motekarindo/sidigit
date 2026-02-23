@@ -19,7 +19,7 @@ class StockMovementService
 
     public function query(): Builder
     {
-        return $this->repository->query()->with('material');
+        return $this->repository->query()->with(['material', 'material.unit']);
     }
 
     public function queryByType(string $type, bool $manualOnly = true): Builder

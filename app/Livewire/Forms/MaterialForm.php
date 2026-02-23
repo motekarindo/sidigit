@@ -32,6 +32,12 @@ class MaterialForm extends Form
     #[Validate('nullable|numeric|min:0.01')]
     public ?string $conversion_qty = null;
 
+    #[Validate('nullable|numeric|min:1')]
+    public ?string $roll_width_cm = null;
+
+    #[Validate('nullable|numeric|min:0|max:100')]
+    public ?string $roll_waste_percent = null;
+
     #[Validate('nullable|numeric|min:0')]
     public ?string $reorder_level = null;
 
@@ -48,6 +54,12 @@ class MaterialForm extends Form
             : null;
         $this->conversion_qty = $material->conversion_qty !== null
             ? (string) $material->conversion_qty
+            : null;
+        $this->roll_width_cm = $material->roll_width_cm !== null
+            ? (string) $material->roll_width_cm
+            : null;
+        $this->roll_waste_percent = $material->roll_waste_percent !== null
+            ? (string) $material->roll_waste_percent
             : null;
         $this->reorder_level = $material->reorder_level !== null
             ? (string) $material->reorder_level
@@ -73,6 +85,11 @@ class MaterialForm extends Form
             'cost_price.min' => 'Harga pokok minimal 0.',
             'conversion_qty.numeric' => 'Konversi harus berupa angka.',
             'conversion_qty.min' => 'Konversi minimal 0,01.',
+            'roll_width_cm.numeric' => 'Lebar roll harus berupa angka.',
+            'roll_width_cm.min' => 'Lebar roll minimal 1 cm.',
+            'roll_waste_percent.numeric' => 'Waste harus berupa angka.',
+            'roll_waste_percent.min' => 'Waste minimal 0%.',
+            'roll_waste_percent.max' => 'Waste maksimal 100%.',
             'reorder_level.numeric' => 'Batas minimum harus berupa angka.',
             'reorder_level.min' => 'Batas minimum minimal 0.',
         ];
@@ -88,6 +105,8 @@ class MaterialForm extends Form
             'description' => 'Deskripsi',
             'cost_price' => 'Harga pokok',
             'conversion_qty' => 'Konversi',
+            'roll_width_cm' => 'Lebar roll',
+            'roll_waste_percent' => 'Waste roll',
             'reorder_level' => 'Batas minimum',
         ];
     }
@@ -116,6 +135,12 @@ class MaterialForm extends Form
             'description' => $this->description,
             'cost_price' => $this->cost_price,
             'conversion_qty' => $this->conversion_qty ?: 1,
+            'roll_width_cm' => $this->roll_width_cm !== null && $this->roll_width_cm !== ''
+                ? $this->roll_width_cm
+                : null,
+            'roll_waste_percent' => $this->roll_waste_percent !== null && $this->roll_waste_percent !== ''
+                ? $this->roll_waste_percent
+                : 0,
             'reorder_level' => $this->reorder_level,
         ];
     }

@@ -21,6 +21,8 @@ class MaterialRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'cost_price' => ['nullable', 'integer', 'min:0'],
             'conversion_qty' => ['nullable', 'numeric', 'min:0.01'],
+            'roll_width_cm' => ['nullable', 'numeric', 'min:1'],
+            'roll_waste_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'reorder_level' => ['nullable', 'numeric', 'min:0'],
         ];
     }
@@ -35,6 +37,8 @@ class MaterialRequest extends FormRequest
             'description' => 'Deskripsi',
             'cost_price' => 'Harga Pokok',
             'conversion_qty' => 'Konversi Satuan',
+            'roll_width_cm' => 'Lebar Roll',
+            'roll_waste_percent' => 'Waste Roll',
             'reorder_level' => 'Batas Minimum',
         ];
     }

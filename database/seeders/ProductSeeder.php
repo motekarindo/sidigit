@@ -33,6 +33,7 @@ class ProductSeeder extends Seeder
             [
                 'sku' => 'SKU-IND-001',
                 'name' => 'Banner Indoor',
+                'product_type' => 'goods',
                 'category' => 'Indoor',
                 'unit' => 'CM',
                 'base_price' => 15000,
@@ -48,6 +49,7 @@ class ProductSeeder extends Seeder
             [
                 'sku' => 'SKU-OUT-001',
                 'name' => 'Banner',
+                'product_type' => 'goods',
                 'category' => 'Outdoor',
                 'unit' => 'CM',
                 'base_price' => 18000,
@@ -64,6 +66,7 @@ class ProductSeeder extends Seeder
             [
                 'sku' => 'SKU-MERCH-001',
                 'name' => 'Ganci',
+                'product_type' => 'goods',
                 'category' => 'Merchandise',
                 'unit' => 'PCS',
                 'base_price' => 5000,
@@ -81,6 +84,7 @@ class ProductSeeder extends Seeder
             [
                 'sku' => 'SKU-MERCH-002',
                 'name' => 'TUmbler',
+                'product_type' => 'goods',
                 'category' => 'Merchandise',
                 'unit' => 'PCS',
                 'base_price' => 5000,
@@ -96,6 +100,7 @@ class ProductSeeder extends Seeder
             [
                 'sku' => 'SKU-STAT-001',
                 'name' => 'Stempel',
+                'product_type' => 'goods',
                 'category' => 'Stationery',
                 'unit' => 'PCS',
                 'base_price' => 7000,
@@ -121,6 +126,7 @@ class ProductSeeder extends Seeder
             [
                 'sku' => 'SKU-STAT-002',
                 'name' => 'Kartu Nama',
+                'product_type' => 'goods',
                 'category' => 'Stationery',
                 'unit' => 'PCS',
                 'base_price' => 7000,
@@ -140,6 +146,7 @@ class ProductSeeder extends Seeder
             [
                 'sku' => 'SKU-A3P-001',
                 'name' => 'Print A3+',
+                'product_type' => 'goods',
                 'category' => 'Mesin A3+',
                 'unit' => 'Lembar',
                 'base_price' => 500,
@@ -172,7 +179,7 @@ class ProductSeeder extends Seeder
             }
 
             $data = Arr::only($payload, [
-                'sku', 'name', 'base_price', 'sale_price', 'length_cm', 'width_cm', 'description',
+                'sku', 'name', 'product_type', 'base_price', 'sale_price', 'length_cm', 'width_cm', 'description',
             ]);
             $data['category_id'] = $category->id;
             $data['unit_id'] = $unit->id;

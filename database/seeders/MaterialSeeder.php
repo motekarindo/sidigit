@@ -21,13 +21,13 @@ class MaterialSeeder extends Seeder
 
         $materials = [
             //indoor
-                ['name' => 'Albatros', 'category' => 'indoor', 'unit' => 'cm', 'purchase_unit' => 'roll', 'conversion_qty' => 500000, 'cost_price' => 12000],
-                ['name' => 'Backlite', 'category' => 'indoor', 'unit' => 'cm', 'purchase_unit' => 'roll', 'conversion_qty' => 500000, 'cost_price' => 12000],
+                ['name' => 'Albatros', 'category' => 'indoor', 'unit' => 'm2', 'purchase_unit' => 'rol', 'conversion_qty' => 50, 'cost_price' => 12000, 'roll_width_cm' => 152, 'roll_waste_percent' => 3],
+                ['name' => 'Backlite', 'category' => 'indoor', 'unit' => 'm2', 'purchase_unit' => 'rol', 'conversion_qty' => 50, 'cost_price' => 12000, 'roll_width_cm' => 152, 'roll_waste_percent' => 3],
 
             //outdoor
-                ['name' => 'Flexy Cina 240 GSM', 'category' => 'outdoor', 'unit' => 'cm', 'purchase_unit' => 'roll', 'conversion_qty' => 2100000, 'cost_price' => 12000],
-                ['name' => 'Flexy Cina 280 GSM', 'category' => 'outdoor', 'unit' => 'cm', 'purchase_unit' => 'roll', 'conversion_qty' => 2100000, 'cost_price' => 15000],
-                ['name' => 'Flexy Korea 380 GSM', 'category' => 'outdoor', 'unit' => 'cm', 'purchase_unit' => 'roll', 'conversion_qty' => 2100000, 'cost_price' => 23000],
+                ['name' => 'Flexy Cina 240 GSM', 'category' => 'outdoor', 'unit' => 'm2', 'purchase_unit' => 'rol', 'conversion_qty' => 210, 'cost_price' => 12000, 'roll_width_cm' => 320, 'roll_waste_percent' => 3],
+                ['name' => 'Flexy Cina 280 GSM', 'category' => 'outdoor', 'unit' => 'm2', 'purchase_unit' => 'rol', 'conversion_qty' => 210, 'cost_price' => 15000, 'roll_width_cm' => 320, 'roll_waste_percent' => 3],
+                ['name' => 'Flexy Korea 380 GSM', 'category' => 'outdoor', 'unit' => 'm2', 'purchase_unit' => 'rol', 'conversion_qty' => 210, 'cost_price' => 23000, 'roll_width_cm' => 320, 'roll_waste_percent' => 3],
 
             //mesin a3+
                 ['name' => 'Art Paper 120 GSM', 'category' => 'mesin a3+', 'unit' => 'lembar', 'purchase_unit' => 'rim', 'conversion_qty' => 500, 'cost_price' => 1500],
@@ -89,6 +89,8 @@ class MaterialSeeder extends Seeder
                     'cost_price' => $material['cost_price'],
                     'purchase_unit_id' => $purchaseUnit?->id,
                     'conversion_qty' => $material['conversion_qty'] ?? 1,
+                    'roll_width_cm' => $material['roll_width_cm'] ?? null,
+                    'roll_waste_percent' => $material['roll_waste_percent'] ?? 0,
                     'reorder_level' => 0,
                     'created_at' => now(),
                     'updated_at' => now(),

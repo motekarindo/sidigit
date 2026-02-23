@@ -21,7 +21,7 @@ class ExpenseService
 
     public function query(): Builder
     {
-        return $this->repository->query()->with(['material', 'supplier']);
+        return $this->repository->query()->with(['material', 'supplier', 'unit']);
     }
 
     public function queryByType(string $type): Builder

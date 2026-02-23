@@ -26,6 +26,7 @@ class Edit extends Component
     public int $productId;
     public string $sku = '';
     public string $name = '';
+    public string $product_type = 'goods';
     public $base_price = null;
     public $sale_price = null;
     public $length_cm = null;
@@ -46,6 +47,8 @@ class Edit extends Component
         'sku.required' => 'SKU wajib diisi.',
         'sku.unique' => 'SKU sudah digunakan. Gunakan SKU lain.',
         'name.required' => 'Nama produk wajib diisi.',
+        'product_type.required' => 'Jenis produk wajib dipilih.',
+        'product_type.in' => 'Jenis produk tidak valid.',
         'base_price.required' => 'Harga pokok wajib diisi.',
         'base_price.integer' => 'Harga pokok harus berupa angka bulat.',
         'base_price.min' => 'Harga pokok tidak boleh kurang dari 0.',
@@ -68,6 +71,7 @@ class Edit extends Component
     protected array $validationAttributes = [
         'sku' => 'SKU',
         'name' => 'Nama Produk',
+        'product_type' => 'Jenis Produk',
         'base_price' => 'Harga Pokok',
         'sale_price' => 'Harga Jual',
         'length_cm' => 'Panjang (cm)',
@@ -102,6 +106,7 @@ class Edit extends Component
         $this->productId = $productModel->id;
         $this->sku = (string) $productModel->sku;
         $this->name = (string) $productModel->name;
+        $this->product_type = (string) ($productModel->product_type ?: 'goods');
         $this->base_price = $productModel->base_price;
         $this->sale_price = $productModel->sale_price;
         $this->length_cm = $productModel->length_cm ?: null;
@@ -138,6 +143,13 @@ class Edit extends Component
         $this->syncDimensionFields(true);
     }
 
+    public function updatedProductType($value): void
+    {
+        if ((string) $value === 'service') {
+            $this->materials = [];
+        }
+    }
+
     protected function rules(): array
     {
         return $this->rulesFor($this->productId ?? null);
@@ -153,6 +165,7 @@ class Edit extends Component
                 Rule::unique('mst_products', 'sku')->ignore($productId),
             ],
             'name' => ['required', 'string', 'max:128'],
+            'product_type' => ['required', Rule::in(['goods', 'service'])],
             'base_price' => ['required', 'integer', 'min:0'],
             'sale_price' => ['required', 'integer', 'min:0'],
             'length_cm' => ['nullable', 'numeric', 'min:0'],
@@ -160,7 +173,11 @@ class Edit extends Component
             'unit_id' => ['required', 'exists:mst_units,id'],
             'category_id' => ['required', 'exists:mst_categories,id'],
             'product_description' => ['nullable', 'string'],
-            'materials' => ['required', 'array', 'min:1'],
+            'materials' => array_values(array_filter([
+                $this->product_type === 'goods' ? 'required' : 'nullable',
+                'array',
+                $this->product_type === 'goods' ? 'min:1' : null,
+            ])),
             'materials.*' => [
                 'integer',
                 Rule::exists('mst_materials', 'id'),

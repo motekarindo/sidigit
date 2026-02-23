@@ -1,5 +1,6 @@
 @php
     $hasMaterials = count($materialsAll ?? []) > 0;
+    $isGoods = ($product_type ?? 'goods') === 'goods';
 @endphp
 
 <div class="space-y-6">
@@ -29,6 +30,27 @@
                         'name'),
                 ])>
                 @error('name')
+                    <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                @php
+                    $productTypeOptions = collect([
+                        ['value' => 'goods', 'label' => 'Barang'],
+                        ['value' => 'service', 'label' => 'Jasa'],
+                    ]);
+                @endphp
+                <x-forms.searchable-select
+                    label="Jenis Produk"
+                    :options="$productTypeOptions"
+                    optionValue="value"
+                    optionLabel="label"
+                    placeholder="Pilih jenis produk"
+                    wire:model.live="product_type"
+                    required
+                />
+                @error('product_type')
                     <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
                 @enderror
             </div>
@@ -136,12 +158,18 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Bahan <span class="text-red-500">*</span>
+                    Bahan @if ($isGoods)
+                        <span class="text-red-500">*</span>
+                    @endif
                 </label>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Pilih bahan yang digunakan untuk produk ini. Gunakan <kbd
-                        class="rounded border px-1 py-0.5 text-[11px]">Ctrl</kbd>/<kbd
-                        class="rounded border px-1 py-0.5 text-[11px]">Cmd</kbd> untuk memilih lebih dari satu.
+                    @if ($isGoods)
+                        Pilih bahan yang digunakan untuk produk ini. Gunakan <kbd
+                            class="rounded border px-1 py-0.5 text-[11px]">Ctrl</kbd>/<kbd
+                            class="rounded border px-1 py-0.5 text-[11px]">Cmd</kbd> untuk memilih lebih dari satu.
+                    @else
+                        Produk jasa tidak wajib memiliki bahan.
+                    @endif
                 </p>
 
                 <div class="mt-3 space-y-3">
@@ -181,7 +209,7 @@
                             optionValueKey="id"
                             placeholder="Pilih material"
                             wire:model="materials"
-                            :required="true"
+                            :required="$isGoods"
                             :key="'materials-all'"
                         />
                     </div>

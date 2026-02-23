@@ -23,6 +23,8 @@ class Material extends Model
         'description',
         'cost_price',
         'conversion_qty',
+        'roll_width_cm',
+        'roll_waste_percent',
         'reorder_level',
         'branch_id',
     ];
@@ -30,6 +32,8 @@ class Material extends Model
     protected $casts = [
         'cost_price' => 'decimal:2',
         'conversion_qty' => 'decimal:2',
+        'roll_width_cm' => 'decimal:2',
+        'roll_waste_percent' => 'decimal:2',
         'reorder_level' => 'decimal:2',
     ];
 

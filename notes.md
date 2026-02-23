@@ -63,6 +63,9 @@
 ## Product
 - ProductSeeder sekarang **static** (nama produk, kategori, bahan bisa diatur langsung di array).
 - ProductSeeder: perbaikan scope variabel saat mapping material.
+- Produk ditambahkan field **`product_type`** (`goods` / `service`) untuk membedakan produk barang dan jasa secara eksplisit.
+- Form master produk diperbarui: pilih **Jenis Produk**; material menjadi **wajib hanya untuk barang**, sedangkan jasa boleh tanpa material.
+- Tabel produk (aktif & trashed) menampilkan kolom **Jenis** agar user cepat membedakan Barang/Jasa.
 
 ## Order
 - Orders: tombol aksi di Edit Order ditambah **Buat Quotation**, **Approve Quotation**, **Lihat Invoice**, dan **Print Invoice** (visible sesuai status).
@@ -84,6 +87,8 @@
 - Validasi pembayaran diperketat: field **Jumlah** dan tombol simpan otomatis **disabled** saat `sisa_tagihan <= 0`, serta backend memblok submit pembayaran tambahan; kondisi minus dijelaskan sebagai **kembalian**.
 - Penyesuaian styling dark mode halaman input pembayaran yang sempat diuji sudah **di-rollback**; tampilan kembali ke style dark mode awal (standar TailAdmin).
 - Penyelarasan UI halaman pembayaran: background section **Input Pembayaran** dan **Riwayat Pembayaran** disamakan dengan kartu ringkasan (contoh: **Order No**) agar visual lebih konsisten.
+- Penyelarasan UI juga diterapkan ke **Form Order** (`orders/create`): background section **Pembayaran** dan **Ringkasan** disamakan dengan style kartu ringkasan (`bg-gray-50/60` + `dark:bg-gray-900/40`).
+- Konsistensi dark mode `orders/create` ditingkatkan: section **Informasi Order** dan **Item Order** kini memakai background dark mode yang sama dengan section **Pembayaran** (`dark:bg-gray-900/40`).
 - Order Edit: mulai status **Approval** ke atas, halaman menjadi **read-only** (mode lihat); seluruh perubahan data order dipindahkan ke alur aksi terkontrol.
 - Hardening backend lock order: `OrderService::update()` memblok update field/item/payment jika status existing sudah fase **Approval+**; hanya perubahan status yang diproses.
 - Revisi status terkontrol: saat status diturunkan dari fase **Approval+** ke tahap sebelumnya, field **Alasan Revisi** wajib diisi pada action **Ubah Status** di daftar order.
@@ -94,7 +99,34 @@
 - Orders Table ditambah action **Ubah Status** (modal): pilih status baru langsung dari list order, dengan validasi **alasan revisi wajib** saat downgrade dari fase Approval+.
 - Action bar order diperbarui: status `draft`/`quotation` menampilkan **Edit Order**, sedangkan status Approval+ menampilkan **Lihat Order**.
 - Urutan action di dropdown **Orders Table** dirapikan (mode Approval+): **Input Pembayaran**, **Ubah Status**, **Lihat Order**, **Lihat Quotation**, **Lihat Invoice**, **Delete**.
+- Perbaikan kontras dark mode pada dropdown action **Orders Table**: warna teks **Lihat Quotation** dan **Lihat Invoice** diperjelas (`dark:text-gray-200`) agar tetap terbaca di tema gelap.
+- Rule penghapusan order diperketat di backend: **hapus hanya boleh** untuk status `draft`/`quotation`, **wajib** belum ada pembayaran (`paid_amount = 0`), dan **wajib** belum ada `stock_movements`. Jika tidak memenuhi, delete ditolak dengan pesan validasi human-readable.
+- UX delete di Orders Table disesuaikan: action **Delete** hanya ditampilkan untuk order yang masih memenuhi syarat dasar (status `draft/quotation` dan belum ada pembayaran), sehingga lebih aman untuk operasional.
 - Halaman detail order (Invoice/Quotation) kini menampilkan **Riwayat Status** dari `order_status_logs` (waktu, status, user, catatan), sehingga alasan revisi bisa ditelusuri langsung dari UI tanpa cek database.
+- Input ukuran order tetap pakai **cm** di form, dan ditambahkan helper text bahwa pemakaian bahan otomatis dikonversi ke satuan dasar bahan (contoh: **m2**) saat proses stok.
+- Posisi helper text ukuran di Form Order dirapikan: ditampilkan di bawah baris **Diskon/Finishing** (kolom kanan item) dengan spacing kiri kecil agar tidak terlihat mentok ke kiri.
+- Order item: validasi bahan kini **kondisional** berdasarkan `product_type`.
+  - Produk **barang** dengan mapping bahan: `material_id` wajib dipilih.
+  - Produk **jasa**: bahan opsional.
+- UX order ditingkatkan: saat pilih produk, bahan otomatis terisi ke opsi pertama jika produk punya mapping bahan (meminimalkan kasus lupa pilih bahan).
+- Guard backend ditambahkan di `OrderService`: validasi bahan kondisional dan verifikasi bahwa bahan yang dipilih harus sesuai mapping bahan produk (anti bypass dari request manual/API).
+
+## Stock & Material
+- Standarisasi satuan bahan roll-area: basis bahan indoor/outdoor roll (Albatros/Backlite/Flexy) diubah ke **m2** dengan `purchase_unit = rol`.
+- Konversi roll diperbaiki ke nilai area riil (`1 rol = 50 m2` untuk indoor, `1 rol = 210 m2` untuk flexy) pada `MaterialSeeder`.
+- Ditambahkan migrasi normalisasi data existing `2026_02_23_000100_normalize_roll_material_units_to_m2.php`:
+  - memastikan unit **M2** tersedia,
+  - mengubah material roll lama berbasis cm menjadi m2,
+  - menyesuaikan `conversion_qty` dan `reorder_level`,
+  - menyesuaikan `stock_movements.qty` historis untuk sumber manual/expense agar tetap konsisten satuan.
+- Implementasi **paket tracing pemakaian roll (point 5)**:
+  - ditambah field material `roll_width_cm` dan `roll_waste_percent` + migrasi `2026_02_23_000200_add_roll_specs_to_mst_materials_table.php`,
+  - `OrderMaterialUsageService` menghitung pemakaian bahan berbasis layout roll (jumlah muat per baris, run length, lalu waste),
+  - `OrderService` memakai kalkulasi yang sama untuk **stock out/reserve** dan **HPP material** agar laporan & stok tetap sinkron,
+  - preview di form order ikut memakai kalkulasi yang sama agar angka sebelum/sesudah simpan konsisten.
+- Modul stok sekarang mendukung **qty desimal** (tidak hanya bilangan bulat), termasuk validasi khusus opname (boleh +/- tapi tidak boleh 0).
+- Tampilan qty di tabel stok, reservasi, saldo stok, dan expense bahan kini menampilkan **angka + satuan** agar tracing lebih mudah (mis. `1,00 m2`, `2,00 Rol`).
+- Hint konversi di form stok/expense dirapikan agar satuan tampil konsisten dan mudah dibaca.
 
 ## Reporting
 - Laporan baru **Laporan Per Cabang** (`reports/branches`): filter periode + cabang, ringkasan **order/omzet/HPP/laba kotor/pembayaran/piutang/pengeluaran/laba bersih**, serta tabel breakdown performa per cabang.

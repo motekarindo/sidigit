@@ -17,11 +17,15 @@ class StockMovementForm extends Form
 
     public function rules(): array
     {
+        $qtyRules = $this->type === 'opname'
+            ? ['required', 'numeric', 'not_in:0']
+            : ['required', 'numeric', 'min:0.01'];
+
         return [
             'material_id' => ['required', 'integer', 'exists:mst_materials,id'],
             'unit_id' => ['required', 'integer', 'exists:mst_units,id'],
             'type' => ['required', 'string', 'in:in,out,opname'],
-            'qty' => ['required', 'integer'],
+            'qty' => $qtyRules,
             'notes' => ['nullable', 'string'],
         ];
     }
@@ -38,7 +42,9 @@ class StockMovementForm extends Form
             'type.required' => 'Tipe stok wajib diisi.',
             'type.in' => 'Tipe stok tidak valid.',
             'qty.required' => 'Qty wajib diisi.',
-            'qty.integer' => 'Qty harus berupa angka bulat.',
+            'qty.numeric' => 'Qty harus berupa angka.',
+            'qty.min' => 'Qty minimal 0,01.',
+            'qty.not_in' => 'Qty opname tidak boleh 0.',
             'notes.string' => 'Catatan harus berupa teks.',
         ];
     }

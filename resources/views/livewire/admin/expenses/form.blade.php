@@ -44,13 +44,13 @@
 
         @php
             $material = $form->material_id ? \App\Models\Material::with(['unit', 'purchaseUnit'])->find($form->material_id) : null;
-            $baseUnit = $material?->unit?->name;
-            $purchaseUnit = $material?->purchaseUnit?->name;
+            $baseUnit = \App\Support\UnitFormatter::label($material?->unit?->name);
+            $purchaseUnit = \App\Support\UnitFormatter::label($material?->purchaseUnit?->name);
             $conversion = $material?->conversion_qty ?? null;
         @endphp
         @if ($material && $purchaseUnit && $baseUnit && $conversion)
             <p class="text-xs text-gray-500 dark:text-gray-400">
-                Konversi: 1 {{ $purchaseUnit }} = {{ $conversion }} {{ $baseUnit }}.
+                Konversi: 1 {{ $purchaseUnit }} = {{ number_format((float) $conversion, 2, ',', '.') }} {{ $baseUnit }}.
             </p>
         @endif
 

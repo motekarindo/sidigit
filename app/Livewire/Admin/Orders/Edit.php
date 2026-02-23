@@ -188,6 +188,7 @@ class Edit extends Component
             }
 
             $data = $this->validate();
+            $this->validateItemMaterialRequirements($data['items'] ?? []);
 
             $order = $this->service->update($this->orderId, [
                 'customer_id' => $data['customer_id'] ?? null,

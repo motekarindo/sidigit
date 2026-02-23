@@ -7,6 +7,7 @@ use App\Livewire\Forms\StockMovementForm;
 use App\Services\MaterialService;
 use App\Services\StockMovementService;
 use App\Services\UnitService;
+use App\Support\UnitFormatter;
 use Illuminate\Validation\ValidationException;
 
 class Table extends BaseTable
@@ -211,7 +212,15 @@ class Table extends BaseTable
     {
         return [
             ['label' => 'Bahan', 'field' => 'material.name', 'sortable' => false],
-            ['label' => 'Qty', 'field' => 'qty', 'sortable' => false],
+            [
+                'label' => 'Qty',
+                'field' => 'qty',
+                'sortable' => false,
+                'format' => fn ($row) => UnitFormatter::quantity(
+                    (float) $row->qty,
+                    $row->material?->unit?->name
+                ),
+            ],
             [
                 'label' => 'Sumber',
                 'view' => 'livewire.admin.stocks.columns.source',

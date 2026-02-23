@@ -150,6 +150,7 @@ class Create extends Component
     {
         try {
             $data = $this->validate();
+            $this->validateItemMaterialRequirements($data['items'] ?? []);
 
             $order = $this->service->store([
                 'customer_id' => $data['customer_id'] ?? null,

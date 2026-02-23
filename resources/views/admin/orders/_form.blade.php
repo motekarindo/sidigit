@@ -13,7 +13,7 @@
 @endphp
 
 <div class="space-y-6">
-    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900/40">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Informasi Order</h2>
@@ -102,7 +102,7 @@
         </div>
     </div>
 
-    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950/60">
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900/40">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Item Order</h2>
@@ -130,10 +130,12 @@
                 @php
                     $calc = $this->calculateItemPreview($item);
                     $selectedProduct = collect($products ?? [])->firstWhere('id', (int) ($item['product_id'] ?? 0));
+                    $selectedProductType = (string) ($selectedProduct['product_type'] ?? 'goods');
                     $materialIds = $item['material_ids'] ?? ($selectedProduct['material_ids'] ?? []);
                     $materialOptions = !empty($materialIds)
                         ? collect($materialsAll ?? [])->whereIn('id', $materialIds)->values()->all()
                         : [];
+                    $materialRequired = !empty($selectedProduct) && $selectedProductType === 'goods' && !empty($materialIds);
                     $showDimension = !empty($item['unit_id']) && in_array((int) $item['unit_id'], $dimensionUnitIds, true);
                 @endphp
                 <div class="rounded-2xl border border-gray-200 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-gray-900/40"
@@ -160,7 +162,11 @@
 
                         <div>
                             <div class="{{ $labelRowClass }}">
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Bahan</label>
+                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Bahan @if ($materialRequired)
+                                        <span class="text-red-500">*</span>
+                                    @endif
+                                </label>
                             </div>
                             <div wire:key="material-select-{{ $index }}-{{ $item['product_id'] ?? 'none' }}">
                                 <x-forms.searchable-select
@@ -176,9 +182,15 @@
                                     Pilih produk terlebih dahulu untuk melihat bahan.
                                 </p>
                             @elseif (empty($materialOptions))
-                                <p class="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                                    Produk ini belum memiliki bahan.
-                                </p>
+                                @if ($selectedProductType === 'service')
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Produk jasa tidak membutuhkan bahan.
+                                    </p>
+                                @else
+                                    <p class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                        Produk barang ini belum memiliki mapping bahan di master produk.
+                                    </p>
+                                @endif
                             @endif
                         </div>
 
@@ -258,6 +270,13 @@
                             />
                         </div>
                         <div class="hidden lg:block"></div>
+                        @if ($showDimension)
+                            <div class="lg:col-start-1 lg:col-span-4 lg:pl-4">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    Ukuran tetap diinput dalam cm. Pemakaian bahan otomatis dikonversi ke satuan dasar bahan (contoh: m2); jika material punya spec roll, perhitungan mengikuti lebar roll + waste.
+                                </p>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="mt-4 flex items-center justify-between border-t border-gray-200 pt-3 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">

@@ -26,6 +26,7 @@ class ProductRequest extends FormRequest
                     ->ignore($productId),
             ],
             'name' => ['required', 'string', 'max:128'],
+            'product_type' => ['required', Rule::in(['goods', 'service'])],
             'base_price' => ['required', 'integer', 'min:0'],
             'sale_price' => ['required', 'integer', 'min:0'],
             'length_cm' => ['nullable', 'numeric', 'min:0'],
@@ -33,7 +34,11 @@ class ProductRequest extends FormRequest
             'unit_id' => ['required', 'exists:mst_units,id'],
             'category_id' => ['required', 'exists:mst_categories,id'],
             'description' => ['nullable', 'string'],
-            'materials' => ['required', 'array', 'min:1'],
+            'materials' => [
+                Rule::requiredIf(($this->input('product_type') ?? 'goods') === 'goods'),
+                'nullable',
+                'array',
+            ],
             'materials.*' => [
                 'integer',
                 Rule::exists('mst_materials', 'id'),
@@ -46,6 +51,7 @@ class ProductRequest extends FormRequest
         return [
             'sku' => 'SKU',
             'name' => 'Nama Produk',
+            'product_type' => 'Jenis Produk',
             'base_price' => 'Harga Pokok',
             'sale_price' => 'Harga Jual',
             'length_cm' => 'Panjang (cm)',
@@ -62,7 +68,8 @@ class ProductRequest extends FormRequest
     {
         return [
             'materials.required' => 'Pilih minimal satu material untuk produk ini.',
-            'materials.min' => 'Pilih minimal satu material untuk produk ini.',
+            'product_type.required' => 'Jenis produk wajib dipilih.',
+            'product_type.in' => 'Jenis produk tidak valid.',
         ];
     }
 }
