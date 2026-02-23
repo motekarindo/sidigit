@@ -420,7 +420,8 @@ class OrderService
             $price = (float) $product->sale_price;
             if ($lengthCm && $widthCm) {
                 $areaM2 = ($lengthCm / 100) * ($widthCm / 100);
-                return $price * $areaM2;
+                $billableAreaM2 = max(1, $areaM2);
+                return $price * $billableAreaM2;
             }
 
             return $price;

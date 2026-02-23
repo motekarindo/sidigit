@@ -273,7 +273,7 @@
                         @if ($showDimension)
                             <div class="lg:col-start-1 lg:col-span-4 lg:pl-4">
                                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                                    Ukuran tetap diinput dalam cm. Pemakaian bahan otomatis dikonversi ke satuan dasar bahan (contoh: m2); jika material punya spec roll, perhitungan mengikuti lebar roll + waste.
+                                    Ukuran tetap diinput dalam cm. Harga jual otomatis memakai minimum penagihan 1 m2. Pemakaian bahan tetap dihitung aktual ke satuan dasar bahan (contoh: m2); jika material punya spec roll, perhitungan mengikuti lebar roll + waste.
                                 </p>
                             </div>
                         @endif

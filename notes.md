@@ -110,6 +110,7 @@
   - Produk **jasa**: bahan opsional.
 - UX order ditingkatkan: saat pilih produk, bahan otomatis terisi ke opsi pertama jika produk punya mapping bahan (meminimalkan kasus lupa pilih bahan).
 - Guard backend ditambahkan di `OrderService`: validasi bahan kondisional dan verifikasi bahwa bahan yang dipilih harus sesuai mapping bahan produk (anti bypass dari request manual/API).
+- Perhitungan **harga jual otomatis** untuk item berdimensi menerapkan **minimum penagihan 1 m2**: jika luas < 1 m2, harga tetap dibulatkan ke 1 m2 (contoh `25.000/m2` tetap `25.000` untuk ukuran di bawah 1 m2).
 
 ## Stock & Material
 - Standarisasi satuan bahan roll-area: basis bahan indoor/outdoor roll (Albatros/Backlite/Flexy) diubah ke **m2** dengan `purchase_unit = rol`.

@@ -212,7 +212,8 @@ trait HandlesOrderForm
 
         if ($lengthCm && $widthCm) {
             $areaM2 = ($lengthCm / 100) * ($widthCm / 100);
-            return $basePrice * $areaM2;
+            $billableAreaM2 = max(1, $areaM2);
+            return $basePrice * $billableAreaM2;
         }
 
         return $basePrice;
