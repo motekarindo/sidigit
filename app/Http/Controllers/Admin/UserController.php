@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Role;
-use App\Models\User;
+use App\Services\RoleService;
+use App\Services\UserService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -16,6 +15,14 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class UserController extends Controller
 {
     use AuthorizesRequests;
+    protected UserService $userService;
+    protected RoleService $roleService;
+
+    public function __construct(UserService $userService, RoleService $roleService)
+    {
+        $this->userService = $userService;
+        $this->roleService = $roleService;
+    }
     /**
      * Display a listing of the resource.
      */
@@ -23,7 +30,7 @@ class UserController extends Controller
     {
         $this->authorize("users.view");
 
-        $users = User::with('roles')->latest()->paginate(10);
+        $users = $this->userService->query()->latest()->paginate(10);
 
         return view("admin.users.index", compact('users'));
     }
@@ -35,7 +42,7 @@ class UserController extends Controller
     {
         $this->authorize("users.create");
 
-        $roles = Role::all();
+        $roles = $this->roleService->all();
         return view('admin.users.create', compact('roles'));
     }
 
@@ -55,10 +62,10 @@ class UserController extends Controller
         ]);
 
         // Buat user baru
-        $user = User::create($validated);
+        $user = $this->userService->store($validated);
 
         // Berikan role
-        $user->roles()->sync($validated['roles']);
+        $this->userService->syncRoles($user->id, $validated['roles']);
 
         return redirect()->route('users.index')->with('success', 'User baru berhasil ditambahkan.');
     }
@@ -74,43 +81,46 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(User $user)
+    public function edit(int $user)
     {
         $this->authorize("users.edit");
 
-        $roles = Role::all();
+        $roles = $this->roleService->all();
 
-        return view('admin.users.edit', compact('user', 'roles'));
+        return view('admin.users.edit', [
+            'user' => $this->userService->findWithRoles($user),
+            'roles' => $roles,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, int $user)
     {
         $this->authorize("users.create");
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users,username,' . $user->id,
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'username' => 'required|string|max:255|unique:users,username,' . $user,
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user,
             'password' => ['nullable', 'confirmed', Password::min(8)],
             'role' => 'required',
             'role.*' => 'exists:roles,id',
         ]);
 
         // Jika password diisi, hash dan update. Jika tidak, abaikan.
+        $payload = [
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+        ];
         if (!empty($validated['password'])) {
-            $user->password = $validated['password'];
+            $payload['password'] = $validated['password'];
         }
-
-        // Update data user lainnya
-        $user->name = $validated['name'];
-        $user->username = $validated['username'];
-        $user->email = $validated['email'];
-        $user->save();
+        $this->userService->update($user, $payload);
 
         // Update role
-        $user->roles()->sync($validated['role']);
+        $this->userService->syncRoles($user, $validated['role']);
 
         return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
     }
@@ -118,14 +128,14 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(User $user)
+    public function destroy(int $user)
     {
         $this->authorize("users.delete");
-        if (Auth::id() == $user->id) {
+        if (Auth::id() == $user) {
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
-        $user->delete();
+        $this->userService->destroy($user);
         return redirect()->route('users.index')->with('success', 'User berhasil dihapus.');
     }
 }

@@ -5,9 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
+use App\Services\UserService;
 
 class ProfileController extends Controller
 {
+    protected UserService $userService;
+
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+    }
     /**
      * Menampilkan form edit profil untuk user yang sedang login.
      */
@@ -23,7 +30,6 @@ class ProfileController extends Controller
      */
     public function update(Request $request)
     {
-        /** @var \App\Models\User $user */ // <-- TAMBAHKAN BARIS INI
         $user = Auth::user(); // Ambil user di awal
 
         $validated = $request->validate([
@@ -47,7 +53,7 @@ class ProfileController extends Controller
         }
 
         // Gunakan method update()
-        $user->update($dataToUpdate);
+        $this->userService->update($user->id, $dataToUpdate);
 
         return back()->with('success', 'Profil berhasil diperbarui.');
     }

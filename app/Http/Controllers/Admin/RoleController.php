@@ -4,14 +4,22 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Role;
-use App\Models\Menu;
+use App\Services\MenuService;
+use App\Services\RoleService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 
 class RoleController extends Controller
 {
     use AuthorizesRequests;
+    protected RoleService $roleService;
+    protected MenuService $menuService;
+
+    public function __construct(RoleService $roleService, MenuService $menuService)
+    {
+        $this->roleService = $roleService;
+        $this->menuService = $menuService;
+    }
 
     /**
      * Display a listing of the resource.
@@ -19,7 +27,7 @@ class RoleController extends Controller
     public function index()
     {
         $this->authorize(('role.view'));
-        $roles = Role::latest()->paginate(10);
+        $roles = $this->roleService->query()->latest()->paginate(10);
 
 
         return view("admin.roles.index", compact('roles'));
@@ -32,10 +40,7 @@ class RoleController extends Controller
     {
         $this->authorize('role.create');
 
-        $menus = Menu::whereNull('parent_id')
-            ->with('children.permissions', 'permissions')
-            ->orderBy('order')
-            ->get();
+        $menus = $this->menuService->treeWithPermissions();
 
         return view('admin.roles.create', compact('menus'));
     }
@@ -57,14 +62,16 @@ class RoleController extends Controller
         ]);
 
         // Buat Role baru
-        $role = Role::create([
+        $role = $this->roleService->store([
             'name' => $validated['name'],
             'slug' => $validated['slug'],
         ]);
 
-        // Hubungkan role dengan permission dan menu yang dipilih
-        $role->permissions()->sync($validated['permissions'] ?? []);
-        $role->menus()->sync($validated['menus'] ?? []);
+        $this->roleService->syncPermissionsMenus(
+            $role->id,
+            $validated['permissions'] ?? [],
+            $validated['menus'] ?? []
+        );
 
         return redirect()->route('roles.index')->with('success', 'Role baru berhasil ditambahkan.');
     }
@@ -80,51 +87,53 @@ class RoleController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Role $role)
+    public function edit(int $role)
     {
         $this->authorize('role.edit');
 
-        // Ambil semua menu dengan relasi permission-nya, sama seperti di method create
-        $menus = Menu::whereNull('parent_id')
-            ->with('children.permissions', 'permissions')
-            ->orderBy('order')
-            ->get();
+        $roleModel = $this->roleService->findWithRelations($role);
+        $menus = $this->menuService->treeWithPermissions();
 
 
-        return view('admin.roles.edit', compact('role', 'menus',));
+        return view('admin.roles.edit', [
+            'role' => $roleModel,
+            'menus' => $menus,
+        ]);
     }
 
 
-    public function update(Request $request, Role $role)
+    public function update(Request $request, int $role)
     {
         $this->authorize('role.edit');
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
-            'slug' => 'required|string|max:255|unique:roles,slug,' . $role->id,
+            'name' => 'required|string|max:255|unique:roles,name,' . $role,
+            'slug' => 'required|string|max:255|unique:roles,slug,' . $role,
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,id',
             'menus' => 'nullable|array', // Pastikan ini ada
             'menus.*' => 'exists:menus,id' // Pastikan ini ada
         ]);
 
-        $role->update([
+        $this->roleService->update($role, [
             'name' => $validated['name'],
             'slug' => $validated['slug'],
         ]);
 
-        $role->permissions()->sync($validated['permissions'] ?? []);
-        $role->menus()->sync($validated['menus'] ?? []); // Dan pastikan ini ada
+        $this->roleService->syncPermissionsMenus(
+            $role,
+            $validated['permissions'] ?? [],
+            $validated['menus'] ?? []
+        );
 
         return redirect()->route('roles.index')->with('success', 'Role berhasil diperbarui.');
     }
 
-    public function destroy(Role $role)
+    public function destroy(int $role)
     {
         $this->authorize('role.delete');
 
-        // Eloquent akan otomatis menghapus relasinya di tabel pivot (permission_role, menu_role, dll)
-        $role->delete();
+        $this->roleService->destroy($role);
 
         // 3. Redirect kembali dengan pesan sukses
         return redirect()->route('roles.index')->with('success', 'Role berhasil dihapus.');

@@ -1,0 +1,216 @@
+<?php
+
+namespace App\Livewire\Admin\Product;
+
+use App\Livewire\Admin\Product\Concerns\HandlesProductForm;
+use App\Services\ProductService;
+use App\Traits\WithErrorToast;
+use App\Traits\WithPageMeta;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+#[Layout('layouts.app')]
+#[Title('Edit Produk')]
+class Edit extends Component
+{
+    use AuthorizesRequests;
+    use HandlesProductForm;
+    use WithErrorToast;
+    use WithPageMeta;
+
+    public int $productId;
+    public string $sku = '';
+    public string $name = '';
+    public string $product_type = 'goods';
+    public $base_price = null;
+    public $sale_price = null;
+    public $length_cm = null;
+    public $width_cm = null;
+    public ?int $unit_id = null;
+    public ?int $category_id = null;
+    public ?string $product_description = null;
+    public array $materials = [];
+
+    protected ProductService $service;
+
+    public function boot(ProductService $service): void
+    {
+        $this->service = $service;
+    }
+
+    protected array $messages = [
+        'sku.required' => 'SKU wajib diisi.',
+        'sku.unique' => 'SKU sudah digunakan. Gunakan SKU lain.',
+        'name.required' => 'Nama produk wajib diisi.',
+        'product_type.required' => 'Jenis produk wajib dipilih.',
+        'product_type.in' => 'Jenis produk tidak valid.',
+        'base_price.required' => 'Harga pokok wajib diisi.',
+        'base_price.integer' => 'Harga pokok harus berupa angka bulat.',
+        'base_price.min' => 'Harga pokok tidak boleh kurang dari 0.',
+        'sale_price.required' => 'Harga jual wajib diisi.',
+        'sale_price.integer' => 'Harga jual harus berupa angka bulat.',
+        'sale_price.min' => 'Harga jual tidak boleh kurang dari 0.',
+        'unit_id.required' => 'Satuan wajib dipilih.',
+        'unit_id.exists' => 'Satuan yang dipilih tidak valid.',
+        'category_id.required' => 'Kategori produk wajib dipilih.',
+        'category_id.exists' => 'Kategori yang dipilih tidak valid.',
+        'length_cm.numeric' => 'Panjang harus berupa angka.',
+        'length_cm.min' => 'Panjang tidak boleh kurang dari 0.',
+        'width_cm.numeric' => 'Lebar harus berupa angka.',
+        'width_cm.min' => 'Lebar tidak boleh kurang dari 0.',
+        'materials.required' => 'Pilih minimal satu material untuk produk ini.',
+        'materials.min' => 'Pilih minimal satu material untuk produk ini.',
+        'materials.*.exists' => 'Material yang dipilih tidak valid.',
+    ];
+
+    protected array $validationAttributes = [
+        'sku' => 'SKU',
+        'name' => 'Nama Produk',
+        'product_type' => 'Jenis Produk',
+        'base_price' => 'Harga Pokok',
+        'sale_price' => 'Harga Jual',
+        'length_cm' => 'Panjang (cm)',
+        'width_cm' => 'Lebar (cm)',
+        'unit_id' => 'Satuan',
+        'category_id' => 'Kategori Produk',
+        'product_description' => 'Deskripsi',
+        'materials' => 'Material Produk',
+        'materials.*' => 'Material Produk',
+    ];
+
+    public function mount(int $product): void
+    {
+        $this->authorize('product.edit');
+
+        $this->loadReferenceData();
+
+        try {
+            $productModel = $this->service->find($product);
+        } catch (\Throwable $th) {
+            report($th);
+
+            session()->flash('toast', [
+                'message' => 'Data produk tidak ditemukan atau tidak dapat diakses.',
+                'type' => 'error',
+            ]);
+            $this->redirectRoute('products.index');
+
+            return;
+        }
+
+        $this->productId = $productModel->id;
+        $this->sku = (string) $productModel->sku;
+        $this->name = (string) $productModel->name;
+        $this->product_type = (string) ($productModel->product_type ?: 'goods');
+        $this->base_price = $productModel->base_price;
+        $this->sale_price = $productModel->sale_price;
+        $this->length_cm = $productModel->length_cm ?: null;
+        $this->width_cm = $productModel->width_cm ?: null;
+        $this->unit_id = $productModel->unit_id;
+        $this->category_id = $productModel->category_id;
+        $this->product_description = $productModel->description;
+        $this->materials = $productModel->productMaterials
+            ->pluck('material_id')
+            ->map(fn($id) => (int) $id)
+            ->toArray();
+
+        $this->refreshMaterialsForCategory($this->category_id);
+        $this->syncDimensionFields();
+
+        $this->setPageMeta(
+            'Edit Produk',
+            'Perbarui informasi produk, harga, dan material yang digunakan.',
+            [
+                ['label' => 'Dashboard', 'url' => Route::has('dashboard') ? route('dashboard') : '#', 'icon' => true],
+                ['label' => 'Produk', 'url' => route('products.index')],
+                ['label' => 'Edit', 'current' => true],
+            ]
+        );
+    }
+
+    public function updatedCategoryId($value): void
+    {
+        $this->refreshMaterialsForCategory();
+    }
+
+    public function updatedUnitId($value): void
+    {
+        $this->syncDimensionFields(true);
+    }
+
+    public function updatedProductType($value): void
+    {
+        if ((string) $value === 'service') {
+            $this->materials = [];
+        }
+    }
+
+    protected function rules(): array
+    {
+        return $this->rulesFor($this->productId ?? null);
+    }
+
+    protected function rulesFor(?int $productId): array
+    {
+        return [
+            'sku' => [
+                'required',
+                'string',
+                'max:64',
+                Rule::unique('mst_products', 'sku')->ignore($productId),
+            ],
+            'name' => ['required', 'string', 'max:128'],
+            'product_type' => ['required', Rule::in(['goods', 'service'])],
+            'base_price' => ['required', 'integer', 'min:0'],
+            'sale_price' => ['required', 'integer', 'min:0'],
+            'length_cm' => ['nullable', 'numeric', 'min:0'],
+            'width_cm' => ['nullable', 'numeric', 'min:0'],
+            'unit_id' => ['required', 'exists:mst_units,id'],
+            'category_id' => ['required', 'exists:mst_categories,id'],
+            'product_description' => ['nullable', 'string'],
+            'materials' => array_values(array_filter([
+                $this->product_type === 'goods' ? 'required' : 'nullable',
+                'array',
+                $this->product_type === 'goods' ? 'min:1' : null,
+            ])),
+            'materials.*' => [
+                'integer',
+                Rule::exists('mst_materials', 'id'),
+            ],
+        ];
+    }
+
+    public function update(): void
+    {
+        $this->normalizePriceInputs();
+        $data = $this->validate();
+        $data['description'] = $data['product_description'] ?? null;
+        unset($data['product_description']);
+
+        try {
+            $product = $this->service->update($this->productId, $data);
+
+            session()->flash('toast', [
+                'message' => "Produk {$product->name} berhasil diperbarui.",
+                'type' => 'success',
+            ]);
+            $this->redirectRoute('products.index');
+        } catch (ValidationException $e) {
+            $this->toastValidation($e);
+            throw $e;
+        } catch (\Throwable $th) {
+            report($th);
+            $this->toastError($th, 'Terjadi kesalahan saat memperbarui data produk.');
+        }
+    }
+
+    public function render()
+    {
+        return view('livewire.admin.product.edit');
+    }
+}

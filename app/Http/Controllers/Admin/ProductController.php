@@ -3,75 +3,150 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\ProductRequest;
+use App\Services\CategoryService;
+use App\Services\MaterialService;
+use App\Services\ProductService;
+use App\Services\UnitService;
+use App\Support\ErrorReporter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
 class ProductController extends Controller
 {
     use AuthorizesRequests;
-    /**
-     * Display a listing of the resource.
-     */
+
+    protected $service;
+    protected CategoryService $categoryService;
+    protected MaterialService $materialService;
+    protected UnitService $unitService;
+
+    public function __construct(
+        ProductService $service,
+        CategoryService $categoryService,
+        MaterialService $materialService,
+        UnitService $unitService
+    )
+    {
+        $this->service = $service;
+        $this->categoryService = $categoryService;
+        $this->materialService = $materialService;
+        $this->unitService = $unitService;
+    }
+
     public function index()
     {
-        $this->authorize("product.view");
-        return view("admin.product.index");
+        $this->authorize('product.view');
+
+        $products = $this->service->getPaginated();
+
+        return view('admin.product.index', compact('products'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
+        $this->authorize('product.create');
 
-        $this->authorize("product.create");
-        //
+        $categories = $this->categoryService->query()->orderBy('name')->get();
+        $materialsAll = $this->getMaterialsAll();
+        $units = $this->unitService->query()->orderBy('name')->get();
+
+        return view('admin.product.create', compact('categories', 'materialsAll', 'units'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(ProductRequest $request)
     {
+        $this->authorize('product.create');
 
-        $this->authorize("product.create");
-        //
+        try {
+            $product = $this->service->store($request->validated());
+
+            return redirect()
+                ->route('products.index')
+                ->with('success', "Produk {$product->name} berhasil ditambahkan.");
+        } catch (\Throwable $th) {
+
+            return back()
+                ->withInput()
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat menambahkan produk.')['message']);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function edit(int $product)
     {
-        //
+        $this->authorize('product.edit');
+
+        try {
+            $productModel = $this->service->find($product);
+            $categories = $this->categoryService->query()->orderBy('name')->get();
+            $materialsAll = $this->getMaterialsAll();
+            $units = $this->unitService->query()->orderBy('name')->get();
+
+            return view('admin.product.edit', [
+                'product' => $productModel,
+                'categories' => $categories,
+                'materialsAll' => $materialsAll,
+                'units' => $units,
+            ]);
+        } catch (\Throwable $th) {
+
+            return redirect()
+                ->route('products.index')
+                ->with('error', 'Data produk tidak ditemukan atau tidak dapat diakses.');
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(ProductRequest $request, int $product)
     {
+        $this->authorize('product.edit');
 
-        $this->authorize("product.edit");
-        //
+        try {
+            $updatedProduct = $this->service->update($product, $request->validated());
+
+            return redirect()
+                ->route('products.index')
+                ->with('success', "Produk {$updatedProduct->name} berhasil diperbarui.");
+        } catch (\Throwable $th) {
+
+            return back()
+                ->withInput()
+                ->with('error', ErrorReporter::report($th, 'Terjadi kesalahan saat memperbarui data produk.')['message']);
+        }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy(int $product)
     {
+        $this->authorize('product.delete');
 
-        $this->authorize("product.edit");
-        //
+        try {
+            $productModel = $this->service->find($product);
+            $this->service->destroy($product);
+
+            return redirect()
+                ->route('products.index')
+                ->with('success', "Produk {$productModel->name} berhasil dihapus.");
+        } catch (\Throwable $th) {
+
+            return redirect()
+                ->route('products.index')
+                ->with('error', 'Terjadi kesalahan saat menghapus data produk. Silakan coba lagi.');
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    protected function getMaterialsAll(): array
     {
-
-        $this->authorize("product.delete");
-        //
+        return $this->materialService->query()
+            ->with(['unit', 'category'])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($material) {
+                return [
+                    'id' => (string) $material->id,
+                    'name' => $material->name,
+                    'unit' => optional($material->unit)->name,
+                    'category' => optional($material->category)->name,
+                ];
+            })
+            ->values()
+            ->toArray();
     }
 }

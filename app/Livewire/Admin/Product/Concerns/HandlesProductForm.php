@@ -1,0 +1,123 @@
+<?php
+
+namespace App\Livewire\Admin\Product\Concerns;
+
+use App\Services\CategoryService;
+use App\Services\MaterialService;
+use App\Services\UnitService;
+
+trait HandlesProductForm
+{
+    public array $categories = [];
+    public array $units = [];
+    public array $materialsAll = [];
+    public array $materialsForSelectedCategory = [];
+    public array $dimensionUnitIds = [];
+    public bool $showDimensionFields = false;
+
+    protected function loadReferenceData(): void
+    {
+        $this->categories = app(CategoryService::class)->query()
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn ($category) => [
+                'id' => $category->id,
+                'name' => $category->name,
+            ])
+            ->toArray();
+
+        $this->units = app(UnitService::class)->query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'is_dimension'])
+            ->map(fn ($unit) => [
+                'id' => $unit->id,
+                'name' => $unit->name,
+                'is_dimension' => (bool) $unit->is_dimension,
+            ])
+            ->toArray();
+
+        $this->materialsAll = $this->getMaterialsAll();
+        $this->materialsForSelectedCategory = $this->materialsAll;
+
+        $this->dimensionUnitIds = collect($this->units)
+            ->filter(fn ($unit) => !empty($unit['is_dimension']))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->toArray();
+    }
+
+    protected function refreshMaterialsForCategory(?int $categoryId = null): void
+    {
+        $this->materialsForSelectedCategory = $this->materialsAll;
+    }
+
+    public function reloadMaterials(): void
+    {
+        $this->materialsAll = $this->getMaterialsAll();
+        $this->materials = [];
+        $this->refreshMaterialsForCategory();
+    }
+
+    protected function syncDimensionFields(bool $resetValues = false): void
+    {
+        $unitId = $this->unit_id ? (int) $this->unit_id : null;
+        $shouldShow = $unitId && in_array($unitId, $this->dimensionUnitIds, true);
+
+        $this->showDimensionFields = (bool) $shouldShow;
+
+        if (!$shouldShow && $resetValues) {
+            $this->length_cm = null;
+            $this->width_cm = null;
+        }
+    }
+
+    protected function normalizePriceInputs(): void
+    {
+        $this->base_price = $this->sanitizeMoneyValue($this->base_price);
+        $this->sale_price = $this->sanitizeMoneyValue($this->sale_price);
+    }
+
+    protected function sanitizeMoneyValue($value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            return (int) round((float) $value);
+        }
+
+        $digits = preg_replace('/[^\d]/', '', (string) $value);
+
+        return $digits === '' ? null : (int) $digits;
+    }
+
+    public function handleUnitChange($value): void
+    {
+        $this->unit_id = $value ? (int) $value : null;
+        $this->syncDimensionFields(true);
+    }
+
+    protected function getMaterialsAll(): array
+    {
+        return app(MaterialService::class)->query()
+            ->with(['unit', 'category'])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($material) {
+                return [
+                    'id' => (string) $material->id,
+                    'name' => $material->name,
+                    'unit' => optional($material->unit)->name,
+                    'category' => optional($material->category)->name,
+                ];
+            })
+            ->values()
+            ->toArray();
+    }
+}
