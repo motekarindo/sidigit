@@ -331,6 +331,7 @@ class Table extends BaseTable
             ['label' => 'Order No', 'field' => 'order_no', 'sortable' => true],
             ['label' => 'Customer', 'field' => 'customer.name', 'sortable' => false],
             ['label' => 'Status', 'view' => 'livewire.admin.orders.columns.status', 'sortable' => false],
+            ['label' => 'Tracking', 'view' => 'livewire.admin.orders.columns.tracking', 'sortable' => false],
             [
                 'label' => 'Total',
                 'field' => 'grand_total',

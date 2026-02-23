@@ -19,3 +19,15 @@
 - Run the stack where you deploy: `docker compose -f docker-compose.prod.yml up -d`.
 - After the containers start, run `docker compose -f docker-compose.prod.yml exec app php artisan key:generate --force` (first run), `php artisan migrate --force`, and `php artisan storage:link` if you need public storage.
 - Make sure `docker/.env.production` references the correct external MinIO/S3 endpoint and credentials before deploying.
+
+## Order
+- Ditambahkan modul **Tracking Order Publik** dengan URL: `/track/order/{id_order_encrypted}`.
+- Link tracking bersifat **public**: siapa pun yang memiliki URL dapat melihat progres order.
+- ID order di URL tidak memakai ID mentah, tetapi token terenkripsi melalui `OrderTrackingToken`.
+- Implementasi mengikuti **service and repository pattern**:
+  - `App\\Services\\OrderTrackingService`
+  - `App\\Repositories\\OrderTrackingRepository`
+- Halaman tracking publik menampilkan status saat ini dan riwayat pengerjaan dari `order_status_logs`.
+- Akses tracking dipindahkan ke **Daftar Order** pada kolom **Tracking** (aksi `Lihat` dan `Salin Link`) agar header halaman detail order tetap ringkas.
+- Aksi **Salin Link** menampilkan **toast sukses** (bukan modal) agar feedback cepat dan tidak mengganggu alur kerja.
+- Untuk environment `http` (non-HTTPS), salin link tetap dicoba otomatis via fallback `execCommand('copy')`; prompt manual hanya muncul jika browser menolak semua metode copy.

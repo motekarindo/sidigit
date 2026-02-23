@@ -47,6 +47,7 @@ use App\Livewire\Admin\Reports\SalesReport as SalesReport;
 use App\Livewire\Admin\Reports\ExpenseReport as ExpenseReport;
 use App\Livewire\Admin\Reports\BranchReport as BranchReport;
 use App\Livewire\Admin\Orders\AddPayment as OrderAddPayment;
+use App\Http\Controllers\Tracking\OrderTrackingController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -59,6 +60,10 @@ Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', ForgotPasswordPage::class)->name('password.request');
     Route::get('/reset-password/{token}', ResetPasswordPage::class)->name('password.reset');
 });
+
+Route::get('/track/order/{id_order_encrypted}', [OrderTrackingController::class, 'show'])
+    ->where('id_order_encrypted', '[A-Za-z0-9\\-_]+')
+    ->name('orders.track.public');
 
 
 
