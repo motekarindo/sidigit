@@ -96,6 +96,8 @@
 - UX Order disempurnakan: pesan validasi dibuat lebih **human-readable** (label field lebih jelas, bahasa natural), dan field **Alasan Revisi** muncul **realtime** di modal Ubah Status saat status di-downgrade.
 - Workflow baru setelah Approval: halaman `Edit Order` berubah menjadi mode **Lihat Order** (read-only), tombol Simpan disembunyikan, dan user diarahkan mengubah status dari daftar order.
 - Action button pada mode **Lihat Order** dirapikan urutannya: **Lihat Invoice**, **Lihat Quotation**, **Print Invoice**, **Print Quotation**, **Input Pembayaran**, **Kembali**; tiap tombol dilengkapi ikon representatif.
+- UX order ditingkatkan: header aksi di halaman **Tambah/Edit Order** (judul + tombol aksi) dibuat **sticky** saat scroll agar user tetap bisa simpan/aksi tanpa kembali ke atas.
+- Perbaikan sticky header order: offset sticky dinaikkan agar panel aksi tidak lagi tertutup navbar atas saat scroll (create/edit order).
 - Orders Table ditambah action **Ubah Status** (modal): pilih status baru langsung dari list order, dengan validasi **alasan revisi wajib** saat downgrade dari fase Approval+.
 - Action bar order diperbarui: status `draft`/`quotation` menampilkan **Edit Order**, sedangkan status Approval+ menampilkan **Lihat Order**.
 - Urutan action di dropdown **Orders Table** dirapikan (mode Approval+): **Input Pembayaran**, **Ubah Status**, **Lihat Order**, **Lihat Quotation**, **Lihat Invoice**, **Delete**.
