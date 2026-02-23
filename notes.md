@@ -1,7 +1,4 @@
-
 # 📝 TODO — MVP System
-
-
 ## 🧭 Multi-Branch (Implementasi Awal)
 ### Ringkasan
 - **Model cabang**: 1 company = 1 database, dengan cabang induk (`is_main`).
