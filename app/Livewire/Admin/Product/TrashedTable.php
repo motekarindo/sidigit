@@ -97,6 +97,12 @@ class TrashedTable extends BaseTable
         return [
             ['label' => 'SKU', 'field' => 'sku', 'sortable' => true],
             ['label' => 'Nama', 'field' => 'name', 'sortable' => true],
+            [
+                'label' => 'Jenis',
+                'field' => 'product_type',
+                'sortable' => false,
+                'format' => fn ($row) => ($row->product_type ?? 'goods') === 'service' ? 'Jasa' : 'Barang',
+            ],
             ['label' => 'Kategori', 'field' => 'category.name', 'sortable' => false],
             ['label' => 'Satuan', 'field' => 'unit.name', 'sortable' => false],
             [

@@ -18,7 +18,7 @@ class ReservationsIndex extends Component
 
     public function mount(): void
     {
-        $this->authorize('stock-balance.view');
+        $this->authorize('stock-reservation.view');
 
         $this->setPageMeta(
             'Reservasi Stok',

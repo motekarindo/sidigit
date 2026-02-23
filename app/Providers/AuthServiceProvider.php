@@ -26,7 +26,7 @@ class AuthServiceProvider extends ServiceProvider
         // Secara implisit memberikan semua izin ke role Admin
         // Periksa apakah user punya role 'admin'
         Gate::before(function (User $user) {
-            if ($user->roles()->where('slug', 'admin')->exists()) {
+            if ($user->roles()->whereIn('slug', ['admin', 'administrator', 'superadmin'])->exists()) {
                 return true;
             }
         });

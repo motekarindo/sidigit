@@ -128,6 +128,9 @@ class PermissionSeeder extends Seeder
             // Saldo Stok
             'stock-balance.view' => ['name' => 'Lihat Saldo Stok', 'menu_id' => $menuId('Saldo Stok')],
 
+            // Reservasi Stok
+            'stock-reservation.view' => ['name' => 'Lihat Reservasi Stok', 'menu_id' => $menuId('Reservasi Stok')],
+
             // Expense Bahan
             'expense-material.view' => ['name' => 'Lihat Expense Bahan', 'menu_id' => $menuId('Expense Bahan')],
             'expense-material.create' => ['name' => 'Tambah Expense Bahan', 'menu_id' => $menuId('Expense Bahan')],
@@ -152,9 +155,16 @@ class PermissionSeeder extends Seeder
             'employee-loan.edit' => ['name' => 'Edit Kasbon', 'menu_id' => $menuId('Kasbon')],
             'employee-loan.delete' => ['name' => 'Hapus Kasbon', 'menu_id' => $menuId('Kasbon')],
 
+            // Cabang
+            'branch.view' => ['name' => 'Lihat Cabang', 'menu_id' => $menuId('Cabang')],
+            'branch.create' => ['name' => 'Tambah Cabang', 'menu_id' => $menuId('Cabang')],
+            'branch.edit' => ['name' => 'Edit Cabang', 'menu_id' => $menuId('Cabang')],
+            'branch.delete' => ['name' => 'Hapus Cabang', 'menu_id' => $menuId('Cabang')],
+
             // Laporan
             'report.sales.view' => ['name' => 'Lihat Laporan Penjualan', 'menu_id' => $menuId('Laporan Penjualan')],
             'report.expense.view' => ['name' => 'Lihat Laporan Pengeluaran', 'menu_id' => $menuId('Laporan Pengeluaran')],
+            'report.branch.view' => ['name' => 'Lihat Laporan Per Cabang', 'menu_id' => $menuId('Laporan Per Cabang')],
         ];
 
         // Buat Permissions

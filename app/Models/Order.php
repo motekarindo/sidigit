@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\LogsAllActivity;
+use App\Traits\BranchScoped;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -10,13 +11,14 @@ use RichanFongdasen\EloquentBlameable\BlameableTrait;
 
 class Order extends Model
 {
-    use HasFactory, LogsAllActivity, BlameableTrait, SoftDeletes;
+    use HasFactory, LogsAllActivity, BranchScoped, BlameableTrait, SoftDeletes;
 
     protected $table = 'orders';
 
     protected $fillable = [
         'order_no',
         'customer_id',
+        'branch_id',
         'status',
         'order_date',
         'deadline',
@@ -42,6 +44,11 @@ class Order extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function items()

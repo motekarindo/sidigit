@@ -26,9 +26,9 @@ class OrderInvoiceController extends Controller
         $this->authorize('order.view');
 
         $orderModel = $this->service->find($order);
-        if ($orderModel->status === 'quotation') {
+        if (!$this->canAccessInvoice($orderModel->status)) {
             session()->flash('toast', [
-                'message' => 'Invoice hanya bisa dibuat setelah quotation disetujui.',
+                'message' => 'Invoice hanya tersedia mulai status Approval. Status Draft dan Quotation belum bisa melihat invoice.',
                 'type' => 'warning',
             ]);
             return redirect()->route('orders.index');
@@ -37,6 +37,7 @@ class OrderInvoiceController extends Controller
 
         $bankAccounts = $this->bankAccountService
             ->query()
+            ->where('branch_id', $orderModel->branch_id)
             ->orderBy('bank_name')
             ->orderBy('rekening_number')
             ->get(['bank_name', 'rekening_number', 'account_name']);
@@ -53,9 +54,9 @@ class OrderInvoiceController extends Controller
         $this->authorize('order.view');
 
         $orderModel = $this->service->find($order);
-        if ($orderModel->status === 'quotation') {
+        if (!$this->canAccessInvoice($orderModel->status)) {
             session()->flash('toast', [
-                'message' => 'Invoice hanya bisa dibuat setelah quotation disetujui.',
+                'message' => 'Invoice hanya tersedia mulai status Approval. Status Draft dan Quotation belum bisa melihat invoice.',
                 'type' => 'warning',
             ]);
             return redirect()->route('orders.index');
@@ -72,6 +73,7 @@ class OrderInvoiceController extends Controller
 
         $bankAccounts = $this->bankAccountService
             ->query()
+            ->where('branch_id', $orderModel->branch_id)
             ->orderBy('bank_name')
             ->orderBy('rekening_number')
             ->get(['bank_name', 'rekening_number', 'account_name']);
@@ -132,5 +134,10 @@ class OrderInvoiceController extends Controller
         ]);
 
         return $pdf->download('Quotation-' . $orderModel->order_no . '.pdf');
+    }
+
+    protected function canAccessInvoice(?string $status): bool
+    {
+        return !in_array((string) $status, ['draft', 'quotation'], true);
     }
 }

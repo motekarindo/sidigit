@@ -17,12 +17,16 @@ class BankAccountForm extends Form
 
     public function rules(): array
     {
+        $branchId = auth()->user()?->branch_id;
+
         return [
             'rekening_number' => [
                 'required',
                 'string',
                 'max:18',
-                Rule::unique('mst_bank_accounts', 'rekening_number')->ignore($this->id),
+                Rule::unique('mst_bank_accounts', 'rekening_number')
+                    ->where(fn ($query) => $query->where('branch_id', $branchId))
+                    ->ignore($this->id),
             ],
             'account_name' => ['required', 'string', 'max:64'],
             'bank_name' => ['required', 'string', 'max:64'],

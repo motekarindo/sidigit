@@ -14,6 +14,28 @@
         <form wire:submit.prevent="save" class="space-y-6">
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div class="space-y-4">
+                    <div x-data="{ withoutEmployee: @entangle('without_employee') }">
+                        <div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+                            <label class="flex items-center gap-3">
+                                <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+                                    wire:model.live="without_employee">
+                                <span>Akun tanpa pegawai</span>
+                            </label>
+                            <p class="mt-1 text-xs text-gray-400">Aktifkan jika akun ini tidak terhubung ke data pegawai.</p>
+                        </div>
+                        <div x-cloak x-show="!withoutEmployee" class="mt-4">
+                            <x-forms.searchable-select
+                                label="Pegawai"
+                                :options="$availableEmployees"
+                                placeholder="Pilih pegawai"
+                                wire:model.live="employee_id"
+                                required
+                            />
+                            @error('employee_id')
+                                <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
                     <div>
                         <label for="name" class="text-sm font-medium text-gray-700 dark:text-gray-300">Nama Lengkap</label>
                         <input type="text" id="name" wire:model.defer="name"
@@ -63,6 +85,31 @@
                         />
                         <p class="mt-1 text-xs text-gray-400">Klik untuk memilih lebih dari satu peran.</p>
                         @error('roles')
+                            <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <x-forms.searchable-select
+                            label="Cabang Default"
+                            :options="$availableBranches"
+                            placeholder="Pilih cabang default"
+                            wire:model="branch_id"
+                            required
+                        />
+                        @error('branch_id')
+                            <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <x-forms.searchable-multiselect
+                            label="Akses Cabang"
+                            :options="$availableBranches"
+                            placeholder="Pilih cabang"
+                            wire:model="branch_ids"
+                            required
+                        />
+                        <p class="mt-1 text-xs text-gray-400">Cabang default harus termasuk di akses cabang.</p>
+                        @error('branch_ids')
                             <p class="mt-1 text-sm text-error-500 dark:text-error-300">{{ $message }}</p>
                         @enderror
                     </div>

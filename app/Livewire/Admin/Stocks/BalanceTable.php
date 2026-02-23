@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Stocks;
 
 use App\Livewire\BaseTable;
 use App\Services\MaterialService;
+use App\Support\UnitFormatter;
 use Illuminate\Support\Facades\DB;
 
 class BalanceTable extends BaseTable
@@ -68,13 +69,19 @@ class BalanceTable extends BaseTable
                 'label' => 'Saldo',
                 'field' => 'stock_balance',
                 'sortable' => false,
-                'format' => fn ($row) => number_format((float) $row->stock_balance, 2, ',', '.'),
+                'format' => fn ($row) => UnitFormatter::quantity(
+                    (float) $row->stock_balance,
+                    $row->unit?->name
+                ),
             ],
             [
                 'label' => 'Reorder Level',
                 'field' => 'reorder_level',
                 'sortable' => false,
-                'format' => fn ($row) => number_format((float) $row->reorder_level, 2, ',', '.'),
+                'format' => fn ($row) => UnitFormatter::quantity(
+                    (float) $row->reorder_level,
+                    $row->unit?->name
+                ),
             ],
         ];
     }

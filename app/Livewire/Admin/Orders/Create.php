@@ -150,6 +150,7 @@ class Create extends Component
     {
         try {
             $data = $this->validate();
+            $this->validateItemMaterialRequirements($data['items'] ?? []);
 
             $order = $this->service->store([
                 'customer_id' => $data['customer_id'] ?? null,
@@ -165,6 +166,17 @@ class Create extends Component
                 'message' => "Order {$order->order_no} berhasil dibuat.",
                 'type' => 'success',
             ]);
+
+            if (($order->status ?? 'draft') === 'quotation') {
+                $this->redirectRoute('orders.quotation', ['order' => $order->id]);
+                return;
+            }
+
+            if (($order->status ?? 'draft') === 'draft') {
+                $this->redirectRoute('orders.edit', ['order' => $order->id]);
+                return;
+            }
+
             $this->redirectRoute('orders.invoice', ['order' => $order->id]);
         } catch (ValidationException $e) {
             $this->toastValidation($e);
@@ -173,6 +185,12 @@ class Create extends Component
             report($th);
             $this->toastError($th, 'Terjadi kesalahan saat menambahkan order.');
         }
+    }
+
+    public function saveWithStatus(string $status): void
+    {
+        $this->status = $status;
+        $this->save();
     }
 
     protected function toastValidation(ValidationException $e, ?string $fallback = null): void

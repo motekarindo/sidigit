@@ -12,6 +12,9 @@ class UnitSeeder extends Seeder
     {
         $units = [
             ['name' => 'CM', 'is_dimension' => true],
+            ['name' => 'M', 'is_dimension' => true],
+            ['name' => 'M2', 'is_dimension' => true],
+            ['name' => 'Rol', 'is_dimension' => true],
             ['name' => 'Lembar', 'is_dimension' => false],
             ['name' => 'Pack', 'is_dimension' => false],
             ['name' => 'PCS', 'is_dimension' => false],

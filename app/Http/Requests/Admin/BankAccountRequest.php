@@ -15,13 +15,16 @@ class BankAccountRequest extends FormRequest
     public function rules(): array
     {
         $bankAccountId = $this->route('bank_account') ?? $this->route('bank-account');
+        $branchId = auth()->user()?->branch_id;
 
         return [
             'rekening_number' => [
                 'required',
                 'string',
                 'max:18',
-                Rule::unique('mst_bank_accounts', 'rekening_number')->ignore($bankAccountId),
+                Rule::unique('mst_bank_accounts', 'rekening_number')
+                    ->where(fn ($query) => $query->where('branch_id', $branchId))
+                    ->ignore($bankAccountId),
             ],
             'account_name' => ['required', 'string', 'max:64'],
             'bank_name' => ['required', 'string', 'max:64'],

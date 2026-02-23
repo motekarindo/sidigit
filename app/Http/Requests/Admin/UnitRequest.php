@@ -15,13 +15,16 @@ class UnitRequest extends FormRequest
     public function rules(): array
     {
         $unitId = $this->route('unit');
+        $branchId = auth()->user()?->branch_id;
 
         return [
             'name' => [
                 'required',
                 'string',
                 'max:64',
-                Rule::unique('mst_units', 'name')->ignore($unitId),
+                Rule::unique('mst_units', 'name')
+                    ->where(fn ($query) => $query->where('branch_id', $branchId))
+                    ->ignore($unitId),
             ],
             'is_dimension' => ['nullable', 'boolean'],
         ];

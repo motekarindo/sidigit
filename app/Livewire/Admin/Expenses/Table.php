@@ -8,6 +8,7 @@ use App\Services\ExpenseService;
 use App\Services\MaterialService;
 use App\Services\SupplierService;
 use App\Services\UnitService;
+use App\Support\UnitFormatter;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
 
@@ -72,7 +73,7 @@ class Table extends BaseTable
 
         $ids = array_filter([$material->unit_id, $material->purchase_unit_id]);
         if (empty($ids)) {
-            return Unit::orderBy('name')->get();
+            return $this->unitService->query()->orderBy('name')->get();
         }
 
         return $this->unitService->query()->whereIn('id', $ids)->orderBy('name')->get();
@@ -199,7 +200,15 @@ class Table extends BaseTable
             return [
                 ['label' => 'Bahan', 'field' => 'material.name', 'sortable' => false],
                 ['label' => 'Supplier', 'field' => 'supplier.name', 'sortable' => false],
-                ['label' => 'Qty', 'field' => 'qty', 'sortable' => false],
+                [
+                    'label' => 'Qty',
+                    'field' => 'qty',
+                    'sortable' => false,
+                    'format' => fn ($row) => UnitFormatter::quantity(
+                        (float) ($row->qty ?? 0),
+                        $row->unit?->name
+                    ),
+                ],
                 [
                     'label' => 'Harga/Unit',
                     'field' => 'unit_cost',

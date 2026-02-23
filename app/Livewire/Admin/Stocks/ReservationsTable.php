@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Stocks;
 
 use App\Livewire\BaseTable;
 use App\Models\StockMovement;
+use App\Support\UnitFormatter;
 
 class ReservationsTable extends BaseTable
 {
@@ -17,7 +18,7 @@ class ReservationsTable extends BaseTable
             })
             ->leftJoin('mst_materials as m', 'm.id', '=', 'stock_movements.material_id')
             ->where('stock_movements.type', 'reserve')
-            ->with('material');
+            ->with(['material', 'material.unit']);
 
         return $this->applySearch($query, ['o.order_no', 'm.name', 'stock_movements.notes']);
     }
@@ -46,7 +47,10 @@ class ReservationsTable extends BaseTable
                 'label' => 'Qty',
                 'field' => 'qty',
                 'sortable' => false,
-                'format' => fn ($row) => number_format((float) $row->qty, 2, ',', '.'),
+                'format' => fn ($row) => UnitFormatter::quantity(
+                    (float) $row->qty,
+                    $row->material?->unit?->name
+                ),
             ],
             ['label' => 'Catatan', 'field' => 'notes', 'sortable' => false],
             ['label' => 'Dibuat Pada', 'field' => 'created_at', 'sortable' => false],

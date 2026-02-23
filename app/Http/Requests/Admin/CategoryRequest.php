@@ -15,13 +15,16 @@ class CategoryRequest extends FormRequest
     public function rules(): array
     {
         $categoryId = $this->route('category');
+        $branchId = auth()->user()?->branch_id;
 
         return [
             'name' => [
                 'required',
                 'string',
                 'max:64',
-                Rule::unique('mst_categories', 'name')->ignore($categoryId),
+                Rule::unique('mst_categories', 'name')
+                    ->where(fn ($query) => $query->where('branch_id', $branchId))
+                    ->ignore($categoryId),
             ],
         ];
     }

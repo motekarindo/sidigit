@@ -38,6 +38,7 @@
         .payment-list { margin: 6px 0 0; padding: 0; list-style: none; }
         .payment-list li { margin-bottom: 4px; }
         .qr-box { width: 90px; height: 90px; border: 1px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; color: #6b7280; font-weight: 700; font-size: 10px; background: #fff; border-radius: 6px; }
+        .qr-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
         @media (min-width: 768px) {
             .page { padding: 32px; }
             .paper { padding: 20px 24px; }
@@ -61,14 +62,11 @@
         $issuedAt = $order->order_date?->format('d M Y') ?? now()->format('d M Y');
         $dueAt = $order->deadline?->format('d M Y') ?? '-';
         $status = $order->status ?? 'draft';
-        $payments = $order->payments?->sortBy('paid_at') ?? collect();
-        $paidAmount = (float) ($order->paid_amount ?? 0);
-        $balance = max(0, (float) ($order->grand_total ?? 0) - $paidAmount);
-        $statusLabel = [
+        $statusLabels = [
             'draft' => 'Draft',
             'quotation' => 'Quotation',
             'approval' => 'Approved',
-            'approve' => 'Approved',
+            'menunggu-dp' => 'Menunggu DP',
             'desain' => 'Desain',
             'produksi' => 'Produksi',
             'finishing' => 'Finishing',
@@ -77,7 +75,61 @@
             'diambil' => 'Diambil',
             'selesai' => 'Selesai',
             'dibatalkan' => 'Dibatalkan',
-        ][$status] ?? ucfirst($status);
+        ];
+        $payments = $order->payments?->sortBy('paid_at') ?? collect();
+        $paymentsAsc = $payments->values();
+        $statusHistory = $order->statusLogs ?? collect();
+        $paidAmount = (float) ($order->paid_amount ?? 0);
+        $grandTotal = (float) ($order->grand_total ?? 0);
+        $balance = max(0, $grandTotal - $paidAmount);
+        $change = max(0, $paidAmount - $grandTotal);
+        $runningBalance = $grandTotal;
+        $paymentLedgerRows = collect([
+            [
+                'date' => $order->order_date,
+                'description' => 'Tagihan Order ' . $order->order_no,
+                'debit' => $grandTotal,
+                'credit' => 0.0,
+                'balance' => max(0, $runningBalance),
+            ],
+        ]);
+        foreach ($paymentsAsc as $payment) {
+            $amount = (float) ($payment->amount ?? 0);
+            $balanceBefore = $runningBalance;
+            $runningBalance -= $amount;
+
+            $changeFromPayment = max(0, $amount - max(0, $balanceBefore));
+            $description = ucfirst((string) ($payment->method ?? '-'));
+            if (!empty($payment->notes)) {
+                $description .= ' - ' . $payment->notes;
+            }
+            if ($changeFromPayment > 0) {
+                $description .= ' (Kembalian Rp ' . number_format($changeFromPayment, 0, ',', '.') . ')';
+            }
+
+            $paymentLedgerRows->push([
+                'date' => $payment->paid_at,
+                'description' => $description,
+                'debit' => 0.0,
+                'credit' => $amount,
+                'balance' => max(0, $runningBalance),
+            ]);
+        }
+        $branch = $order->branch;
+        $qrisUrl = null;
+        if (!empty($branch?->qris_path)) {
+            $disk = 'public';
+            try {
+                $storage = Storage::disk($disk);
+                $driver = config("filesystems.disks.{$disk}.driver");
+                $qrisUrl = $driver === 's3'
+                    ? $storage->temporaryUrl($branch->qris_path, now()->addMinutes(10))
+                    : $storage->url($branch->qris_path);
+            } catch (\Throwable $e) {
+                $qrisUrl = null;
+            }
+        }
+        $statusLabel = $statusLabels[$status] ?? ucfirst($status);
 
         $bankAccounts = $bankAccounts ?? collect();
     @endphp
@@ -192,7 +244,14 @@
                                 @endforelse
                             </ul>
                         </div>
-                        <div class="qr-box">QRIS</div>
+                        <div class="qr-box">
+                            @if ($qrisUrl)
+                                <img src="{{ $qrisUrl }}" alt="QRIS"
+                                    onerror="this.onerror=null;this.parentElement.textContent='QRIS';">
+                            @else
+                                QRIS
+                            @endif
+                        </div>
                     </div>
                 </div>
 
@@ -215,8 +274,12 @@
                             <td class="text-right"><strong>Rp {{ number_format($paidAmount, 0, ',', '.') }}</strong></td>
                         </tr>
                         <tr>
-                            <td class="meta-label">Sisa</td>
+                            <td class="meta-label">Sisa Tagihan</td>
                             <td class="text-right"><strong>Rp {{ number_format($balance, 0, ',', '.') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Kembalian</td>
+                            <td class="text-right"><strong>Rp {{ number_format($change, 0, ',', '.') }}</strong></td>
                         </tr>
                     </table>
                 </div>
@@ -226,32 +289,95 @@
                 <p class="text-muted"><strong>Catatan:</strong> {{ $order->notes ?: 'Tidak ada catatan.' }}</p>
             </div>
 
+            @if (empty($print))
+                <div class="section no-print">
+                    <h2>Riwayat Status</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Status</th>
+                                <th>User</th>
+                                <th>Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($statusHistory as $log)
+                                @php
+                                    $logStatus = $statusLabels[$log->status] ?? ucfirst((string) $log->status);
+                                    $logUser = $log->changedByUser?->name
+                                        ? $log->changedByUser->name . ' (#' . ($log->changed_by ?? '-') . ')'
+                                        : 'User #' . ($log->changed_by ?? '-');
+                                @endphp
+                                <tr>
+                                    <td>{{ $log->created_at?->format('d M Y H:i') ?? '-' }}</td>
+                                    <td>{{ $logStatus }}</td>
+                                    <td>{{ $logUser }}</td>
+                                    <td>{{ $log->note ?? '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-muted">Belum ada riwayat status.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+
             <div class="section">
                 <h2>Riwayat Pembayaran</h2>
                 <table>
                     <thead>
                         <tr>
+                            <th>No</th>
                             <th>Tanggal</th>
-                            <th>Metode</th>
-                            <th>Catatan</th>
-                            <th class="text-right">Jumlah</th>
+                            <th>Keterangan</th>
+                            <th class="text-right">Debit</th>
+                            <th class="text-right">Kredit</th>
+                            <th class="text-right">Sisa Tagihan</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($payments as $payment)
+                        @forelse ($paymentLedgerRows as $row)
                             <tr>
-                                <td>{{ $payment->paid_at?->format('d M Y H:i') ?? '-' }}</td>
-                                <td>{{ ucfirst($payment->method ?? '-') }}</td>
-                                <td>{{ $payment->notes ?? '-' }}</td>
-                                <td class="text-right"><strong>Rp {{ number_format((float) $payment->amount, 0, ',', '.') }}</strong></td>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $row['date'] ? \Illuminate\Support\Carbon::parse($row['date'])->format('d M Y H:i') : '-' }}</td>
+                                <td>{{ $row['description'] }}</td>
+                                <td class="text-right">
+                                    @if ($row['debit'] > 0)
+                                        <strong>Rp {{ number_format((float) $row['debit'], 0, ',', '.') }}</strong>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td class="text-right">
+                                    @if ($row['credit'] > 0)
+                                        <strong>Rp {{ number_format((float) $row['credit'], 0, ',', '.') }}</strong>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td class="text-right"><strong>Rp {{ number_format((float) $row['balance'], 0, ',', '.') }}</strong></td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="text-muted">Belum ada pembayaran.</td>
+                                <td colspan="6" class="text-muted">Belum ada transaksi pembayaran.</td>
                             </tr>
                         @endforelse
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>Total</strong></td>
+                            <td class="text-right"><strong>Rp {{ number_format($grandTotal, 0, ',', '.') }}</strong></td>
+                            <td class="text-right"><strong>Rp {{ number_format($paidAmount, 0, ',', '.') }}</strong></td>
+                            <td class="text-right"><strong>Rp {{ number_format($balance, 0, ',', '.') }}</strong></td>
+                        </tr>
+                    </tfoot>
                 </table>
+                @if ($change > 0)
+                    <p class="text-muted" style="margin-top: 8px;"><strong>Kembalian:</strong> Rp {{ number_format($change, 0, ',', '.') }}</p>
+                @endif
             </div>
         </div>
     </div>

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\Employee;
 use App\Repositories\UserRepository;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -32,24 +33,47 @@ class UserService
 
     public function findWithRoles(int $id): User
     {
-        return $this->repository->query()->with('roles')->findOrFail($id);
+        return $this->repository->query()->with(['roles', 'branches'])->findOrFail($id);
     }
 
     public function store(array $data): User
     {
-        return $this->repository->create($data);
+        $user = $this->repository->create($data);
+        $this->syncEmployeeEmail($data['employee_id'] ?? null, $data['email'] ?? null);
+        return $user;
     }
 
     public function update(int $id, array $data): User
     {
         $user = $this->repository->findOrFail($id);
-        return $this->repository->update($user, $data);
+        $user = $this->repository->update($user, $data);
+        $this->syncEmployeeEmail($data['employee_id'] ?? null, $data['email'] ?? null);
+        return $user;
     }
 
     public function syncRoles(int $id, array $roles): void
     {
         $user = $this->repository->findOrFail($id);
         $user->roles()->sync($roles);
+    }
+
+    public function syncBranches(int $id, array $branches): void
+    {
+        $user = $this->repository->findOrFail($id);
+        $branches = array_values(array_filter($branches));
+        $user->branches()->sync($branches);
+    }
+
+    protected function syncEmployeeEmail(?int $employeeId, ?string $email): void
+    {
+        if (empty($employeeId) || empty($email)) {
+            return;
+        }
+
+        Employee::query()
+            ->whereKey($employeeId)
+            ->whereNull('email')
+            ->update(['email' => $email]);
     }
 
     public function destroy(int $id): void

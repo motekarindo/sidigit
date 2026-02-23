@@ -5,8 +5,10 @@ namespace App\Livewire\Admin\Orders\Concerns;
 use App\Services\CustomerService;
 use App\Services\FinishService;
 use App\Services\MaterialService;
+use App\Services\OrderMaterialUsageService;
 use App\Services\ProductService;
 use App\Services\UnitService;
+use Illuminate\Validation\ValidationException;
 
 trait HandlesOrderForm
 {
@@ -36,7 +38,7 @@ trait HandlesOrderForm
                 'unit:id,name',
             ])
             ->orderBy('name')
-            ->get(['id', 'name', 'category_id', 'unit_id', 'sale_price', 'base_price'])
+            ->get(['id', 'name', 'category_id', 'unit_id', 'sale_price', 'base_price', 'product_type'])
             ->map(function ($product) {
                 $unitName = $product->unit?->name ?? 'Tanpa satuan';
 
@@ -44,6 +46,7 @@ trait HandlesOrderForm
                 'id' => $product->id,
                 'name' => $product->name,
                 'label' => "{$product->name} - {$unitName}",
+                'product_type' => (string) ($product->product_type ?: 'goods'),
                 'category_id' => $product->category_id,
                 'unit_id' => $product->unit_id,
                 'sale_price' => (float) $product->sale_price,
@@ -55,7 +58,7 @@ trait HandlesOrderForm
 
         $materials = app(MaterialService::class)->query()
             ->orderBy('name')
-            ->get(['id', 'name', 'category_id', 'unit_id', 'cost_price']);
+            ->get(['id', 'name', 'category_id', 'unit_id', 'cost_price', 'roll_width_cm', 'roll_waste_percent']);
 
         $this->materialsAll = $materials->map(fn ($material) => [
             'id' => $material->id,
@@ -63,6 +66,8 @@ trait HandlesOrderForm
             'category_id' => $material->category_id,
             'unit_id' => $material->unit_id,
             'cost_price' => (float) $material->cost_price,
+            'roll_width_cm' => $material->roll_width_cm !== null ? (float) $material->roll_width_cm : null,
+            'roll_waste_percent' => $material->roll_waste_percent !== null ? (float) $material->roll_waste_percent : 0,
         ])->toArray();
 
         $this->units = app(UnitService::class)->query()
@@ -167,8 +172,9 @@ trait HandlesOrderForm
 
         $this->items[$index]['product_id'] = (int) $productId;
         $this->items[$index]['unit_id'] = $product['unit_id'];
-        $this->items[$index]['material_id'] = null;
-        $this->items[$index]['material_ids'] = $this->productMaterialMap[(int) $productId] ?? [];
+        $materialIds = $this->productMaterialMap[(int) $productId] ?? [];
+        $this->items[$index]['material_ids'] = $materialIds;
+        $this->items[$index]['material_id'] = !empty($materialIds) ? (int) $materialIds[0] : null;
         $this->items[$index]['price_source'] = $this->items[$index]['price_source'] ?? 'auto';
 
         if (!in_array((int) $product['unit_id'], $this->dimensionUnitIds, true)) {
@@ -206,7 +212,8 @@ trait HandlesOrderForm
 
         if ($lengthCm && $widthCm) {
             $areaM2 = ($lengthCm / 100) * ($widthCm / 100);
-            return $basePrice * $areaM2;
+            $billableAreaM2 = max(1, $areaM2);
+            return $basePrice * $billableAreaM2;
         }
 
         return $basePrice;
@@ -247,9 +254,14 @@ trait HandlesOrderForm
         if ($material) {
             $cost = (float) ($material['cost_price'] ?? 0);
             if ($cost > 0) {
-                $hppMaterial = ($lengthCm && $widthCm)
-                    ? ($cost * ($lengthCm / 100) * ($widthCm / 100) * $qty)
-                    : ($cost * $qty);
+                $usageQty = app(OrderMaterialUsageService::class)->calculate(
+                    $qty,
+                    $lengthCm,
+                    $widthCm,
+                    isset($material['roll_width_cm']) ? (float) $material['roll_width_cm'] : null,
+                    isset($material['roll_waste_percent']) ? (float) $material['roll_waste_percent'] : 0
+                );
+                $hppMaterial = $cost * $usageQty;
             }
         }
 
@@ -295,5 +307,39 @@ trait HandlesOrderForm
             'total_discount' => $totalDiscount,
             'grand_total' => $grandTotal,
         ];
+    }
+
+    protected function validateItemMaterialRequirements(array $items): void
+    {
+        $errors = [];
+
+        foreach ($items as $index => $item) {
+            $product = collect($this->products)->firstWhere('id', (int) ($item['product_id'] ?? 0));
+            if (!$product) {
+                continue;
+            }
+
+            $productType = (string) ($product['product_type'] ?? 'goods');
+            $allowedMaterialIds = collect($product['material_ids'] ?? [])
+                ->map(fn ($id) => (int) $id)
+                ->values()
+                ->all();
+            $materialId = isset($item['material_id']) && $item['material_id'] !== ''
+                ? (int) $item['material_id']
+                : null;
+
+            if ($productType === 'goods' && !empty($allowedMaterialIds) && !$materialId) {
+                $errors["items.$index.material_id"] = 'Bahan wajib dipilih untuk produk barang ini.';
+                continue;
+            }
+
+            if ($materialId && !empty($allowedMaterialIds) && !in_array($materialId, $allowedMaterialIds, true)) {
+                $errors["items.$index.material_id"] = 'Bahan tidak sesuai dengan mapping bahan produk yang dipilih.';
+            }
+        }
+
+        if (!empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
     }
 }

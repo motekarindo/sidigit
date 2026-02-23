@@ -35,8 +35,17 @@ class ProductService
 
     public function store(array $data): Product
     {
+        $data['product_type'] = in_array(($data['product_type'] ?? 'goods'), ['goods', 'service'], true)
+            ? $data['product_type']
+            : 'goods';
+
         $materials = $data['materials'] ?? [];
         unset($data['materials']);
+
+        if ($data['product_type'] === 'service') {
+            $materials = [];
+        }
+
         $this->normaliseDimensions($data);
 
         return DB::transaction(function () use ($data, $materials) {
@@ -50,8 +59,17 @@ class ProductService
 
     public function update(int $id, array $data): Product
     {
+        $data['product_type'] = in_array(($data['product_type'] ?? 'goods'), ['goods', 'service'], true)
+            ? $data['product_type']
+            : 'goods';
+
         $materials = $data['materials'] ?? [];
         unset($data['materials']);
+
+        if ($data['product_type'] === 'service') {
+            $materials = [];
+        }
+
         $this->normaliseDimensions($data);
 
         return DB::transaction(function () use ($id, $data, $materials) {

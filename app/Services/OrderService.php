@@ -14,14 +14,17 @@ use App\Repositories\OrderRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
     protected OrderRepository $repository;
+    protected OrderMaterialUsageService $materialUsageService;
 
-    public function __construct(OrderRepository $repository)
+    public function __construct(OrderRepository $repository, OrderMaterialUsageService $materialUsageService)
     {
         $this->repository = $repository;
+        $this->materialUsageService = $materialUsageService;
     }
 
     public function query(): Builder
@@ -67,11 +70,34 @@ class OrderService
     {
         $items = $data['items'] ?? [];
         $payments = $data['payments'] ?? [];
-        unset($data['items'], $data['payments']);
+        $revisionReason = $data['revision_reason'] ?? null;
+        unset($data['items'], $data['payments'], $data['revision_reason']);
 
-        return DB::transaction(function () use ($id, $data, $items, $payments) {
+        return DB::transaction(function () use ($id, $data, $items, $payments, $revisionReason) {
             $order = $this->repository->findOrFail($id);
             $oldStatus = $order->status;
+
+            if ($this->isLockedStatus($oldStatus)) {
+                $nextStatus = (string) ($data['status'] ?? $oldStatus);
+                $this->ensureRevisionReasonIfRequired($oldStatus, $nextStatus, $revisionReason);
+
+                $this->repository->update($order, [
+                    'status' => $nextStatus,
+                ]);
+
+                if ($oldStatus !== $order->status) {
+                    $order->statusLogs()->create([
+                        'status' => $order->status,
+                        'changed_by' => auth()->id(),
+                        'note' => $this->buildStatusLogNote($oldStatus, $order->status, 'Status diperbarui.', $revisionReason),
+                    ]);
+                }
+
+                $this->syncStockByStatus($order);
+
+                return $order->fresh(['customer', 'items']);
+            }
+
             $this->repository->update($order, $data);
 
             $this->clearItems($order);
@@ -94,12 +120,36 @@ class OrderService
         });
     }
 
+    public function addPayment(int $orderId, array $data): Payment
+    {
+        return DB::transaction(function () use ($orderId, $data) {
+            $order = $this->repository->findOrFail($orderId);
+
+            $payment = Payment::create([
+                'order_id' => $order->id,
+                'amount' => $data['amount'],
+                'method' => $data['method'] ?? 'cash',
+                'paid_at' => $data['paid_at'] ?? now(),
+                'notes' => $data['notes'] ?? null,
+                'branch_id' => $order->branch_id,
+            ]);
+
+            $this->recalculateTotals($order);
+
+            return $payment;
+        });
+    }
+
     public function destroy(int $id): void
     {
-        $order = $this->repository->findOrFail($id);
-        $order->items()->delete();
-        $order->payments()->delete();
-        $this->repository->delete($order);
+        DB::transaction(function () use ($id) {
+            $order = $this->repository->findOrFail($id);
+            $this->ensureCanBeDeleted($order);
+
+            $order->items()->delete();
+            $order->payments()->delete();
+            $this->repository->delete($order);
+        });
     }
 
     public function destroyMany(array $ids): void
@@ -109,12 +159,19 @@ class OrderService
             return;
         }
 
-        $orders = $this->repository->query()->whereIn('id', $ids)->get();
-        foreach ($orders as $order) {
-            $order->items()->delete();
-            $order->payments()->delete();
-            $this->repository->delete($order);
-        }
+        DB::transaction(function () use ($ids) {
+            $orders = $this->repository->query()->whereIn('id', $ids)->get();
+
+            foreach ($orders as $order) {
+                $this->ensureCanBeDeleted($order);
+            }
+
+            foreach ($orders as $order) {
+                $order->items()->delete();
+                $order->payments()->delete();
+                $this->repository->delete($order);
+            }
+        });
     }
 
     public function restore(int $id): void
@@ -143,23 +200,33 @@ class OrderService
     public function find(int $id): Order
     {
         return $this->repository->query()
-            ->with(['customer', 'items', 'items.product', 'items.material', 'items.finishes.finish', 'payments'])
+            ->with([
+                'customer',
+                'items',
+                'items.product',
+                'items.material',
+                'items.finishes.finish',
+                'payments',
+                'statusLogs' => fn ($query) => $query->latest('created_at'),
+                'statusLogs.changedByUser:id,name',
+            ])
             ->findOrFail($id);
     }
 
-    public function updateStatus(int $id, string $status, ?string $note = null): Order
+    public function updateStatus(int $id, string $status, ?string $note = null, ?string $revisionReason = null): Order
     {
-        return DB::transaction(function () use ($id, $status, $note) {
+        return DB::transaction(function () use ($id, $status, $note, $revisionReason) {
             $order = $this->repository->findOrFail($id);
             $oldStatus = $order->status;
 
+            $this->ensureRevisionReasonIfRequired($oldStatus, $status, $revisionReason);
             $this->repository->update($order, ['status' => $status]);
 
             if ($oldStatus !== $order->status) {
                 $order->statusLogs()->create([
                     'status' => $order->status,
                     'changed_by' => auth()->id(),
-                    'note' => $note ?? 'Status diperbarui.',
+                    'note' => $this->buildStatusLogNote($oldStatus, $order->status, $note, $revisionReason),
                 ]);
             }
 
@@ -169,12 +236,52 @@ class OrderService
         });
     }
 
+    public function requiresRevisionReason(string $fromStatus, string $toStatus): bool
+    {
+        if (!$this->isLockedStatus($fromStatus)) {
+            return false;
+        }
+
+        $fromOrder = $this->statusOrder($fromStatus);
+        $toOrder = $this->statusOrder($toStatus);
+
+        if ($fromOrder === null || $toOrder === null) {
+            return false;
+        }
+
+        return $toOrder < $fromOrder;
+    }
+
     protected function syncItems(Order $order, array $items): void
     {
-        foreach ($items as $item) {
-            $product = Product::find($item['product_id'] ?? null);
+        foreach ($items as $index => $item) {
+            $product = Product::query()
+                ->with(['productMaterials' => fn ($query) => $query->whereNull('deleted_at')->select('id', 'product_id', 'material_id')])
+                ->find($item['product_id'] ?? null);
             if (!$product) {
                 continue;
+            }
+
+            $allowedMaterialIds = $product->productMaterials
+                ->pluck('material_id')
+                ->map(fn ($id) => (int) $id)
+                ->values()
+                ->all();
+            $selectedMaterialId = isset($item['material_id']) && $item['material_id'] !== ''
+                ? (int) $item['material_id']
+                : null;
+            $productType = (string) ($product->product_type ?? 'goods');
+
+            if ($productType === 'goods' && !empty($allowedMaterialIds) && !$selectedMaterialId) {
+                throw ValidationException::withMessages([
+                    "items.$index.material_id" => 'Bahan wajib dipilih untuk produk barang ini.',
+                ]);
+            }
+
+            if ($selectedMaterialId && !empty($allowedMaterialIds) && !in_array($selectedMaterialId, $allowedMaterialIds, true)) {
+                throw ValidationException::withMessages([
+                    "items.$index.material_id" => 'Bahan tidak sesuai dengan mapping bahan produk yang dipilih.',
+                ]);
             }
 
             $material = !empty($item['material_id']) ? Material::find($item['material_id']) : null;
@@ -243,6 +350,7 @@ class OrderService
                 'method' => $payment['method'] ?? 'cash',
                 'paid_at' => $payment['paid_at'] ?? now(),
                 'notes' => $payment['notes'] ?? null,
+                'branch_id' => $order->branch_id,
             ]);
         }
     }
@@ -286,12 +394,15 @@ class OrderService
             return 0;
         }
 
-        if ($lengthCm && $widthCm) {
-            $areaM2 = ($lengthCm / 100) * ($widthCm / 100);
-            return $cost * $areaM2 * $qty;
-        }
+        $usageQty = $this->materialUsageService->calculate(
+            $qty,
+            $lengthCm,
+            $widthCm,
+            $material->roll_width_cm !== null ? (float) $material->roll_width_cm : null,
+            $material->roll_waste_percent !== null ? (float) $material->roll_waste_percent : 0
+        );
 
-        return $cost * $qty;
+        return $cost * $usageQty;
     }
 
     protected function finishTotal(array $finishIds): float
@@ -309,7 +420,8 @@ class OrderService
             $price = (float) $product->sale_price;
             if ($lengthCm && $widthCm) {
                 $areaM2 = ($lengthCm / 100) * ($widthCm / 100);
-                return $price * $areaM2;
+                $billableAreaM2 = max(1, $areaM2);
+                return $price * $billableAreaM2;
             }
 
             return $price;
@@ -332,9 +444,13 @@ class OrderService
         $lengthCm = $orderItem->length_cm !== null ? (float) $orderItem->length_cm : null;
         $widthCm = $orderItem->width_cm !== null ? (float) $orderItem->width_cm : null;
 
-        $usage = $lengthCm && $widthCm
-            ? ($lengthCm / 100) * ($widthCm / 100) * $qty
-            : $qty;
+        $usage = $this->materialUsageService->calculate(
+            $qty,
+            $lengthCm,
+            $widthCm,
+            $material->roll_width_cm !== null ? (float) $material->roll_width_cm : null,
+            $material->roll_waste_percent !== null ? (float) $material->roll_waste_percent : 0
+        );
 
         app(StockMovementService::class)->store([
             'material_id' => $material->id,
@@ -344,6 +460,7 @@ class OrderService
             'ref_type' => 'order',
             'ref_id' => $orderItem->order_id,
             'notes' => $note,
+            'branch_id' => $orderItem->order?->branch_id,
         ]);
     }
 
@@ -355,7 +472,7 @@ class OrderService
             ->delete();
 
         $status = $order->status;
-        $reserveStatuses = ['approval', 'approve'];
+        $reserveStatuses = ['approval'];
         $outStatuses = ['produksi', 'finishing', 'qc', 'siap', 'diambil', 'selesai'];
 
         $type = null;
@@ -411,5 +528,94 @@ class OrderService
         $count = Order::query()->whereDate('created_at', now()->toDateString())->count() + 1;
 
         return sprintf('ORD-%s-%04d', $date, $count);
+    }
+
+    protected function isLockedStatus(string $status): bool
+    {
+        return in_array($status, [
+            'approval',
+            'menunggu-dp',
+            'desain',
+            'produksi',
+            'finishing',
+            'qc',
+            'siap',
+            'diambil',
+            'selesai',
+        ], true);
+    }
+
+    protected function statusOrder(string $status): ?int
+    {
+        return match ($status) {
+            'draft' => 10,
+            'quotation' => 20,
+            'approval' => 30,
+            'menunggu-dp' => 40,
+            'desain' => 50,
+            'produksi' => 60,
+            'finishing' => 70,
+            'qc' => 80,
+            'siap' => 90,
+            'diambil' => 100,
+            'selesai' => 110,
+            default => null,
+        };
+    }
+
+    protected function ensureRevisionReasonIfRequired(string $oldStatus, string $newStatus, ?string $revisionReason): void
+    {
+        if (!$this->requiresRevisionReason($oldStatus, $newStatus)) {
+            return;
+        }
+
+        if (blank(trim((string) $revisionReason))) {
+            throw ValidationException::withMessages([
+                'revision_reason' => 'Alasan revisi wajib diisi saat menurunkan status dari fase Approval ke tahap sebelumnya.',
+            ]);
+        }
+    }
+
+    protected function ensureCanBeDeleted(Order $order): void
+    {
+        if (!in_array((string) $order->status, ['draft', 'quotation'], true)) {
+            throw ValidationException::withMessages([
+                'order_delete' => "Order {$order->order_no} tidak bisa dihapus. Hanya status Draft atau Quotation yang boleh dihapus.",
+            ]);
+        }
+
+        $paidAmount = (float) $order->payments()->sum('amount');
+        if ($paidAmount > 0) {
+            throw ValidationException::withMessages([
+                'order_delete' => "Order {$order->order_no} tidak bisa dihapus karena sudah memiliki pembayaran.",
+            ]);
+        }
+
+        $hasStockMovements = StockMovement::query()
+            ->where('ref_type', 'order')
+            ->where('ref_id', $order->id)
+            ->exists();
+
+        if ($hasStockMovements) {
+            throw ValidationException::withMessages([
+                'order_delete' => "Order {$order->order_no} tidak bisa dihapus karena sudah memiliki pergerakan stok.",
+            ]);
+        }
+    }
+
+    protected function buildStatusLogNote(string $oldStatus, string $newStatus, ?string $defaultNote = null, ?string $revisionReason = null): string
+    {
+        $note = $defaultNote ?? 'Status diperbarui.';
+
+        if (!$this->requiresRevisionReason($oldStatus, $newStatus)) {
+            return $note;
+        }
+
+        $reason = trim((string) $revisionReason);
+        if ($reason === '') {
+            return $note;
+        }
+
+        return "{$note} Alasan revisi: {$reason}";
     }
 }

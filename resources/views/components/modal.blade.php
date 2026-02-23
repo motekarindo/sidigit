@@ -30,7 +30,7 @@
         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
         x-transition:leave-end="opacity-0 scale-95 translate-y-2"
         class="fixed inset-0 z-[100000] flex items-center justify-center" @keydown.escape.window="$wire.closeModal()">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full {{ $maxWidthClass }} mx-4 overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full {{ $maxWidthClass }} mx-4 overflow-hidden max-h-[calc(100vh-4rem)] flex flex-col">
             {{-- Header --}}
             @isset($header)
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
@@ -45,7 +45,7 @@
             @endisset
 
             {{-- Body --}}
-            <div class="px-6 py-5 space-y-4 text-gray-700 dark:text-gray-200">
+            <div class="px-6 py-5 space-y-4 text-gray-700 dark:text-gray-200 overflow-y-auto">
                 {{ $slot }}
             </div>
 

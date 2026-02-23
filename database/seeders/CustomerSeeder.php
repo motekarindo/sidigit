@@ -12,8 +12,17 @@ class CustomerSeeder extends Seeder
         Customer::updateOrCreate([
             'email' => 'customer@example.com',
         ], [
-            'name' => 'Customer Umum',
+            'name' => 'Customer Satu',
             'address' => 'Cibatok',
+            'phone_number' => '0895410155551',
+            'member_type' => 'umum',
+        ]);
+
+        Customer::updateOrCreate([
+            'email' => 'pelanggan@example.com',
+        ], [
+            'name' => 'Customer Dua',
+            'address' => 'Leuwiliang',
             'phone_number' => '081212656699',
             'member_type' => 'umum',
         ]);

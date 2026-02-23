@@ -20,6 +20,8 @@ class CustomerForm extends Form
 
     public function rules(): array
     {
+        $branchId = auth()->user()?->branch_id;
+
         return [
             'name' => ['required', 'string', 'max:32'],
             'address' => ['nullable', 'string', 'max:128'],
@@ -28,7 +30,9 @@ class CustomerForm extends Form
                 'nullable',
                 'email',
                 'max:64',
-                Rule::unique('mst_customers', 'email')->ignore($this->id),
+                Rule::unique('mst_customers', 'email')
+                    ->where(fn ($query) => $query->where('branch_id', $branchId))
+                    ->ignore($this->id),
             ],
             'member_type' => ['required', Rule::enum(CustomerMemberType::class)],
         ];

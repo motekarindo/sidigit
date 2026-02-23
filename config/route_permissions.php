@@ -1,0 +1,57 @@
+<?php
+
+return [
+    'resource_prefixes' => [
+        'orders' => 'order',
+        'customers' => 'customer',
+        'employees' => 'employee',
+        'users' => 'users',
+        'roles' => 'role',
+        'permissions' => 'permission',
+        'menus' => 'menu',
+        'products' => 'product',
+        'suppliers' => 'supplier',
+        'warehouses' => 'warehouse',
+        'materials' => 'material',
+        'categories' => 'category',
+        'units' => 'unit',
+        'branches' => 'branch',
+        'finishes' => 'finish',
+        'attendances' => 'attendance',
+        'employee-loans' => 'employee-loan',
+        'bank-accounts' => 'bank-account',
+        'audit-logs' => 'audit-log',
+    ],
+
+    'resource_actions' => [
+        'index' => 'view',
+        'trashed' => 'view',
+        'create' => 'create',
+        'edit' => 'edit',
+    ],
+
+    'explicit' => [
+        'stocks.in' => 'stock-in.view',
+        'stocks.out' => 'stock-out.view',
+        'stocks.opname' => 'stock-opname.view',
+        'stocks.balances' => 'stock-balance.view',
+        'stocks.reservations' => 'stock-reservation.view',
+
+        'expenses.materials.index' => 'expense-material.view',
+        'expenses.general.index' => 'expense-general.view',
+
+        'orders.invoice' => 'order.view',
+        'orders.invoice.pdf' => 'order.view',
+        'orders.quotation' => 'order.view',
+        'orders.quotation.pdf' => 'order.view',
+        'orders.payments.create' => 'order.edit',
+
+        'reports.sales' => 'report.sales.view',
+        'reports.expenses' => 'report.expense.view',
+        'reports.branches' => 'report.branch.view',
+
+        'dashboard' => null,
+        'profile.edit' => null,
+        'logout' => null,
+    ],
+];

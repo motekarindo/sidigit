@@ -20,8 +20,23 @@ class RoleSeeder extends Seeder
         );
 
         Role::updateOrCreate(
-            ['name' => 'User'],
-            ['name' => 'User']
+            ['name' => 'Kasir'],
+            ['name' => 'Kasir']
+        );
+
+        Role::updateOrCreate(
+            ['name' => 'Desainer'],
+            ['name' => 'Desainer']
+        );
+
+        Role::updateOrCreate(
+            ['name' => 'Operator'],
+            ['name' => 'Operator']
+        );
+
+        Role::updateOrCreate(
+            ['name' => 'Finishing'],
+            ['name' => 'Finishing']
         );
     }
 }

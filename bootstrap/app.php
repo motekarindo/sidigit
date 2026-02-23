@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
     ])
     ->withMiddleware(function (Middleware $middleware): void {
+         $middleware->alias([
+             'route.permission' => \App\Http\Middleware\EnsureRoutePermission::class,
+         ]);
+
          $middleware->use([
              \App\Http\Middleware\ShareMenuMiddleware::class
          ]);

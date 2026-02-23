@@ -4,14 +4,16 @@ namespace App\Models;
 
 use App\Enums\EmployeeStatus;
 use App\Traits\LogsAllActivity;
+use App\Traits\BranchScoped;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use RichanFongdasen\EloquentBlameable\BlameableTrait;
+use App\Models\User;
 
 class Employee extends Model
 {
-    use HasFactory, LogsAllActivity, BlameableTrait, SoftDeletes;
+    use HasFactory, LogsAllActivity, BranchScoped, BlameableTrait, SoftDeletes;
 
     protected $table = 'mst_employees';
 
@@ -23,6 +25,7 @@ class Employee extends Model
         'photo',
         'salary',
         'status',
+        'branch_id',
     ];
 
     protected $casts = [
@@ -38,5 +41,10 @@ class Employee extends Model
     public function loans()
     {
         return $this->hasMany(EmployeeLoan::class, 'employee_id');
+    }
+
+    public function user()
+    {
+        return $this->hasOne(User::class, 'employee_id');
     }
 }

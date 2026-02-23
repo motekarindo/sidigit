@@ -60,6 +60,16 @@
         <x-forms.input label="Konversi ke Satuan Dasar" name="form.conversion_qty" placeholder="1"
             wire:model.blur="form.conversion_qty" type="number" step="0.01" min="0.01" />
 
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <x-forms.input label="Lebar Roll (cm) - Opsional" name="form.roll_width_cm" placeholder="Contoh: 320"
+                wire:model.blur="form.roll_width_cm" type="number" step="0.01" min="1" />
+            <x-forms.input label="Waste Roll (%) - Opsional" name="form.roll_waste_percent" placeholder="Contoh: 3"
+                wire:model.blur="form.roll_waste_percent" type="number" step="0.01" min="0" max="100" />
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">
+            Jika diisi, pemakaian bahan order akan dihitung berbasis lebar roll + waste. Jika kosong, sistem pakai hitung area standar.
+        </p>
+
         <div>
             <livewire:components.text-editor
                 label="Deskripsi"

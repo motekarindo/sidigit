@@ -167,6 +167,14 @@ class Table extends BaseTable
             ['label' => 'Kategori', 'field' => 'category.name', 'sortable' => false],
             ['label' => 'Satuan', 'field' => 'unit.name', 'sortable' => false],
             [
+                'label' => 'Spec Roll',
+                'field' => 'roll_width_cm',
+                'sortable' => false,
+                'format' => fn ($row) => $row->roll_width_cm
+                    ? number_format((float) $row->roll_width_cm, 2, ',', '.') . ' cm | waste ' . number_format((float) ($row->roll_waste_percent ?? 0), 2, ',', '.') . '%'
+                    : '–',
+            ],
+            [
                 'label' => 'Harga Pokok',
                 'field' => 'cost_price',
                 'sortable' => false,

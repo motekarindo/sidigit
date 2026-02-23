@@ -38,6 +38,12 @@ class MaterialService
         $data['conversion_qty'] = isset($data['conversion_qty']) && $data['conversion_qty'] !== null
             ? $data['conversion_qty']
             : 1;
+        $data['roll_width_cm'] = isset($data['roll_width_cm']) && $data['roll_width_cm'] !== ''
+            ? $data['roll_width_cm']
+            : null;
+        $data['roll_waste_percent'] = isset($data['roll_waste_percent']) && $data['roll_waste_percent'] !== null && $data['roll_waste_percent'] !== ''
+            ? $data['roll_waste_percent']
+            : 0;
 
         return $this->repository->create($data);
     }
@@ -52,6 +58,12 @@ class MaterialService
         $data['conversion_qty'] = isset($data['conversion_qty']) && $data['conversion_qty'] !== null
             ? $data['conversion_qty']
             : 1;
+        $data['roll_width_cm'] = isset($data['roll_width_cm']) && $data['roll_width_cm'] !== ''
+            ? $data['roll_width_cm']
+            : null;
+        $data['roll_waste_percent'] = isset($data['roll_waste_percent']) && $data['roll_waste_percent'] !== null && $data['roll_waste_percent'] !== ''
+            ? $data['roll_waste_percent']
+            : 0;
 
         return $this->repository->update($material, $data);
     }

@@ -129,7 +129,7 @@
             @click.outside="open = false"
             @keydown.escape.window="open = false"
             :style="`position: absolute; top: ${top}px; left: ${left}px; width: ${width}px;`"
-            class="z-50 mt-2 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900">
+            class="z-[999999] mt-2 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900">
             <div class="p-2">
                 <input type="text" x-model="search" placeholder="{{ $searchPlaceholder }}" class="form-input" />
             </div>
