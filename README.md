@@ -113,6 +113,10 @@
   - `username`: `owner`
   - `email`: `owner@gmail.com`
   - `password`: `password`
+- Seeder default juga membuat akun operasional berikut (otomatis terhubung ke data karyawan via `employee_id`):
+  - `desainer` (`desainer@gmail.com`) dengan role `Desainer`
+  - `operator` (`operator@gmail.com`) dengan role `Operator`
+  - password default: `password`
 - Permission override workflow yang ditambahkan:
   - `workflow.override.status`
   - `workflow.override.actor`
