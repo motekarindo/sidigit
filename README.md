@@ -158,3 +158,15 @@
 - Akses tracking dipindahkan ke **Daftar Order** pada kolom **Tracking** (aksi `Lihat` dan `Salin Link`) agar header halaman detail order tetap ringkas.
 - Aksi **Salin Link** menampilkan **toast sukses** (bukan modal) agar feedback cepat dan tidak mengganggu alur kerja.
 - Untuk environment `http` (non-HTTPS), salin link tetap dicoba otomatis via fallback `execCommand('copy')`; prompt manual hanya muncul jika browser menolak semua metode copy.
+- Status `dibatalkan` sekarang diperlakukan sebagai status **locked/read-only** seperti `approval` ke atas.
+- Pada status locked (termasuk `dibatalkan`), update dari halaman Edit Order hanya mengizinkan perubahan status via aksi daftar order; field lain tidak diproses.
+- Opsi status `dibatalkan` tetap tersedia di UI perubahan status untuk kasus order batal (mis. Draft/Quotation tidak jadi lanjut).
+
+## Testing
+- Ditambahkan regression test untuk flow lock status `dibatalkan`:
+  - `tests/Feature/Orders/CancelledOrderLockingTest.php`
+  - mencakup:
+    - halaman edit tampil read-only untuk order `dibatalkan`
+    - update non-status diabaikan untuk user tanpa override `workflow.override.locked-order`
+    - opsi `dibatalkan` tampil di modal ubah status (daftar order)
+- `AuthServiceProvider` ditambah guard `Schema::hasTable('permissions')` agar test environment tidak gagal saat bootstrap sebelum migrasi selesai.
