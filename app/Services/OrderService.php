@@ -584,6 +584,7 @@ class OrderService
             'siap',
             'diambil',
             'selesai',
+            'dibatalkan',
         ], true);
     }
 

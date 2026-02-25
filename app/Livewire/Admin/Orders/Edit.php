@@ -88,7 +88,7 @@ class Edit extends Component
         $this->setPageMeta(
             $this->isApprovalLocked ? 'Lihat Order' : 'Edit Order',
             $this->isApprovalLocked
-                ? 'Order status approval ke atas bersifat read-only. Ubah status melalui aksi di daftar order.'
+                ? 'Order status approval ke atas atau dibatalkan bersifat read-only. Ubah status melalui aksi di daftar order.'
                 : 'Perbarui data order dan item.',
             [
                 ['label' => 'Dashboard', 'url' => Route::has('dashboard') ? route('dashboard') : '#', 'icon' => true],
@@ -181,7 +181,7 @@ class Edit extends Component
             if ($this->isApprovalLocked) {
                 $this->dispatch(
                     'toast',
-                    message: 'Order status Approval ke atas hanya dapat dilihat. Ubah status lewat aksi pada daftar order.',
+                    message: 'Order status Approval ke atas atau Dibatalkan hanya dapat dilihat. Ubah status lewat aksi pada daftar order.',
                     type: 'warning'
                 );
                 return;
@@ -228,6 +228,7 @@ class Edit extends Component
             'siap',
             'diambil',
             'selesai',
+            'dibatalkan',
         ], true);
     }
 
