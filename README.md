@@ -25,6 +25,13 @@
 - Tahap `Desain` bersifat opsional: task bisa langsung dari `Antrian` ke `In Progress` (bypass desain).
 - Perubahan status di board mengikuti flow yang sama untuk menjaga konsistensi operasional.
 
+### Riwayat Produksi
+- Halaman `/productions/history` tetap menggunakan list/tabel riwayat produksi.
+- Aksi `Riwayat` pada tiap baris menampilkan popup detail dengan tampilan card timeline (inspirasi TailAdmin Logistics):
+  - menampilkan `Tracking ID`, badge status terkini, dan urutan event produksi per item.
+- Styling popup riwayat diperhalus: ukuran jam diperkecil, angka memakai `tabular-nums`, dan spacing timeline dirapikan agar lebih nyaman dibaca.
+- Tipografi popup disetel ulang agar lebih proporsional: hierarki ukuran teks `tracking/date/title/subtitle/time` dibuat lebih seimbang dan mudah dipindai.
+
 ### Sinkronisasi Status Order
 - Sinkron status order otomatis hanya dihitung dari job tahap `produksi`.
 - Seluruh item `siap_diambil` -> order otomatis `siap`.

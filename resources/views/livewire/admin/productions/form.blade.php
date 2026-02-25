@@ -22,32 +22,50 @@
             </p>
         </div>
     @else
-        <div class="space-y-3">
-            @forelse ($historyLogs as $log)
-                <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-800 dark:bg-gray-950/40">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="font-semibold text-gray-900 dark:text-gray-100">
-                            {{ strtoupper(str_replace('_', ' ', $log['event'])) }}
-                        </div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ $log['created_at'] ?: '-' }}
-                        </div>
-                    </div>
-                    <div class="mt-1 text-xs text-gray-600 dark:text-gray-300">
-                        {{ $log['from_status'] ?: '-' }} -> {{ $log['to_status'] ?: '-' }}
-                    </div>
-                    @if (!empty($log['note']))
-                        <div class="mt-2 text-gray-700 dark:text-gray-200">{{ $log['note'] }}</div>
-                    @endif
-                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Oleh: {{ $log['changed_by'] ?: 'Sistem' }}
-                    </div>
+        <div class="rounded-2xl border border-gray-200 bg-gray-50/90 p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900/70">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Tracking ID</p>
+                    <h3 class="mt-2 text-3xl font-bold leading-none text-gray-900 dark:text-white">{{ $historyMeta['tracking_id'] ?? '-' }}</h3>
+                    <p class="mt-2 text-sm leading-5 text-gray-500 dark:text-gray-400">
+                        {{ $historyMeta['order_no'] ?? '-' }} · {{ $historyMeta['item_name'] ?? '-' }} (Qty {{ $historyMeta['qty'] ?? '-' }})
+                    </p>
                 </div>
-            @empty
-                <div class="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                    Belum ada riwayat untuk job ini.
-                </div>
-            @endforelse
+                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $historyMeta['status_badge_class'] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' }}">
+                    {{ $historyMeta['status_label'] ?? '-' }}
+                </span>
+            </div>
+
+            <div class="mt-6 space-y-5">
+                @forelse ($historyLogs as $log)
+                    <div class="flex gap-3.5">
+                        <div class="relative flex w-11 shrink-0 justify-center">
+                            <div class="flex h-11 w-11 items-center justify-center rounded-full border-2 {{ !empty($log['is_active']) ? 'border-brand-400 bg-brand-50 text-brand-600 dark:border-brand-300 dark:bg-brand-500/20 dark:text-brand-300' : 'border-gray-300 bg-white text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300' }}">
+                                <x-dynamic-component :component="'lucide-' . ($log['icon'] ?? 'circle')" class="h-4 w-4" />
+                            </div>
+                            @if (!$loop->last)
+                                <div class="absolute top-11 h-9 border-l-2 {{ !empty($log['is_active']) ? 'border-brand-400/70' : 'border-gray-300 dark:border-gray-700' }}"></div>
+                            @endif
+                        </div>
+                        <div class="flex-1 pt-0.5">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ $log['date'] ?? '-' }}</p>
+                                    <h4 class="mt-0.5 text-lg font-semibold leading-tight text-gray-900 dark:text-white">{{ $log['label'] ?? '-' }}</h4>
+                                    <p class="mt-1 text-sm leading-5 text-gray-500 dark:text-gray-400">{{ $log['subtitle'] ?? '-' }}</p>
+                                </div>
+                                <span class="mt-1 min-w-[50px] text-right text-sm font-semibold tabular-nums text-gray-400 dark:text-gray-500">
+                                    {{ $log['time'] ?? '--:--' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                        Belum ada riwayat untuk job ini.
+                    </div>
+                @endforelse
+            </div>
         </div>
     @endif
 </div>

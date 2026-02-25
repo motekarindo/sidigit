@@ -28,6 +28,7 @@ class Table extends BaseTable
     public ?int $assign_role_id = null;
     public ?string $qc_fail_note = null;
     public array $historyLogs = [];
+    public array $historyMeta = [];
 
     public function boot(ProductionJobService $service): void
     {
@@ -118,6 +119,7 @@ class Table extends BaseTable
         $this->assign_role_id = null;
         $this->qc_fail_note = null;
         $this->historyLogs = [];
+        $this->historyMeta = [];
     }
 
     protected function loadForm(int $id): void
@@ -165,19 +167,43 @@ class Table extends BaseTable
     {
         $this->authorize('production.view');
 
+        $job = $this->service->find($id);
+        $status = (string) ($job->status ?? '');
+        $statusLabel = ProductionJob::statusOptions()[$status] ?? ucfirst($status);
+
+        $logs = $this->service->recentLogsForJob($id, 20)->reverse()->values();
+
         $this->activeId = $id;
         $this->modalMode = 'history';
-        $this->historyLogs = $this->service
-            ->recentLogsForJob($id, 20)
-            ->map(fn ($log) => [
-                'event' => $log->event,
-                'from_status' => $log->from_status,
-                'to_status' => $log->to_status,
-                'note' => $log->note,
-                'changed_by' => $log->changedByUser?->name,
-                'created_at' => $log->created_at?->format('d M Y H:i'),
-            ])
-            ->all();
+        $this->historyMeta = [
+            'tracking_id' => '#PJ-' . str_pad((string) $job->id, 6, '0', STR_PAD_LEFT),
+            'status_label' => $statusLabel,
+            'status_badge_class' => $this->historyStatusBadgeClass($status),
+            'order_no' => $job->order?->order_no ?? '-',
+            'item_name' => $job->orderItem?->product?->name ?? '-',
+            'qty' => number_format((float) ($job->orderItem?->qty ?? 0), 0, ',', '.'),
+        ];
+
+        if ($logs->isEmpty()) {
+            $this->historyLogs = [[
+                'label' => $statusLabel,
+                'subtitle' => 'Status saat ini',
+                'date' => $job->updated_at?->format('d M Y') ?? '-',
+                'time' => $job->updated_at?->format('H:i') ?? '--:--',
+                'icon' => $this->historyIconByStatus($status),
+                'is_active' => true,
+            ]];
+        } else {
+            $lastIndex = $logs->count() - 1;
+            $this->historyLogs = $logs->map(fn ($log, $index) => [
+                'label' => $this->historyEventLabel((string) $log->event, (string) ($log->to_status ?? '')),
+                'subtitle' => $log->note ?: ('Oleh ' . ($log->changedByUser?->name ?? 'Sistem')),
+                'date' => $log->created_at?->format('d M Y') ?? '-',
+                'time' => $log->created_at?->format('H:i') ?? '--:--',
+                'icon' => $this->historyIconByEvent((string) $log->event, (string) ($log->to_status ?? '')),
+                'is_active' => (int) $index === $lastIndex,
+            ])->all();
+        }
 
         $this->showCreateModal = false;
         $this->showEditModal = true;
@@ -186,7 +212,7 @@ class Table extends BaseTable
         $this->modalActionLabel = 'Tutup';
         $this->modalActionMethod = 'closeModal';
         $this->modalCancelLabel = 'Kembali';
-        $this->modalMaxWidth = '2xl';
+        $this->modalMaxWidth = '3xl';
     }
 
     public function saveModal(): void
@@ -416,5 +442,62 @@ class Table extends BaseTable
     protected function selectionColumnCheckbox(): bool
     {
         return false;
+    }
+
+    protected function historyEventLabel(string $event, string $toStatus): string
+    {
+        return match ($event) {
+            'created' => 'Job Dibuat',
+            'claimed' => 'Task Diambil',
+            'released' => 'Task Dilepas',
+            'in_progress' => 'In Progress',
+            'finished' => 'Selesai Produksi',
+            'to_qc' => 'Masuk QC',
+            'qc_pass' => 'Siap Diambil',
+            'qc_fail' => 'QC Gagal',
+            'assigned', 'auto_assigned' => 'Assign Role',
+            'stage_switched' => 'Pindah Tahap',
+            default => ProductionJob::statusOptions()[$toStatus] ?? ucfirst(str_replace('_', ' ', $event)),
+        };
+    }
+
+    protected function historyIconByEvent(string $event, string $status): string
+    {
+        return match ($event) {
+            'created' => 'file-plus',
+            'claimed' => 'user-check',
+            'released' => 'corner-up-left',
+            'in_progress' => 'play',
+            'finished' => 'check-check',
+            'to_qc' => 'shield-check',
+            'qc_pass' => 'package-check',
+            'qc_fail' => 'rotate-ccw',
+            'assigned', 'auto_assigned' => 'user-cog',
+            'stage_switched' => 'git-compare-arrows',
+            default => $this->historyIconByStatus($status),
+        };
+    }
+
+    protected function historyIconByStatus(string $status): string
+    {
+        return match ($status) {
+            ProductionJob::STATUS_ANTRIAN => 'clock-3',
+            ProductionJob::STATUS_IN_PROGRESS => 'play',
+            ProductionJob::STATUS_SELESAI => 'check-check',
+            ProductionJob::STATUS_QC => 'shield-check',
+            ProductionJob::STATUS_SIAP_DIAMBIL => 'package-check',
+            default => 'circle',
+        };
+    }
+
+    protected function historyStatusBadgeClass(string $status): string
+    {
+        return match ($status) {
+            ProductionJob::STATUS_SIAP_DIAMBIL => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+            ProductionJob::STATUS_QC => 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+            ProductionJob::STATUS_SELESAI => 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
+            ProductionJob::STATUS_IN_PROGRESS => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
+            default => 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+        };
     }
 }
