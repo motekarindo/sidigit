@@ -20,7 +20,7 @@ class MenuSeeder extends Seeder
         Menu::updateOrCreate(['route_name' => 'orders.index'], ['parent_id' => $transactions->id, 'name' => 'Order', 'order' => 1]);
         $productionMenu = Menu::updateOrCreate(
             ['name' => 'Produksi', 'parent_id' => $transactions->id],
-            ['route_name' => null, 'icon' => 'bi bi-kanban', 'order' => 2]
+            ['route_name' => 'productions.index', 'icon' => 'bi bi-kanban', 'order' => 2]
         );
         Menu::updateOrCreate(
             ['route_name' => 'productions.desain'],

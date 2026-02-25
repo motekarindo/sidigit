@@ -10,6 +10,7 @@
   - saat status order menjadi `desain` => job tahap `desain`
   - saat status order menjadi `produksi` => job tahap `produksi`
 - Akses menu: `Transaksi -> Produksi -> Desain / Produksi Kanban / Riwayat Produksi`.
+- Parent menu `Produksi` sekarang mengarah ke `productions.index` (bukan `#`), tetap bisa expand submenu.
 
 ### Flow Produksi (Per Item)
 - `antrian -> in_progress -> selesai -> qc -> siap_diambil`

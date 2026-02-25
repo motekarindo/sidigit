@@ -46,32 +46,38 @@
                     @foreach ($sidebarMenus as $menu)
                         @if ($menu->children->isNotEmpty())
                             <li x-data="{ open: {{ $menu->active ? 'true' : 'false' }} }">
-                                <button type="button"
-                                    class="menu-item group w-full text-left {{ $menu->active ? 'menu-item-active' : 'menu-item-inactive' }}"
-                                    @click="open = !open">
-                                    <span class="menu-item-icon {{ $menu->active ? 'menu-item-icon-active' : 'menu-item-icon-inactive' }}">
-                                        @if (!empty($menu->icon) && Str::contains($menu->icon, '<svg'))
-                                            {!! $menu->icon !!}
-                                        @elseif (!empty($menu->icon))
-                                            <i class="{{ $menu->icon }}"></i>
-                                        @else
-                                            <span class="text-sm font-semibold uppercase">
-                                                {{ Str::substr($menu->name, 0, 1) }}
-                                            </span>
-                                        @endif
-                                    </span>
+                                <div class="menu-item group w-full text-left {{ $menu->active ? 'menu-item-active' : 'menu-item-inactive' }}">
+                                    <a href="{{ $menu->route_url ?? '#' }}" class="flex min-w-0 flex-1 items-center gap-3"
+                                        @if (($menu->route_url ?? '#') === '#')
+                                            @click.prevent="open = !open"
+                                        @endif>
+                                        <span class="menu-item-icon {{ $menu->active ? 'menu-item-icon-active' : 'menu-item-icon-inactive' }}">
+                                            @if (!empty($menu->icon) && Str::contains($menu->icon, '<svg'))
+                                                {!! $menu->icon !!}
+                                            @elseif (!empty($menu->icon))
+                                                <i class="{{ $menu->icon }}"></i>
+                                            @else
+                                                <span class="text-sm font-semibold uppercase">
+                                                    {{ Str::substr($menu->name, 0, 1) }}
+                                                </span>
+                                            @endif
+                                        </span>
 
-                                    <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">
-                                        {{ $menu->name }}
-                                    </span>
-                                    <svg class="menu-item-arrow {{ $menu->active ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive' }}"
+                                        <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">
+                                            {{ $menu->name }}
+                                        </span>
+                                    </a>
+
+                                    <button type="button" class="menu-item-arrow {{ $menu->active ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive' }}"
                                         :class="open ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive'"
-                                        width="20" height="20" viewBox="0 0 20 20" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M7 8L10 11L13 8" stroke="currentColor" stroke-width="1.5"
-                                            stroke-linecap="round" stroke-linejoin="round" />
-                                    </svg>
-                                </button>
+                                        @click="open = !open">
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M7 8L10 11L13 8" stroke="currentColor" stroke-width="1.5"
+                                                stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </button>
+                                </div>
                                 <ul x-show="open" x-transition class="menu-dropdown menu-dropdown-panel"
                                     :class="sidebarToggle ? 'lg:hidden flex' : 'flex'">
                                     @foreach ($menu->children as $child)
