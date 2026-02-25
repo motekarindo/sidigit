@@ -23,6 +23,7 @@ return [
         'audit-logs' => 'audit-log',
         'accounts' => 'account',
         'journals' => 'journal',
+        'cashflows' => 'cashflow',
     ],
 
     'resource_actions' => [

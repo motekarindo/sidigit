@@ -63,8 +63,9 @@ class MenuSeeder extends Seeder
         // --- AKUNTANSI ---
         $accountingMenu = Menu::updateOrCreate(['name' => 'Akuntansi'], ['icon' => 'bi bi-journal-text', 'order' => 8]);
         Menu::updateOrCreate(['route_name' => 'accounting.overview'], ['parent_id' => $accountingMenu->id, 'name' => 'Dashboard Akuntansi', 'order' => 1]);
-        Menu::updateOrCreate(['route_name' => 'accounts.index'], ['parent_id' => $accountingMenu->id, 'name' => 'Chart of Accounts', 'order' => 2]);
-        Menu::updateOrCreate(['route_name' => 'journals.index'], ['parent_id' => $accountingMenu->id, 'name' => 'Jurnal Umum', 'order' => 3]);
+        Menu::updateOrCreate(['route_name' => 'cashflows.index'], ['parent_id' => $accountingMenu->id, 'name' => 'Arus Kas', 'order' => 2]);
+        Menu::updateOrCreate(['route_name' => 'accounts.index'], ['parent_id' => $accountingMenu->id, 'name' => 'Chart of Accounts', 'order' => 3]);
+        Menu::updateOrCreate(['route_name' => 'journals.index'], ['parent_id' => $accountingMenu->id, 'name' => 'Jurnal Umum', 'order' => 4]);
 
         // --- MASTER DATA ---
         $masterData = Menu::updateOrCreate(['name' => 'Master'], ['icon' => 'bi bi-layers', 'order' => 9]);

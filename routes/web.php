@@ -50,6 +50,7 @@ use App\Livewire\Admin\Orders\AddPayment as OrderAddPayment;
 use App\Livewire\Admin\Accounting\Overview\Index as AccountingOverviewIndex;
 use App\Livewire\Admin\Accounting\Accounts\Index as AccountingAccountsIndex;
 use App\Livewire\Admin\Accounting\Journals\Index as AccountingJournalsIndex;
+use App\Livewire\Admin\Accounting\Cashflows\Index as AccountingCashflowsIndex;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -166,6 +167,7 @@ Route::middleware('guest')->group(function () {
     Route::get('reports/expenses', ExpenseReport::class)->name('reports.expenses');
     Route::get('reports/branches', BranchReport::class)->name('reports.branches');
     Route::get('accounting/overview', AccountingOverviewIndex::class)->name('accounting.overview');
+    Route::get('accounting/cashflows', AccountingCashflowsIndex::class)->name('cashflows.index');
     Route::get('accounting/accounts', AccountingAccountsIndex::class)->name('accounts.index');
     Route::get('accounting/journals', AccountingJournalsIndex::class)->name('journals.index');
 

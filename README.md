@@ -63,6 +63,10 @@
   - **Dashboard Akuntansi** (`/accounting/overview`) untuk ringkasan posisi akun utama.
     - Mendukung filter periode `Harian`, `Bulanan`, dan `Custom Range`.
     - Tabel **Jurnal Terbaru** dirapikan (spacing kolom + nowrap nominal/user) agar mudah dibaca.
+  - **Arus Kas** (`/accounting/cashflows`) untuk melihat pemasukan dan pengeluaran dalam satu halaman.
+    - Menampilkan `Saldo Awal`, `Total Masuk`, `Total Keluar`, `Net Cashflow`, `Saldo Akhir`.
+    - Menyediakan tabel mutasi kronologis dengan saldo berjalan.
+    - Mendukung filter `Periode`, `Sumber (all/payment/expense)`, dan `Metode (cash/transfer/qris)`.
   - **Chart of Accounts** (`/accounting/accounts`) untuk kelola akun per cabang.
   - **Jurnal Umum** (`/accounting/journals`) untuk input jurnal manual dengan validasi debit = kredit.
 - Implementasi menggunakan service and repository pattern:
@@ -91,5 +95,5 @@
     - Expense umum: Debit Beban Operasional (`6001`), Kredit Kas/Bank
   - Expense `update/delete` akan sinkron/hapus jurnal sumber terkait (`source_type=expense`).
 - RBAC akuntansi:
-  - permission baru: `accounting-overview.view`, `account.*`, `journal.view`, `journal.create`
-  - menu baru: **Akuntansi** -> **Dashboard Akuntansi**, **Chart of Accounts**, **Jurnal Umum**
+  - permission baru: `accounting-overview.view`, `cashflow.view`, `account.*`, `journal.view`, `journal.create`
+  - menu baru: **Akuntansi** -> **Dashboard Akuntansi**, **Arus Kas**, **Chart of Accounts**, **Jurnal Umum**

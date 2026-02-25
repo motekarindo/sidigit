@@ -163,6 +163,7 @@ class PermissionSeeder extends Seeder
 
             // Akuntansi - COA
             'accounting-overview.view' => ['name' => 'Lihat Dashboard Akuntansi', 'menu_id' => $menuId('Dashboard Akuntansi')],
+            'cashflow.view' => ['name' => 'Lihat Arus Kas', 'menu_id' => $menuId('Arus Kas')],
             'account.view' => ['name' => 'Lihat Chart of Accounts', 'menu_id' => $menuId('Chart of Accounts')],
             'account.create' => ['name' => 'Tambah Akun COA', 'menu_id' => $menuId('Chart of Accounts')],
             'account.edit' => ['name' => 'Edit Akun COA', 'menu_id' => $menuId('Chart of Accounts')],
