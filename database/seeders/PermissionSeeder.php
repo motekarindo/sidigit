@@ -161,6 +161,18 @@ class PermissionSeeder extends Seeder
             'branch.edit' => ['name' => 'Edit Cabang', 'menu_id' => $menuId('Cabang')],
             'branch.delete' => ['name' => 'Hapus Cabang', 'menu_id' => $menuId('Cabang')],
 
+            // Akuntansi - COA
+            'accounting-overview.view' => ['name' => 'Lihat Dashboard Akuntansi', 'menu_id' => $menuId('Dashboard Akuntansi')],
+            'cashflow.view' => ['name' => 'Lihat Arus Kas', 'menu_id' => $menuId('Arus Kas')],
+            'account.view' => ['name' => 'Lihat Chart of Accounts', 'menu_id' => $menuId('Chart of Accounts')],
+            'account.create' => ['name' => 'Tambah Akun COA', 'menu_id' => $menuId('Chart of Accounts')],
+            'account.edit' => ['name' => 'Edit Akun COA', 'menu_id' => $menuId('Chart of Accounts')],
+            'account.delete' => ['name' => 'Hapus Akun COA', 'menu_id' => $menuId('Chart of Accounts')],
+
+            // Akuntansi - Jurnal
+            'journal.view' => ['name' => 'Lihat Jurnal Umum', 'menu_id' => $menuId('Jurnal Umum')],
+            'journal.create' => ['name' => 'Tambah Jurnal Umum', 'menu_id' => $menuId('Jurnal Umum')],
+
             // Laporan
             'report.sales.view' => ['name' => 'Lihat Laporan Penjualan', 'menu_id' => $menuId('Laporan Penjualan')],
             'report.expense.view' => ['name' => 'Lihat Laporan Pengeluaran', 'menu_id' => $menuId('Laporan Pengeluaran')],
