@@ -1,4 +1,24 @@
-<div class="space-y-2">
+<div class="space-y-2"
+    x-data="{
+        draggingJobId: null,
+        draggingFromStatus: null,
+        overStatus: null,
+        startDrag(event, jobId, fromStatus) {
+            this.draggingJobId = jobId;
+            this.draggingFromStatus = fromStatus;
+            event.dataTransfer.effectAllowed = 'move';
+        },
+        endDrag() {
+            this.draggingJobId = null;
+            this.draggingFromStatus = null;
+            this.overStatus = null;
+        },
+        dropTo(toStatus) {
+            if (!this.draggingJobId) return;
+            $wire.moveCard(this.draggingJobId, toStatus);
+            this.endDrag();
+        },
+    }">
     <x-breadcrumbs :items="$breadcrumbs" />
 
     <x-card>
@@ -29,12 +49,20 @@
         <div class="mt-4">
             <input type="text" wire:model.live.debounce.300ms="search" class="form-input"
                 placeholder="Cari order no, nama produk, atau nama user claim...">
+            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                Drag card ke kolom berikutnya untuk ubah status. QC gagal tetap melalui tombol agar alasan revisi tercatat.
+            </p>
         </div>
 
         <div class="mt-6 overflow-x-auto pb-2">
             <div class="grid min-w-[1200px] grid-cols-5 gap-4">
                 @foreach ($this->columns as $status => $column)
-                    <div class="flex min-h-[620px] flex-col rounded-2xl border bg-gray-50/60 {{ $column['accent'] }} dark:bg-gray-900/40">
+                    <div class="flex min-h-[620px] flex-col rounded-2xl border bg-gray-50/60 {{ $column['accent'] }} transition dark:bg-gray-900/40"
+                        x-bind:class="overStatus === '{{ $status }}' ? 'ring-2 ring-brand-400/60' : ''"
+                        x-on:dragenter.prevent="overStatus = '{{ $status }}'"
+                        x-on:dragover.prevent
+                        x-on:dragleave="if (overStatus === '{{ $status }}') overStatus = null"
+                        x-on:drop.prevent="dropTo('{{ $status }}')">
                         <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
                             <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $column['label'] }}</h3>
                             <span class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-200">
@@ -44,7 +72,10 @@
 
                         <div class="flex-1 space-y-3 overflow-y-auto p-3">
                             @forelse (($this->groupedJobs[$status] ?? []) as $job)
-                                <article class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                                <article class="cursor-move rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+                                    draggable="true"
+                                    x-on:dragstart="startDrag($event, {{ $job->id }}, '{{ $job->status }}')"
+                                    x-on:dragend="endDrag()">
                                     <div class="mb-3 flex items-start justify-between gap-2">
                                         <div>
                                             <a href="{{ route('orders.edit', ['order' => $job->order_id]) }}"

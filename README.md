@@ -20,6 +20,7 @@
 - Board dipisah per tahap: `Desain` dan `Produksi`.
 - Tiap card adalah `1 item order`.
 - Ada mekanisme `Ambil Task` (claim) dan `Lepas`.
+- Card bisa dipindahkan antar kolom dengan drag-and-drop untuk transisi status.
 - Perubahan status di board mengikuti flow yang sama untuk menjaga konsistensi operasional.
 
 ### Sinkronisasi Status Order

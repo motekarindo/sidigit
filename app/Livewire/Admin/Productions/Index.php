@@ -226,6 +226,72 @@ class Index extends Component
         }
     }
 
+    public function moveCard(int $jobId, string $toStatus): void
+    {
+        $actor = auth()->user();
+        if (!$actor instanceof User) {
+            abort(403);
+        }
+
+        $allowedStatuses = [
+            ProductionJob::STATUS_ANTRIAN,
+            ProductionJob::STATUS_IN_PROGRESS,
+            ProductionJob::STATUS_SELESAI,
+            ProductionJob::STATUS_QC,
+            ProductionJob::STATUS_SIAP_DIAMBIL,
+        ];
+
+        if (!in_array($toStatus, $allowedStatuses, true)) {
+            $this->dispatch('toast', message: 'Target kolom tidak valid.', type: 'warning');
+            return;
+        }
+
+        $job = $this->service->find($jobId);
+        $fromStatus = (string) $job->status;
+        if ($fromStatus === $toStatus) {
+            return;
+        }
+
+        try {
+            if (in_array($toStatus, [ProductionJob::STATUS_QC, ProductionJob::STATUS_SIAP_DIAMBIL], true)) {
+                $this->authorize('production.qc');
+            } else {
+                $this->authorize('production.edit');
+            }
+
+            if ($toStatus === ProductionJob::STATUS_IN_PROGRESS) {
+                $this->service->markInProgress($jobId, null, $actor);
+                $this->dispatch('toast', message: 'Task dipindahkan ke In Progress.', type: 'success');
+                return;
+            }
+
+            if ($toStatus === ProductionJob::STATUS_SELESAI) {
+                $this->service->markSelesai($jobId, null, $actor);
+                $this->dispatch('toast', message: 'Task dipindahkan ke Selesai.', type: 'success');
+                return;
+            }
+
+            if ($toStatus === ProductionJob::STATUS_QC) {
+                $this->service->moveToQc($jobId, null, $actor);
+                $this->dispatch('toast', message: 'Task dipindahkan ke QC.', type: 'success');
+                return;
+            }
+
+            if ($toStatus === ProductionJob::STATUS_SIAP_DIAMBIL) {
+                $this->service->qcPass($jobId, null, $actor);
+                $this->dispatch('toast', message: 'Task dipindahkan ke Siap Diambil.', type: 'success');
+                return;
+            }
+
+            $this->dispatch('toast', message: 'Drag ke kolom ini belum didukung.', type: 'warning');
+        } catch (ValidationException $e) {
+            $this->toastValidation($e);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->toastError($e, 'Gagal memindahkan task via drag.');
+        }
+    }
+
     public function openQcFail(int $jobId): void
     {
         $this->authorize('production.qc');
