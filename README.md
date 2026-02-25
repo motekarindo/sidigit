@@ -1,5 +1,36 @@
 # sidigit
 
+## Modul Produksi
+- URL modul internal: `/productions`
+- Konsep: 1 `production_job` untuk setiap `order_item` (bukan per invoice/order header).
+- Trigger pembuatan job: saat status order menjadi `produksi`.
+- Akses menu: `Transaksi -> Produksi`.
+
+### Flow Produksi (Per Item)
+- `antrian -> in_progress -> selesai -> qc -> siap_diambil`
+- Jika QC gagal: `qc -> in_progress` (kembali ke Produksi).
+- Setiap transisi disimpan ke `production_job_logs` untuk jejak audit.
+
+### Sinkronisasi Status Order
+- Seluruh item `siap_diambil` -> order otomatis `siap`.
+- Seluruh item sudah masuk `qc`/`siap_diambil` -> order otomatis `qc`.
+- Selain kondisi di atas -> order berada di `produksi`.
+
+### Assignment Role
+- Job bisa di-assign ke role (contoh: Operator, Finishing, dll).
+- Assignment berbasis role, bukan user langsung, agar fleksibel untuk pembagian tim.
+
+### Permission Produksi
+- `production.view`
+- `production.edit`
+- `production.assign`
+- `production.qc`
+
+### Catatan Simplifikasi
+- Tidak ada scheduling mesin/jam produksi.
+- Tidak ada splitting job ke multi-step internal.
+- Tidak ada kapasitas planning otomatis.
+
 ## Dockerized workflows
 
 ### Local development

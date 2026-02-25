@@ -18,6 +18,7 @@ class MenuSeeder extends Seeder
         // --- TRANSAKSI ---
         $transactions = Menu::updateOrCreate(['name' => 'Transaksi'], ['icon' => 'bi bi-receipt', 'order' => 3]);
         Menu::updateOrCreate(['route_name' => 'orders.index'], ['parent_id' => $transactions->id, 'name' => 'Order', 'order' => 1]);
+        Menu::updateOrCreate(['route_name' => 'productions.index'], ['parent_id' => $transactions->id, 'name' => 'Produksi', 'order' => 2]);
 
         // --- MANAJEMEN PRODUK ---
         $productManagement = Menu::updateOrCreate(['name' => 'Manajemen Produk'], ['icon' => 'bi bi-box-seam-fill', 'order' => 4]);

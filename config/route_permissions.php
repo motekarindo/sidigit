@@ -3,6 +3,7 @@
 return [
     'resource_prefixes' => [
         'orders' => 'order',
+        'productions' => 'production',
         'customers' => 'customer',
         'employees' => 'employee',
         'users' => 'users',

@@ -1,0 +1,148 @@
+<?php
+
+namespace Tests\Feature\Productions;
+
+use App\Models\Branch;
+use App\Models\Category;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Product;
+use App\Models\ProductionJob;
+use App\Models\Unit;
+use App\Services\ProductionJobService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class ProductionJobServiceTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_jobs_are_created_per_item_only_when_order_status_is_produksi(): void
+    {
+        [$orderDraft] = $this->createOrderWithItems('draft', 2);
+        [$orderProduksi] = $this->createOrderWithItems('produksi', 2);
+
+        $service = app(ProductionJobService::class);
+
+        $service->syncByOrderStatus($orderDraft);
+        $this->assertSame(0, ProductionJob::query()->where('order_id', $orderDraft->id)->count());
+
+        $service->syncByOrderStatus($orderProduksi);
+        $this->assertSame(2, ProductionJob::query()->where('order_id', $orderProduksi->id)->count());
+
+        // idempotent: sync ulang tidak boleh duplikasi
+        $service->syncByOrderStatus($orderProduksi);
+        $this->assertSame(2, ProductionJob::query()->where('order_id', $orderProduksi->id)->count());
+    }
+
+    public function test_qc_fail_returns_job_and_order_to_produksi(): void
+    {
+        [$order] = $this->createOrderWithItems('produksi', 1);
+        $service = app(ProductionJobService::class);
+
+        $service->syncByOrderStatus($order);
+        $job = ProductionJob::query()->where('order_id', $order->id)->firstOrFail();
+
+        $service->markInProgress($job->id);
+        $service->markSelesai($job->id);
+        $service->moveToQc($job->id);
+
+        $order->refresh();
+        $this->assertSame('qc', (string) $order->status);
+
+        $service->qcFail($job->id, 'Warna tidak sesuai proof.');
+
+        $job->refresh();
+        $order->refresh();
+
+        $this->assertSame(ProductionJob::STATUS_IN_PROGRESS, (string) $job->status);
+        $this->assertSame('produksi', (string) $order->status);
+        $this->assertDatabaseHas('production_job_logs', [
+            'production_job_id' => $job->id,
+            'event' => 'qc_fail',
+            'to_status' => ProductionJob::STATUS_IN_PROGRESS,
+        ]);
+    }
+
+    public function test_all_jobs_qc_pass_will_sync_order_to_siap(): void
+    {
+        [$order] = $this->createOrderWithItems('produksi', 2);
+        $service = app(ProductionJobService::class);
+
+        $service->syncByOrderStatus($order);
+
+        $jobs = ProductionJob::query()->where('order_id', $order->id)->get();
+        foreach ($jobs as $job) {
+            $service->markInProgress($job->id);
+            $service->markSelesai($job->id);
+            $service->moveToQc($job->id);
+        }
+
+        $order->refresh();
+        $this->assertSame('qc', (string) $order->status);
+
+        foreach ($jobs as $job) {
+            $service->qcPass($job->id);
+        }
+
+        $order->refresh();
+        $this->assertSame('siap', (string) $order->status);
+    }
+
+    protected function createOrderWithItems(string $status, int $itemCount): array
+    {
+        Branch::query()->updateOrCreate(
+            ['id' => 1],
+            [
+                'name' => 'Headquarter',
+                'is_main' => true,
+            ]
+        );
+
+        $unit = Unit::query()->firstOrCreate(
+            ['name' => 'Pcs'],
+            [
+                'is_dimension' => false,
+                'branch_id' => 1,
+            ]
+        );
+
+        $category = Category::query()->firstOrCreate(
+            ['name' => 'Cetak'],
+            ['branch_id' => 1]
+        );
+
+        $order = Order::query()->create([
+            'order_no' => 'ORD-TST-' . now()->format('YmdHisv') . '-' . rand(10, 99),
+            'branch_id' => 1,
+            'status' => $status,
+            'order_date' => now()->toDateString(),
+            'notes' => 'test',
+        ]);
+
+        $items = [];
+        for ($i = 1; $i <= $itemCount; $i++) {
+            $product = Product::query()->create([
+                'sku' => 'SKU-TST-' . now()->format('Hisv') . '-' . $i . '-' . rand(10, 99),
+                'name' => 'Produk Test ' . $i,
+                'product_type' => 'goods',
+                'unit_id' => $unit->id,
+                'category_id' => $category->id,
+                'base_price' => 1000,
+                'sale_price' => 1500,
+                'branch_id' => 1,
+            ]);
+
+            $items[] = OrderItem::query()->create([
+                'order_id' => $order->id,
+                'product_id' => $product->id,
+                'unit_id' => $unit->id,
+                'qty' => 1,
+                'price' => 1500,
+                'total' => 1500,
+            ]);
+        }
+
+        return [$order, $items];
+    }
+}

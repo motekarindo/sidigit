@@ -47,6 +47,7 @@ use App\Livewire\Admin\Reports\SalesReport as SalesReport;
 use App\Livewire\Admin\Reports\ExpenseReport as ExpenseReport;
 use App\Livewire\Admin\Reports\BranchReport as BranchReport;
 use App\Livewire\Admin\Orders\AddPayment as OrderAddPayment;
+use App\Livewire\Admin\Productions\Index as ProductionsIndex;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -75,6 +76,10 @@ Route::middleware('guest')->group(function () {
             Route::get('/{order}/quotation/pdf', [\App\Http\Controllers\Admin\OrderInvoiceController::class, 'quotationPdf'])->name('quotation.pdf');
             Route::get('/trashed', \App\Livewire\Admin\Orders\Trashed::class)->name('trashed');
         });
+
+    Route::prefix('productions')->name('productions.')->group(function () {
+        Route::get('/', ProductionsIndex::class)->name('index');
+    });
 
     Route::prefix('stocks')->group(function () {
         Route::get('/in', StockInIndex::class)->name('stocks.in');

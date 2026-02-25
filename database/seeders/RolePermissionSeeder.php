@@ -27,7 +27,7 @@ class RolePermissionSeeder extends Seeder
         $kasirMenu = Menu::whereIn('name', [
             'Dashboard',
             'Customer',
-            'Transaksi', 'Order',
+            'Transaksi', 'Order', 'Produksi',
             'Manajemen Produk', 'Produk', 'Bahan', 'Kategori',
             'Stok', 'Stok Masuk', 'Stok Keluar', 'Stok Opname', 'Reservasi Stok',
             'Pengeluaran', 'Expense Bahan','Expense Umum',
@@ -43,6 +43,7 @@ class RolePermissionSeeder extends Seeder
         $kasirPermissions = Permission::whereIn('slug', [
             'customer.view', 'customer.create', 'customer.edit', 'customer.delete',
             'order.view', 'order.create', 'order.edit',
+            'production.view', 'production.edit', 'production.assign', 'production.qc',
             'product.view', 'product.create', 'product.edit', 'product.export',
             'category.view', 'category.export',
             'material.view', 'material.create', 'material.edit',

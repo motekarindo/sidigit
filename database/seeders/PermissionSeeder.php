@@ -101,6 +101,12 @@ class PermissionSeeder extends Seeder
             'order.edit' => ['name' => 'Edit Order', 'menu_id' => $menuId('Order')],
             'order.delete' => ['name' => 'Hapus Order', 'menu_id' => $menuId('Order')],
 
+            // Produksi
+            'production.view' => ['name' => 'Lihat Produksi', 'menu_id' => $menuId('Produksi')],
+            'production.edit' => ['name' => 'Update Status Produksi', 'menu_id' => $menuId('Produksi')],
+            'production.assign' => ['name' => 'Assign Role Produksi', 'menu_id' => $menuId('Produksi')],
+            'production.qc' => ['name' => 'QC Produksi', 'menu_id' => $menuId('Produksi')],
+
             // Finishing
             'finish.view' => ['name' => 'Lihat Finishing', 'menu_id' => $menuId('Finishing')],
             'finish.create' => ['name' => 'Tambah Finishing', 'menu_id' => $menuId('Finishing')],

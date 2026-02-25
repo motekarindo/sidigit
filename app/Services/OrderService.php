@@ -20,11 +20,17 @@ class OrderService
 {
     protected OrderRepository $repository;
     protected OrderMaterialUsageService $materialUsageService;
+    protected ProductionJobService $productionJobService;
 
-    public function __construct(OrderRepository $repository, OrderMaterialUsageService $materialUsageService)
+    public function __construct(
+        OrderRepository $repository,
+        OrderMaterialUsageService $materialUsageService,
+        ProductionJobService $productionJobService
+    )
     {
         $this->repository = $repository;
         $this->materialUsageService = $materialUsageService;
+        $this->productionJobService = $productionJobService;
     }
 
     public function query(): Builder
@@ -56,6 +62,7 @@ class OrderService
             $this->syncPayments($order, $payments);
             $this->recalculateTotals($order);
             $this->syncStockByStatus($order);
+            $this->productionJobService->syncByOrderStatus($order->refresh());
             $order->statusLogs()->create([
                 'status' => $order->status,
                 'changed_by' => auth()->id(),
@@ -94,6 +101,7 @@ class OrderService
                 }
 
                 $this->syncStockByStatus($order);
+                $this->productionJobService->syncByOrderStatus($order->refresh());
 
                 return $order->fresh(['customer', 'items']);
             }
@@ -107,6 +115,7 @@ class OrderService
 
             $this->recalculateTotals($order);
             $this->syncStockByStatus($order);
+            $this->productionJobService->syncByOrderStatus($order->refresh());
 
             if ($oldStatus !== $order->status) {
                 $order->statusLogs()->create([
@@ -231,6 +240,7 @@ class OrderService
             }
 
             $this->syncStockByStatus($order);
+            $this->productionJobService->syncByOrderStatus($order->refresh());
 
             return $order->fresh(['customer', 'items']);
         });
@@ -315,6 +325,7 @@ class OrderService
             ->where('ref_type', 'order')
             ->where('ref_id', $order->id)
             ->delete();
+        $order->productionJobs()->delete();
     }
 
     protected function syncFinishes(OrderItem $orderItem, array $finishIds): void

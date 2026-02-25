@@ -65,4 +65,9 @@ class Order extends Model
     {
         return $this->hasMany(OrderStatusLog::class, 'order_id');
     }
+
+    public function productionJobs()
+    {
+        return $this->hasMany(ProductionJob::class, 'order_id');
+    }
 }
