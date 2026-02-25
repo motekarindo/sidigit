@@ -51,6 +51,7 @@ return [
         'reports.sales' => 'report.sales.view',
         'reports.expenses' => 'report.expense.view',
         'reports.branches' => 'report.branch.view',
+        'accounting.overview' => 'accounting-overview.view',
 
         'dashboard' => null,
         'profile.edit' => null,

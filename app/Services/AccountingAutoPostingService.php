@@ -16,12 +16,16 @@ class AccountingAutoPostingService
 {
     protected const SOURCE_PAYMENT = 'payment';
     protected const SOURCE_EXPENSE = 'expense';
+    protected const SOURCE_ORDER_ACCRUAL = 'order-accrual';
 
     protected const ACCOUNT_CASH = '1001';
     protected const ACCOUNT_BANK = '1002';
+    protected const ACCOUNT_RECEIVABLE = '1101';
     protected const ACCOUNT_INVENTORY_MATERIAL = '1201';
     protected const ACCOUNT_CUSTOMER_CHANGE = '2002';
+    protected const ACCOUNT_CUSTOMER_ADVANCE = '2003';
     protected const ACCOUNT_REVENUE = '4001';
+    protected const ACCOUNT_COGS = '5001';
     protected const ACCOUNT_EXPENSE_GENERAL = '6001';
 
     public function postPayment(Order $order, Payment $payment, float $remainingBeforePayment): void
@@ -32,8 +36,9 @@ class AccountingAutoPostingService
             return;
         }
 
-        $settledAmount = max(0, min($paymentAmount, $remainingBeforePayment));
-        $changeAmount = max(0, $paymentAmount - $settledAmount);
+        $appliedAmount = max(0, min($paymentAmount, $remainingBeforePayment));
+        $changeAmount = max(0, $paymentAmount - $appliedAmount);
+        $isCompletedOrder = (string) ($order->status ?? '') === 'selesai';
 
         $lines = [];
         $lines[] = [
@@ -43,12 +48,18 @@ class AccountingAutoPostingService
             'description' => 'Pembayaran order ' . $order->order_no,
         ];
 
-        if ($settledAmount > 0) {
+        if ($appliedAmount > 0) {
+            $creditCode = $isCompletedOrder
+                ? self::ACCOUNT_RECEIVABLE
+                : self::ACCOUNT_CUSTOMER_ADVANCE;
+
             $lines[] = [
-                'account_id' => $this->resolveAccountId($branchId, self::ACCOUNT_REVENUE),
+                'account_id' => $this->resolveAccountId($branchId, $creditCode),
                 'debit' => 0,
-                'credit' => $settledAmount,
-                'description' => 'Pendapatan order ' . $order->order_no,
+                'credit' => $appliedAmount,
+                'description' => $isCompletedOrder
+                    ? 'Pelunasan piutang order ' . $order->order_no
+                    : 'Uang muka pelanggan ' . $order->order_no,
             ];
         }
 
@@ -69,6 +80,79 @@ class AccountingAutoPostingService
             sourceType: self::SOURCE_PAYMENT,
             sourceId: (int) $payment->id,
             journalDate: Carbon::parse($payment->paid_at ?? now())->toDateString(),
+            description: $description,
+            lines: $lines
+        );
+    }
+
+    public function syncOrderAccrual(Order $order): void
+    {
+        if ((string) ($order->status ?? '') !== 'selesai') {
+            $this->deleteBySource(self::SOURCE_ORDER_ACCRUAL, (int) $order->id);
+            return;
+        }
+
+        $branchId = (int) $order->branch_id;
+        $grandTotal = (float) ($order->grand_total ?? 0);
+        if ($grandTotal <= 0) {
+            $this->deleteBySource(self::SOURCE_ORDER_ACCRUAL, (int) $order->id);
+            return;
+        }
+
+        $paidAmount = (float) ($order->paid_amount ?? 0);
+        $advanceApplied = max(0, min($paidAmount, $grandTotal));
+        $receivable = max(0, $grandTotal - $paidAmount);
+        $totalHpp = max(0, (float) ($order->total_hpp ?? 0));
+
+        $lines = [];
+        if ($advanceApplied > 0) {
+            $lines[] = [
+                'account_id' => $this->resolveAccountId($branchId, self::ACCOUNT_CUSTOMER_ADVANCE),
+                'debit' => $advanceApplied,
+                'credit' => 0,
+                'description' => 'Pengakuan uang muka pelanggan ' . $order->order_no,
+            ];
+        }
+
+        if ($receivable > 0) {
+            $lines[] = [
+                'account_id' => $this->resolveAccountId($branchId, self::ACCOUNT_RECEIVABLE),
+                'debit' => $receivable,
+                'credit' => 0,
+                'description' => 'Piutang order ' . $order->order_no,
+            ];
+        }
+
+        $lines[] = [
+            'account_id' => $this->resolveAccountId($branchId, self::ACCOUNT_REVENUE),
+            'debit' => 0,
+            'credit' => $grandTotal,
+            'description' => 'Pengakuan pendapatan order ' . $order->order_no,
+        ];
+
+        if ($totalHpp > 0) {
+            $lines[] = [
+                'account_id' => $this->resolveAccountId($branchId, self::ACCOUNT_COGS),
+                'debit' => $totalHpp,
+                'credit' => 0,
+                'description' => 'Pengakuan HPP order ' . $order->order_no,
+            ];
+            $lines[] = [
+                'account_id' => $this->resolveAccountId($branchId, self::ACCOUNT_INVENTORY_MATERIAL),
+                'debit' => 0,
+                'credit' => $totalHpp,
+                'description' => 'Pengurangan persediaan bahan order ' . $order->order_no,
+            ];
+        }
+
+        $journalDate = Carbon::parse($order->updated_at ?? now())->toDateString();
+        $description = 'Auto Posting Penyelesaian Order ' . $order->order_no;
+
+        $this->upsertJournalBySource(
+            branchId: $branchId,
+            sourceType: self::SOURCE_ORDER_ACCRUAL,
+            sourceId: (int) $order->id,
+            journalDate: $journalDate,
             description: $description,
             lines: $lines
         );
@@ -275,4 +359,3 @@ class AccountingAutoPostingService
         return $datePrefix . '-' . str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
     }
 }
-

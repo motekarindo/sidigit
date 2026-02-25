@@ -60,6 +60,9 @@
 
 ## Akuntansi
 - Ditambahkan modul **Akuntansi (inti)**:
+  - **Dashboard Akuntansi** (`/accounting/overview`) untuk ringkasan posisi akun utama.
+    - Mendukung filter periode `Harian`, `Bulanan`, dan `Custom Range`.
+    - Tabel **Jurnal Terbaru** dirapikan (spacing kolom + nowrap nominal/user) agar mudah dibaca.
   - **Chart of Accounts** (`/accounting/accounts`) untuk kelola akun per cabang.
   - **Jurnal Umum** (`/accounting/journals`) untuk input jurnal manual dengan validasi debit = kredit.
 - Implementasi menggunakan service and repository pattern:
@@ -75,13 +78,18 @@
   - `AccountingAccountSeeder` membuat akun standar awal pada cabang induk.
 - Auto posting transaksi:
   - `Payment` otomatis membentuk jurnal:
-    - Debit: Kas/Bank (`1001`/`1002`)
-    - Kredit: Pendapatan Penjualan (`4001`)
+    - Sebelum status `selesai`: Debit Kas/Bank (`1001`/`1002`), Kredit Uang Muka Pelanggan (`2003`)
+    - Setelah status `selesai`: Debit Kas/Bank (`1001`/`1002`), Kredit Piutang Usaha (`1101`)
     - Jika lebih bayar: selisih ke Hutang Kembalian Pelanggan (`2002`)
+  - Saat order berubah ke status `selesai`, sistem membuat jurnal pengakuan pendapatan (accrual):
+    - Debit Uang Muka Pelanggan (`2003`) dan/atau Debit Piutang Usaha (`1101`)
+    - Kredit Pendapatan Penjualan (`4001`)
+    - Debit HPP (`5001`) dan Kredit Persediaan Bahan (`1201`) jika nilai HPP > 0
+  - Jika status order diturunkan dari `selesai`, jurnal accrual order akan disinkronkan (dihapus dari sumber `order-accrual`) agar tidak salah saji.
   - `Expense` otomatis membentuk jurnal:
     - Expense material: Debit Persediaan Bahan (`1201`), Kredit Kas/Bank
     - Expense umum: Debit Beban Operasional (`6001`), Kredit Kas/Bank
   - Expense `update/delete` akan sinkron/hapus jurnal sumber terkait (`source_type=expense`).
 - RBAC akuntansi:
-  - permission baru: `account.*`, `journal.view`, `journal.create`
-  - menu baru: **Akuntansi** -> **Chart of Accounts**, **Jurnal Umum**
+  - permission baru: `accounting-overview.view`, `account.*`, `journal.view`, `journal.create`
+  - menu baru: **Akuntansi** -> **Dashboard Akuntansi**, **Chart of Accounts**, **Jurnal Umum**

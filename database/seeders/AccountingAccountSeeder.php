@@ -26,6 +26,7 @@ class AccountingAccountSeeder extends Seeder
             ['code' => '1201', 'name' => 'Persediaan Bahan', 'type' => 'asset', 'normal_balance' => 'debit'],
             ['code' => '2001', 'name' => 'Hutang Usaha', 'type' => 'liability', 'normal_balance' => 'credit'],
             ['code' => '2002', 'name' => 'Hutang Kembalian Pelanggan', 'type' => 'liability', 'normal_balance' => 'credit'],
+            ['code' => '2003', 'name' => 'Uang Muka Pelanggan', 'type' => 'liability', 'normal_balance' => 'credit'],
             ['code' => '3001', 'name' => 'Modal Pemilik', 'type' => 'equity', 'normal_balance' => 'credit'],
             ['code' => '4001', 'name' => 'Pendapatan Penjualan', 'type' => 'revenue', 'normal_balance' => 'credit'],
             ['code' => '5001', 'name' => 'Harga Pokok Penjualan', 'type' => 'expense', 'normal_balance' => 'debit'],

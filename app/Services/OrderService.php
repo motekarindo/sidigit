@@ -61,7 +61,9 @@ class OrderService
             $this->syncItems($order, $items);
             $this->syncPayments($order, $payments);
             $this->recalculateTotals($order);
+            $this->syncAutoPostingPayments($order);
             $this->syncStockByStatus($order);
+            $this->autoPostingService->syncOrderAccrual($order->refresh());
             $order->statusLogs()->create([
                 'status' => $order->status,
                 'changed_by' => auth()->id(),
@@ -100,6 +102,7 @@ class OrderService
                 }
 
                 $this->syncStockByStatus($order);
+                $this->autoPostingService->syncOrderAccrual($order->refresh());
 
                 return $order->fresh(['customer', 'items']);
             }
@@ -112,7 +115,9 @@ class OrderService
             $this->syncPayments($order, $payments);
 
             $this->recalculateTotals($order);
+            $this->syncAutoPostingPayments($order);
             $this->syncStockByStatus($order);
+            $this->autoPostingService->syncOrderAccrual($order->refresh());
 
             if ($oldStatus !== $order->status) {
                 $order->statusLogs()->create([
@@ -153,9 +158,12 @@ class OrderService
         DB::transaction(function () use ($id) {
             $order = $this->repository->findOrFail($id);
             $this->ensureCanBeDeleted($order);
+            $paymentIds = $order->payments()->pluck('id')->all();
 
             $order->items()->delete();
             $order->payments()->delete();
+            $this->autoPostingService->deleteBySource('order-accrual', (int) $order->id);
+            $this->autoPostingService->deleteBySources('payment', $paymentIds);
             $this->repository->delete($order);
         });
     }
@@ -169,16 +177,21 @@ class OrderService
 
         DB::transaction(function () use ($ids) {
             $orders = $this->repository->query()->whereIn('id', $ids)->get();
+            $paymentIds = [];
 
             foreach ($orders as $order) {
                 $this->ensureCanBeDeleted($order);
+                $paymentIds = array_merge($paymentIds, $order->payments()->pluck('id')->all());
             }
 
             foreach ($orders as $order) {
                 $order->items()->delete();
                 $order->payments()->delete();
+                $this->autoPostingService->deleteBySource('order-accrual', (int) $order->id);
                 $this->repository->delete($order);
             }
+
+            $this->autoPostingService->deleteBySources('payment', $paymentIds);
         });
     }
 
@@ -239,6 +252,7 @@ class OrderService
             }
 
             $this->syncStockByStatus($order);
+            $this->autoPostingService->syncOrderAccrual($order->refresh());
 
             return $order->fresh(['customer', 'items']);
         });
@@ -366,6 +380,25 @@ class OrderService
     protected function clearPayments(Order $order): void
     {
         $order->payments()->delete();
+    }
+
+    protected function syncAutoPostingPayments(Order $order): void
+    {
+        $order->refresh();
+
+        $grandTotal = (float) ($order->grand_total ?? 0);
+        $runningPaid = 0.0;
+
+        $payments = $order->payments()
+            ->orderBy('paid_at')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($payments as $payment) {
+            $remainingBeforePayment = max(0, $grandTotal - $runningPaid);
+            $this->autoPostingService->postPayment($order, $payment, $remainingBeforePayment);
+            $runningPaid += (float) ($payment->amount ?? 0);
+        }
     }
 
     protected function calculateItemTotals(Product $product, ?Material $material, array $item, float $finishTotal): array
