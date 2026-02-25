@@ -66,6 +66,8 @@
 - Versi cache sidebar dinaikkan ke `v3` agar data menu lama tidak mengunci icon kosong.
 - Form **Tambah/Edit Menu** sekarang mendukung input icon manual (`icon`) dan pilihan preset icon key.
 - Nilai icon dari form diprioritaskan (jika tidak ada mapping) agar custom class/key yang diinput user tetap tersimpan dan dirender.
+- Styling sidebar dirapikan agar lebih mirip TailAdmin: ikon tanpa kotak border, state aktif/inaktif lebih clean, dan indent submenu lebih proporsional.
+- Styling **submenu** ikut disamakan: panel dropdown diberi spacing yang konsisten, item aktif/nonaktif mengikuti tone TailAdmin, dan area klik item dibuat lebih rapi.
 
 ## Akuntansi
 - Ditambahkan modul **Akuntansi (inti)**:
