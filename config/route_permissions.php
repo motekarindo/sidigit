@@ -21,6 +21,8 @@ return [
         'employee-loans' => 'employee-loan',
         'bank-accounts' => 'bank-account',
         'audit-logs' => 'audit-log',
+        'accounts' => 'account',
+        'journals' => 'journal',
     ],
 
     'resource_actions' => [
