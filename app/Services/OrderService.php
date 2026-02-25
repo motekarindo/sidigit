@@ -20,11 +20,17 @@ class OrderService
 {
     protected OrderRepository $repository;
     protected OrderMaterialUsageService $materialUsageService;
+    protected AccountingAutoPostingService $autoPostingService;
 
-    public function __construct(OrderRepository $repository, OrderMaterialUsageService $materialUsageService)
+    public function __construct(
+        OrderRepository $repository,
+        OrderMaterialUsageService $materialUsageService,
+        AccountingAutoPostingService $autoPostingService
+    )
     {
         $this->repository = $repository;
         $this->materialUsageService = $materialUsageService;
+        $this->autoPostingService = $autoPostingService;
     }
 
     public function query(): Builder
@@ -124,6 +130,7 @@ class OrderService
     {
         return DB::transaction(function () use ($orderId, $data) {
             $order = $this->repository->findOrFail($orderId);
+            $remainingBeforePayment = max(0, (float) $order->grand_total - (float) $order->paid_amount);
 
             $payment = Payment::create([
                 'order_id' => $order->id,
@@ -135,6 +142,7 @@ class OrderService
             ]);
 
             $this->recalculateTotals($order);
+            $this->autoPostingService->postPayment($order, $payment, $remainingBeforePayment);
 
             return $payment;
         });

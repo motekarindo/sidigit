@@ -19,3 +19,69 @@
 - Run the stack where you deploy: `docker compose -f docker-compose.prod.yml up -d`.
 - After the containers start, run `docker compose -f docker-compose.prod.yml exec app php artisan key:generate --force` (first run), `php artisan migrate --force`, and `php artisan storage:link` if you need public storage.
 - Make sure `docker/.env.production` references the correct external MinIO/S3 endpoint and credentials before deploying.
+
+## Paket Aplikasi (Rencana Modular)
+### Matriks Paket (Saran)
+| Modul/Fitur | Silver (Rp200.000) | Gold (Rp300.000) | Platinum (Rp350.000) |
+|---|---|---|---|
+| Dashboard | ✅ | ✅ | ✅ |
+| Customer | ✅ | ✅ | ✅ |
+| Order + Quotation + Invoice | ✅ | ✅ | ✅ |
+| Input Pembayaran | ✅ | ✅ | ✅ |
+| Tracking Order Publik | ✅ | ✅ | ✅ |
+| Stok (in/out/opname/saldo) | ❌ | ✅ | ✅ |
+| Pengeluaran (bahan & umum) | ❌ | ✅ | ✅ |
+| Laporan (sales & expense) | ❌ | ✅ | ✅ |
+| Akuntansi (COA + Jurnal Umum) | ❌ | ✅ | ✅ |
+| Audit Logs | ❌ | ❌ | ✅ |
+| Multi Branch | ❌ | ❌ | ✅ |
+| RBAC lanjutan (role/permission/menu custom) | ❌ | ❌ | ✅ |
+| Laporan cabang | ❌ | ❌ | ✅ |
+
+### Skema Praktis (Dikelola Superadmin Internal)
+- Akun `superadmin` dipegang internal (tidak diberikan ke klien).
+- Klien hanya menerima menu dan permission sesuai paket aktif.
+- Akses final = user punya permission + fitur paket aktif.
+- Konsep data yang disarankan:
+  - `features`
+  - `packages` (silver/gold/platinum)
+  - `package_feature` (default fitur per paket)
+  - `client_feature_overrides` (opsional ON/OFF khusus per klien)
+- Implementasi teknis bertahap:
+  - fase 1: kontrol menu + route middleware berbasis fitur
+  - fase 2: guard fitur di service/action agar tidak bisa bypass API/livewire
+
+## Order
+- Tracking order publik menggunakan URL: `/track/order/{id_order_encrypted}`.
+- Link tracking bersifat public dan memakai token terenkripsi (`OrderTrackingToken`), bukan ID mentah.
+- Akses link tracking dipindahkan ke Daftar Order kolom **Tracking** (aksi `Lihat` dan `Salin Link`) agar header halaman detail order tetap ringkas.
+- Aksi **Salin Link** menampilkan toast sukses.
+- Untuk environment `http` (non-HTTPS), salin link tetap dicoba otomatis via fallback `execCommand('copy')`; prompt manual hanya muncul jika browser menolak semua metode copy.
+
+## Akuntansi
+- Ditambahkan modul **Akuntansi (inti)**:
+  - **Chart of Accounts** (`/accounting/accounts`) untuk kelola akun per cabang.
+  - **Jurnal Umum** (`/accounting/journals`) untuk input jurnal manual dengan validasi debit = kredit.
+- Implementasi menggunakan service and repository pattern:
+  - `App\\Services\\AccountingAccountService`
+  - `App\\Services\\AccountingJournalService`
+  - `App\\Repositories\\AccountingAccountRepository`
+  - `App\\Repositories\\AccountingJournalRepository`
+- Struktur data baru:
+  - `acc_accounts`
+  - `acc_journals`
+  - `acc_journal_lines`
+- Seeder default COA:
+  - `AccountingAccountSeeder` membuat akun standar awal pada cabang induk.
+- Auto posting transaksi:
+  - `Payment` otomatis membentuk jurnal:
+    - Debit: Kas/Bank (`1001`/`1002`)
+    - Kredit: Pendapatan Penjualan (`4001`)
+    - Jika lebih bayar: selisih ke Hutang Kembalian Pelanggan (`2002`)
+  - `Expense` otomatis membentuk jurnal:
+    - Expense material: Debit Persediaan Bahan (`1201`), Kredit Kas/Bank
+    - Expense umum: Debit Beban Operasional (`6001`), Kredit Kas/Bank
+  - Expense `update/delete` akan sinkron/hapus jurnal sumber terkait (`source_type=expense`).
+- RBAC akuntansi:
+  - permission baru: `account.*`, `journal.view`, `journal.create`
+  - menu baru: **Akuntansi** -> **Chart of Accounts**, **Jurnal Umum**
