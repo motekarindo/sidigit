@@ -49,16 +49,11 @@
                                 <button type="button"
                                     class="menu-item group w-full text-left {{ $menu->active ? 'menu-item-active' : 'menu-item-inactive' }}"
                                     @click="open = !open">
-                                    <span
-                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200
-                                            text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500
-                                            dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
-                                        @if (!empty($menu->icon))
-                                            @if (Str::contains($menu->icon, '<svg'))
-                                                {!! $menu->icon !!}
-                                            @else
-                                                <i class="{{ $menu->icon }}"></i>
-                                            @endif
+                                    <span class="menu-item-icon {{ $menu->active ? 'menu-item-icon-active' : 'menu-item-icon-inactive' }}">
+                                        @if (!empty($menu->icon) && Str::contains($menu->icon, '<svg'))
+                                            {!! $menu->icon !!}
+                                        @elseif (!empty($menu->icon))
+                                            <i class="{{ $menu->icon }}"></i>
                                         @else
                                             <span class="text-sm font-semibold uppercase">
                                                 {{ Str::substr($menu->name, 0, 1) }}
@@ -77,7 +72,7 @@
                                             stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
                                 </button>
-                                <ul x-show="open" x-transition class="menu-dropdown flex-col gap-1 pl-12"
+                                <ul x-show="open" x-transition class="menu-dropdown menu-dropdown-panel"
                                     :class="sidebarToggle ? 'lg:hidden flex' : 'flex'">
                                     @foreach ($menu->children as $child)
                                         <li>
@@ -93,12 +88,15 @@
                             <li>
                                 <a href="{{ $menu->route_url ?? '#' }}"
                                     class="menu-item group {{ $menu->active ? 'menu-item-active' : 'menu-item-inactive' }}">
-                                    <span
-                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
-                                        @if (Str::contains($menu->icon, '<svg'))
+                                    <span class="menu-item-icon {{ $menu->active ? 'menu-item-icon-active' : 'menu-item-icon-inactive' }}">
+                                        @if (!empty($menu->icon) && Str::contains($menu->icon, '<svg'))
                                             {!! $menu->icon !!}
-                                        @else
+                                        @elseif (!empty($menu->icon))
                                             <i class="{{ $menu->icon }}"></i>
+                                        @else
+                                            <span class="text-sm font-semibold uppercase">
+                                                {{ Str::substr($menu->name, 0, 1) }}
+                                            </span>
                                         @endif
                                     </span>
                                     <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">
@@ -120,9 +118,14 @@
                         <li>
                             <a href="{{ route('profile.edit') }}"
                                 class="menu-item group {{ Route::is('profile.*') ? 'menu-item-active' : 'menu-item-inactive' }}">
-                                <span
-                                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
-                                    P
+                                <span class="menu-item-icon {{ Route::is('profile.*') ? 'menu-item-icon-active' : 'menu-item-icon-inactive' }}">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="10" cy="6.5" r="3" stroke="currentColor"
+                                            stroke-width="1.5" />
+                                        <path d="M4.5 16.5C4.5 13.7386 6.73858 11.5 9.5 11.5H10.5C13.2614 11.5 15.5 13.7386 15.5 16.5"
+                                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                    </svg>
                                 </span>
                                 <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Profile</span>
                             </a>
@@ -134,9 +137,18 @@
                                 class="menu-item group menu-item-inactive">
                                 @csrf
                                 <button type="submit" class="flex w-full items-center gap-3">
-                                    <span
-                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 group-hover:border-brand-200 group-hover:text-brand-500 dark:border-gray-800 dark:text-gray-400 dark:group-hover:text-brand-400">
-                                        L
+                                    <span class="menu-item-icon menu-item-icon-inactive">
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M8 5.5V14.5" stroke="currentColor" stroke-width="1.5"
+                                                stroke-linecap="round" />
+                                            <path d="M11 8.5L14 10L11 11.5" stroke="currentColor"
+                                                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                            <path d="M14 10H6" stroke="currentColor" stroke-width="1.5"
+                                                stroke-linecap="round" />
+                                            <path d="M3.5 3.5H10.5V16.5H3.5" stroke="currentColor"
+                                                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
                                     </span>
                                     <span class="menu-item-text"
                                         :class="sidebarToggle ? 'lg:hidden' : ''">Logout</span>
