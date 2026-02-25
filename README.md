@@ -97,3 +97,14 @@
 - RBAC akuntansi:
   - permission baru: `accounting-overview.view`, `cashflow.view`, `account.*`, `journal.view`, `journal.create`
   - menu baru: **Akuntansi** -> **Dashboard Akuntansi**, **Arus Kas**, **Chart of Accounts**, **Jurnal Umum**
+## Order
+- Ditambahkan modul **Tracking Order Publik** dengan URL: `/track/order/{id_order_encrypted}`.
+- Link tracking bersifat **public**: siapa pun yang memiliki URL dapat melihat progres order.
+- ID order di URL tidak memakai ID mentah, tetapi token terenkripsi melalui `OrderTrackingToken`.
+- Implementasi mengikuti **service and repository pattern**:
+  - `App\\Services\\OrderTrackingService`
+  - `App\\Repositories\\OrderTrackingRepository`
+- Halaman tracking publik menampilkan status saat ini dan riwayat pengerjaan dari `order_status_logs`.
+- Akses tracking dipindahkan ke **Daftar Order** pada kolom **Tracking** (aksi `Lihat` dan `Salin Link`) agar header halaman detail order tetap ringkas.
+- Aksi **Salin Link** menampilkan **toast sukses** (bukan modal) agar feedback cepat dan tidak mengganggu alur kerja.
+- Untuk environment `http` (non-HTTPS), salin link tetap dicoba otomatis via fallback `execCommand('copy')`; prompt manual hanya muncul jika browser menolak semua metode copy.
