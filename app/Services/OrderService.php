@@ -84,8 +84,9 @@ class OrderService
         return DB::transaction(function () use ($id, $data, $items, $payments, $revisionReason) {
             $order = $this->repository->findOrFail($id);
             $oldStatus = $order->status;
+            $canOverrideLockedOrder = auth()->user()?->can('workflow.override.locked-order') ?? false;
 
-            if ($this->isLockedStatus($oldStatus)) {
+            if ($this->isLockedStatus($oldStatus) && !$canOverrideLockedOrder) {
                 $nextStatus = (string) ($data['status'] ?? $oldStatus);
                 $this->ensureRevisionReasonIfRequired($oldStatus, $nextStatus, $revisionReason);
 
