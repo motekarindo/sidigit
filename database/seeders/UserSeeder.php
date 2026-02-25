@@ -16,12 +16,14 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         // 1. Ambil role yang dibutuhkan
-        $adminRole = Role::where('name', 'Administrator')->first()
-            ?? Role::where('slug', 'administrator')->first();
+        $superadminRole = Role::where('name', 'Superadmin')->first()
+            ?? Role::where('slug', 'superadmin')->first();
+        $ownerRole = Role::where('name', 'Owner')->first()
+            ?? Role::where('slug', 'owner')->first();
         $kasirRole = Role::where('name', 'Kasir')->first()
             ?? Role::where('slug', 'kasir')->first();
 
-        if (!$adminRole) {
+        if (!$superadminRole) {
             return;
         }
 
@@ -36,20 +38,36 @@ class UserSeeder extends Seeder
             ]);
         }
 
-        // 2. Buat/User admin dan berikan peran Admin
-        $adminUser = User::updateOrCreate(
-            ['email' => 'admin@gmail.com'],
+        // 2. Buat/update user superadmin dan berikan role superadmin
+        $superadminUser = User::updateOrCreate(
+            ['email' => 'superadmin@gmail.com'],
             [
-                'name' => 'Admin User',
-                'username' => 'admin',
+                'name' => 'Superadmin User',
+                'username' => 'superadmin',
                 'password' => Hash::make('password'),
                 'branch_id' => $mainBranch->id,
             ]
         );
-        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
-        $adminUser->branches()->syncWithoutDetaching([$mainBranch->id]);
+        $superadminUser->roles()->syncWithoutDetaching([$superadminRole->id]);
+        $superadminUser->branches()->syncWithoutDetaching([$mainBranch->id]);
 
-        // 3. Buat/update user kasir default
+        // 3. Buat/update user owner default (hak akses tertinggi tenant)
+        if ($ownerRole) {
+            $ownerUser = User::updateOrCreate(
+                ['email' => 'owner@gmail.com'],
+                [
+                    'name' => 'owner',
+                    'username' => 'owner',
+                    'password' => Hash::make('password'),
+                    'branch_id' => $mainBranch->id,
+                ]
+            );
+
+            $ownerUser->roles()->syncWithoutDetaching([$ownerRole->id]);
+            $ownerUser->branches()->syncWithoutDetaching([$mainBranch->id]);
+        }
+
+        // 4. Buat/update user kasir default
         if ($kasirRole) {
             $kasirUser = User::updateOrCreate(
                 ['email' => 'kasir@gmail.com'],

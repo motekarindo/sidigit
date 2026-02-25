@@ -53,7 +53,7 @@ class Edit extends Component
         $this->order_date = $orderModel->order_date?->format('Y-m-d') ?? now()->format('Y-m-d');
         $this->deadline = $orderModel->deadline?->format('Y-m-d');
         $this->notes = $orderModel->notes;
-        $this->isApprovalLocked = $this->isLockedStatus($orderModel->status);
+        $this->isApprovalLocked = $this->isLockedStatus($orderModel->status) && !$this->canOverrideLockedOrder();
 
         $this->items = $orderModel->items->map(function ($item) {
             return [
@@ -231,6 +231,11 @@ class Edit extends Component
         ], true);
     }
 
+    protected function canOverrideLockedOrder(): bool
+    {
+        return auth()->user()?->can('workflow.override.locked-order') ?? false;
+    }
+
     public function makeQuotation(): void
     {
         try {
@@ -268,7 +273,7 @@ class Edit extends Component
     protected function syncStatusState(string $status): void
     {
         $this->status = $status;
-        $this->isApprovalLocked = $this->isLockedStatus($status);
+        $this->isApprovalLocked = $this->isLockedStatus($status) && !$this->canOverrideLockedOrder();
     }
 
     public function render()

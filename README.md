@@ -51,6 +51,45 @@
   - fase 1: kontrol menu + route middleware berbasis fitur
   - fase 2: guard fitur di service/action agar tidak bisa bypass API/livewire
 
+## Role Owner (Override)
+- Role sistem utama diganti dari `Administrator` menjadi `Superadmin`.
+- Seeder default membuat akun superadmin:
+  - `name`: `Superadmin User`
+  - `username`: `superadmin`
+  - `email`: `superadmin@gmail.com`
+  - `password`: `password`
+- Ditambahkan role baru: `Owner` (slug otomatis: `owner`).
+- Tujuan role `Owner`: hak akses operasional tertinggi di sisi klien tanpa memberikan akun `superadmin`.
+- Seeder default membuat akun:
+  - `name`: `owner`
+  - `username`: `owner`
+  - `email`: `owner@gmail.com`
+  - `password`: `password`
+- Permission override workflow yang ditambahkan:
+  - `workflow.override.status`
+  - `workflow.override.actor`
+  - `workflow.override.locked-order`
+- `Owner` mendapatkan seluruh menu + permission tenant melalui `RolePermissionSeeder`.
+- Penugasan role `Owner` dibatasi:
+  - hanya akun dengan role `superadmin` yang dapat menetapkan role `Owner` pada form user.
+  - non-superadmin tidak melihat opsi role `Owner` pada form user.
+- Untuk order yang statusnya sudah terkunci (`approval` ke atas), user dengan permission `workflow.override.locked-order` dapat tetap melakukan edit penuh order.
+
+## Feature Gate
+- Ditambahkan infrastruktur feature gate dasar untuk klasifikasi paket:
+  - `config/feature_gate.php`
+  - `App\Support\FeatureGate`
+  - middleware `App\Http\Middleware\EnsureFeatureEnabled`
+  - alias middleware route: `route.feature`
+- Cara pakai di route:
+  - contoh: `Route::get('/orders', ...)->middleware('route.feature:orders');`
+- Cara menambah feature baru:
+  1. Tambahkan key pada `config/feature_gate.php` bagian `features`.
+  2. (Opsional) Atur override role di `role_overrides`.
+  3. Pasang middleware `route.feature:{nama_feature}` pada route yang relevan.
+- Bypass default:
+  - role slug pada `bypass_role_slugs` (default: `superadmin`) selalu lolos pengecekan feature gate.
+
 ## Order
 - Tracking order publik menggunakan URL: `/track/order/{id_order_encrypted}`.
 - Link tracking bersifat public dan memakai token terenkripsi (`OrderTrackingToken`), bukan ID mentah.

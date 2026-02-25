@@ -100,6 +100,9 @@ class PermissionSeeder extends Seeder
             'order.create' => ['name' => 'Tambah Order', 'menu_id' => $menuId('Order')],
             'order.edit' => ['name' => 'Edit Order', 'menu_id' => $menuId('Order')],
             'order.delete' => ['name' => 'Hapus Order', 'menu_id' => $menuId('Order')],
+            'workflow.override.status' => ['name' => 'Override Workflow Status', 'menu_id' => $menuId('Order')],
+            'workflow.override.actor' => ['name' => 'Override PIC Workflow', 'menu_id' => $menuId('Order')],
+            'workflow.override.locked-order' => ['name' => 'Override Edit Order Terkunci', 'menu_id' => $menuId('Order')],
 
             // Finishing
             'finish.view' => ['name' => 'Lihat Finishing', 'menu_id' => $menuId('Finishing')],
