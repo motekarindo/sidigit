@@ -58,6 +58,15 @@
 - Aksi **Salin Link** menampilkan toast sukses.
 - Untuk environment `http` (non-HTTPS), salin link tetap dicoba otomatis via fallback `execCommand('copy')`; prompt manual hanya muncul jika browser menolak semua metode copy.
 
+## UI Sidebar
+- Sidebar sekarang memakai map icon SVG bergaya TailAdmin dari `config/menu.php`.
+- Kompatibilitas icon lama tetap aman: nilai menu `bi bi-*` otomatis dikonversi ke SVG, jadi icon tetap muncul tanpa ubah data menu lama.
+- Resolver icon memiliki fallback default sehingga menu tanpa mapping tidak tampil kosong.
+- Icon `Profile` dan `Logout` pada blok **Account** diganti ke SVG agar konsisten dengan gaya TailAdmin.
+- Versi cache sidebar dinaikkan ke `v3` agar data menu lama tidak mengunci icon kosong.
+- Form **Tambah/Edit Menu** sekarang mendukung input icon manual (`icon`) dan pilihan preset icon key.
+- Nilai icon dari form diprioritaskan (jika tidak ada mapping) agar custom class/key yang diinput user tetap tersimpan dan dirender.
+
 ## Akuntansi
 - Ditambahkan modul **Akuntansi (inti)**:
   - **Dashboard Akuntansi** (`/accounting/overview`) untuk ringkasan posisi akun utama.
