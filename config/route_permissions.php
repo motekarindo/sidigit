@@ -22,6 +22,9 @@ return [
         'employee-loans' => 'employee-loan',
         'bank-accounts' => 'bank-account',
         'audit-logs' => 'audit-log',
+        'accounts' => 'account',
+        'journals' => 'journal',
+        'cashflows' => 'cashflow',
     ],
 
     'resource_actions' => [
@@ -54,6 +57,7 @@ return [
         'reports.sales' => 'report.sales.view',
         'reports.expenses' => 'report.expense.view',
         'reports.branches' => 'report.branch.view',
+        'accounting.overview' => 'accounting-overview.view',
 
         'dashboard' => null,
         'profile.edit' => null,

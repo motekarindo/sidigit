@@ -49,6 +49,11 @@ use App\Livewire\Admin\Reports\BranchReport as BranchReport;
 use App\Livewire\Admin\Orders\AddPayment as OrderAddPayment;
 use App\Livewire\Admin\Productions\Index as ProductionsIndex;
 use App\Livewire\Admin\Productions\HistoryIndex as ProductionsHistoryIndex;
+use App\Livewire\Admin\Accounting\Overview\Index as AccountingOverviewIndex;
+use App\Livewire\Admin\Accounting\Accounts\Index as AccountingAccountsIndex;
+use App\Livewire\Admin\Accounting\Journals\Index as AccountingJournalsIndex;
+use App\Livewire\Admin\Accounting\Cashflows\Index as AccountingCashflowsIndex;
+use App\Http\Controllers\Tracking\OrderTrackingController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -61,6 +66,10 @@ Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', ForgotPasswordPage::class)->name('password.request');
     Route::get('/reset-password/{token}', ResetPasswordPage::class)->name('password.reset');
 });
+
+Route::get('/track/order/{id_order_encrypted}', [OrderTrackingController::class, 'show'])
+    ->where('id_order_encrypted', '[A-Za-z0-9\\-_]+')
+    ->name('orders.track.public');
 
 
 
@@ -173,6 +182,10 @@ Route::middleware('guest')->group(function () {
     Route::get('reports/sales', SalesReport::class)->name('reports.sales');
     Route::get('reports/expenses', ExpenseReport::class)->name('reports.expenses');
     Route::get('reports/branches', BranchReport::class)->name('reports.branches');
+    Route::get('accounting/overview', AccountingOverviewIndex::class)->name('accounting.overview');
+    Route::get('accounting/cashflows', AccountingCashflowsIndex::class)->name('cashflows.index');
+    Route::get('accounting/accounts', AccountingAccountsIndex::class)->name('accounts.index');
+    Route::get('accounting/journals', AccountingJournalsIndex::class)->name('journals.index');
 
     Route::get('audit-logs', AuditLogsIndex::class)->name('audit-logs.index');
 
