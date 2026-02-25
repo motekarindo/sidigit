@@ -22,7 +22,8 @@ class Index extends Component
     use WithErrorToast;
     use WithPageMeta;
 
-    public string $stage = ProductionJob::STAGE_PRODUKSI;
+    public const COLUMN_DESAIN = 'desain';
+
     public string $search = '';
 
     public bool $showQcFailModal = false;
@@ -37,16 +38,9 @@ class Index extends Component
         $this->service = $service;
     }
 
-    public function mount(?string $stage = null): void
+    public function mount(): void
     {
         $this->authorize('production.view');
-
-        $routeStage = request()->route('stage');
-        $this->stage = $this->normalizeStage(
-            $stage
-                ?: (is_string($routeStage) ? $routeStage : null)
-                ?: ($this->isDesainRoute() ? ProductionJob::STAGE_DESAIN : ProductionJob::STAGE_PRODUKSI)
-        );
 
         $this->userRoleSlugs = auth()->user()?->roles()->pluck('slug')->all() ?? [];
 
@@ -55,23 +49,16 @@ class Index extends Component
             'Kelola task produksi per item order dalam board Kanban.',
             [
                 ['label' => 'Dashboard', 'url' => Route::has('dashboard') ? route('dashboard') : '#', 'icon' => true],
-                ['label' => 'Produksi', 'url' => route('productions.produksi')],
-                ['label' => $this->stageLabel, 'current' => true],
+                ['label' => 'Produksi', 'url' => route('productions.index'), 'current' => true],
             ]
         );
-    }
-
-    public function getStageLabelProperty(): string
-    {
-        $labels = ProductionJob::stageOptions();
-
-        return $labels[$this->stage] ?? ucfirst($this->stage);
     }
 
     public function getColumnsProperty(): array
     {
         return [
             ProductionJob::STATUS_ANTRIAN => ['label' => 'Antrian', 'accent' => 'border-gray-200 dark:border-gray-800'],
+            self::COLUMN_DESAIN => ['label' => 'Desain', 'accent' => 'border-cyan-200 dark:border-cyan-900/50'],
             ProductionJob::STATUS_IN_PROGRESS => ['label' => 'In Progress', 'accent' => 'border-blue-200 dark:border-blue-900/50'],
             ProductionJob::STATUS_SELESAI => ['label' => 'Selesai', 'accent' => 'border-emerald-200 dark:border-emerald-900/50'],
             ProductionJob::STATUS_QC => ['label' => 'QC', 'accent' => 'border-amber-200 dark:border-amber-900/50'],
@@ -81,23 +68,19 @@ class Index extends Component
 
     public function getGroupedJobsProperty(): array
     {
-        $jobs = $this->service->kanbanQuery($this->stage, $this->search)->get();
+        $jobs = $this->service->kanbanQuery(null, $this->search)->get();
         $grouped = [];
 
-        foreach (array_keys($this->columns) as $status) {
-            $grouped[$status] = $jobs->where('status', $status)->values();
+        foreach (array_keys($this->columns) as $column) {
+            $grouped[$column] = collect();
+        }
+
+        foreach ($jobs as $job) {
+            $column = $this->resolveBoardColumn($job);
+            $grouped[$column]->push($job);
         }
 
         return $grouped;
-    }
-
-    public function goStage(string $stage): void
-    {
-        $target = $this->normalizeStage($stage);
-
-        $this->redirectRoute(
-            $target === ProductionJob::STAGE_DESAIN ? 'productions.desain' : 'productions.produksi'
-        );
     }
 
     public function claim(int $jobId): void
@@ -226,58 +209,90 @@ class Index extends Component
         }
     }
 
-    public function moveCard(int $jobId, string $toStatus): void
+    public function moveCard(int $jobId, string $toColumn): void
     {
         $actor = auth()->user();
         if (!$actor instanceof User) {
             abort(403);
         }
 
-        $allowedStatuses = [
+        $allowedColumns = [
             ProductionJob::STATUS_ANTRIAN,
+            self::COLUMN_DESAIN,
             ProductionJob::STATUS_IN_PROGRESS,
             ProductionJob::STATUS_SELESAI,
             ProductionJob::STATUS_QC,
             ProductionJob::STATUS_SIAP_DIAMBIL,
         ];
 
-        if (!in_array($toStatus, $allowedStatuses, true)) {
+        if (!in_array($toColumn, $allowedColumns, true)) {
             $this->dispatch('toast', message: 'Target kolom tidak valid.', type: 'warning');
             return;
         }
 
         $job = $this->service->find($jobId);
-        $fromStatus = (string) $job->status;
-        if ($fromStatus === $toStatus) {
+        $fromColumn = $this->resolveBoardColumn($job);
+        if ($fromColumn === $toColumn) {
             return;
         }
 
         try {
-            if (in_array($toStatus, [ProductionJob::STATUS_QC, ProductionJob::STATUS_SIAP_DIAMBIL], true)) {
+            if (in_array($toColumn, [ProductionJob::STATUS_QC, ProductionJob::STATUS_SIAP_DIAMBIL], true)) {
                 $this->authorize('production.qc');
             } else {
                 $this->authorize('production.edit');
             }
 
-            if ($toStatus === ProductionJob::STATUS_IN_PROGRESS) {
+            if ($toColumn === self::COLUMN_DESAIN) {
+                if ($fromColumn !== ProductionJob::STATUS_ANTRIAN) {
+                    throw ValidationException::withMessages([
+                        'status' => 'Task hanya bisa masuk tahap Desain dari Antrian.',
+                    ]);
+                }
+
+                $this->service->switchStage($jobId, ProductionJob::STAGE_DESAIN, 'Masuk tahap desain.');
+                $this->service->markInProgress($jobId, null, $actor);
+                $this->dispatch('toast', message: 'Task dipindahkan ke Desain.', type: 'success');
+                return;
+            }
+
+            if ($toColumn === ProductionJob::STATUS_IN_PROGRESS) {
+                if ($fromColumn === self::COLUMN_DESAIN) {
+                    $this->service->switchStage($jobId, ProductionJob::STAGE_PRODUKSI, 'Desain selesai. Lanjut ke produksi.');
+                    $jobAfterSwitch = $this->service->find($jobId);
+
+                    if ($this->canHandleRole($jobAfterSwitch)) {
+                        $this->service->markInProgress($jobId, null, $actor);
+                        $this->dispatch('toast', message: 'Task dipindahkan ke In Progress.', type: 'success');
+                        return;
+                    }
+
+                    $this->dispatch('toast', message: 'Task dipindahkan ke In Progress. Menunggu operator mengambil task.', type: 'success');
+                    return;
+                }
+
+                if ($fromColumn === ProductionJob::STATUS_ANTRIAN) {
+                    $this->service->switchStage($jobId, ProductionJob::STAGE_PRODUKSI, 'Bypass desain. Langsung ke produksi.');
+                }
+
                 $this->service->markInProgress($jobId, null, $actor);
                 $this->dispatch('toast', message: 'Task dipindahkan ke In Progress.', type: 'success');
                 return;
             }
 
-            if ($toStatus === ProductionJob::STATUS_SELESAI) {
+            if ($toColumn === ProductionJob::STATUS_SELESAI) {
                 $this->service->markSelesai($jobId, null, $actor);
                 $this->dispatch('toast', message: 'Task dipindahkan ke Selesai.', type: 'success');
                 return;
             }
 
-            if ($toStatus === ProductionJob::STATUS_QC) {
+            if ($toColumn === ProductionJob::STATUS_QC) {
                 $this->service->moveToQc($jobId, null, $actor);
                 $this->dispatch('toast', message: 'Task dipindahkan ke QC.', type: 'success');
                 return;
             }
 
-            if ($toStatus === ProductionJob::STATUS_SIAP_DIAMBIL) {
+            if ($toColumn === ProductionJob::STATUS_SIAP_DIAMBIL) {
                 $this->service->qcPass($jobId, null, $actor);
                 $this->dispatch('toast', message: 'Task dipindahkan ke Siap Diambil.', type: 'success');
                 return;
@@ -394,6 +409,10 @@ class Index extends Component
 
     public function canMove(ProductionJob $job): bool
     {
+        if (empty($job->claimed_by)) {
+            return $this->canClaim($job);
+        }
+
         return $this->isMine($job) || $this->canManageAll();
     }
 
@@ -402,15 +421,12 @@ class Index extends Component
         return view('livewire.admin.productions.index');
     }
 
-    protected function isDesainRoute(): bool
+    protected function resolveBoardColumn(ProductionJob $job): string
     {
-        return request()->route()?->getName() === 'productions.desain';
-    }
+        if ($job->status === ProductionJob::STATUS_IN_PROGRESS && $job->stage === ProductionJob::STAGE_DESAIN) {
+            return self::COLUMN_DESAIN;
+        }
 
-    protected function normalizeStage(?string $stage): string
-    {
-        return in_array($stage, [ProductionJob::STAGE_DESAIN, ProductionJob::STAGE_PRODUKSI], true)
-            ? (string) $stage
-            : ProductionJob::STAGE_PRODUKSI;
+        return (string) $job->status;
     }
 }

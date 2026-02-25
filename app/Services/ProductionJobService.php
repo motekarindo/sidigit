@@ -33,9 +33,13 @@ class ProductionJobService
             ]);
     }
 
-    public function kanbanQuery(string $stage, ?string $search = null): Builder
+    public function kanbanQuery(?string $stage = null, ?string $search = null): Builder
     {
-        $query = $this->query()->where('stage', $stage);
+        $query = $this->query();
+
+        if (filled($stage)) {
+            $query->where('stage', $stage);
+        }
 
         if (filled($search)) {
             $keyword = trim((string) $search);
@@ -56,6 +60,56 @@ class ProductionJobService
                 ELSE 99
             END")
             ->orderByDesc('updated_at');
+    }
+
+    public function switchStage(int $jobId, string $targetStage, ?string $note = null): ProductionJob
+    {
+        $labels = ProductionJob::stageOptions();
+        if (!array_key_exists($targetStage, $labels)) {
+            throw ValidationException::withMessages([
+                'stage' => 'Tahap produksi tidak valid.',
+            ]);
+        }
+
+        $job = $this->repository->findOrFail($jobId);
+        $currentStage = (string) ($job->stage ?? '');
+
+        if ($currentStage === $targetStage) {
+            return $job->fresh(['order', 'assignedRole', 'claimedByUser', 'orderItem.product']);
+        }
+
+        $targetRole = $this->resolveRoleForStage($targetStage);
+        $targetRoleId = $targetRole?->id;
+
+        $this->repository->update($job, [
+            'stage' => $targetStage,
+            'assigned_role_id' => $targetRoleId,
+            // Reset claim agar perpindahan antar tahap tetap aman terhadap role.
+            'claimed_by' => null,
+            'claimed_at' => null,
+        ]);
+
+        $job->refresh();
+
+        $this->createLog(
+            $job,
+            'stage_switched',
+            (string) $job->status,
+            (string) $job->status,
+            $note ?: ('Tahap job dipindahkan ke ' . ($labels[$targetStage] ?? ucfirst($targetStage)) . '.')
+        );
+
+        if ($targetRoleId) {
+            $this->createLog(
+                $job,
+                'auto_assigned',
+                (string) $job->status,
+                (string) $job->status,
+                'Auto-assign ke role: ' . ($targetRole?->name ?? 'Role') . '.'
+            );
+        }
+
+        return $job->fresh(['order', 'assignedRole', 'claimedByUser', 'orderItem.product']);
     }
 
     public function find(int $id): ProductionJob

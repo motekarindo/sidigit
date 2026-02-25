@@ -22,17 +22,11 @@ class MenuSeeder extends Seeder
             ['name' => 'Produksi', 'parent_id' => $transactions->id],
             ['route_name' => 'productions.index', 'icon' => 'bi bi-kanban', 'order' => 2]
         );
-        Menu::updateOrCreate(
-            ['route_name' => 'productions.desain'],
-            ['parent_id' => $productionMenu->id, 'name' => 'Desain', 'order' => 1]
-        );
-        Menu::updateOrCreate(
-            ['route_name' => 'productions.produksi'],
-            ['parent_id' => $productionMenu->id, 'name' => 'Produksi Kanban', 'order' => 2]
-        );
+        // Board desain + produksi kini digabung di /productions.
+        Menu::whereIn('route_name', ['productions.desain', 'productions.produksi'])->delete();
         Menu::updateOrCreate(
             ['route_name' => 'productions.history'],
-            ['parent_id' => $productionMenu->id, 'name' => 'Riwayat Produksi', 'order' => 3]
+            ['parent_id' => $productionMenu->id, 'name' => 'Riwayat Produksi', 'order' => 1]
         );
 
         // --- MANAJEMEN PRODUK ---

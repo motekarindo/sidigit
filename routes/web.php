@@ -88,11 +88,9 @@ Route::get('/track/order/{id_order_encrypted}', [OrderTrackingController::class,
         });
 
     Route::prefix('productions')->name('productions.')->group(function () {
-        Route::get('/', function () {
-            return redirect()->route('productions.produksi');
-        })->name('index');
-        Route::get('/desain', ProductionsIndex::class)->name('desain')->defaults('stage', 'desain');
-        Route::get('/produksi', ProductionsIndex::class)->name('produksi')->defaults('stage', 'produksi');
+        Route::get('/', ProductionsIndex::class)->name('index');
+        Route::get('/desain', fn () => redirect()->route('productions.index'))->name('desain');
+        Route::get('/produksi', fn () => redirect()->route('productions.index'))->name('produksi');
         Route::get('/history', ProductionsHistoryIndex::class)->name('history');
     });
 

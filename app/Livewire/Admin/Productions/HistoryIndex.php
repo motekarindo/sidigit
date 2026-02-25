@@ -25,7 +25,7 @@ class HistoryIndex extends Component
             'Daftar job produksi lengkap dengan jejak perubahan statusnya.',
             [
                 ['label' => 'Dashboard', 'url' => Route::has('dashboard') ? route('dashboard') : '#', 'icon' => true],
-                ['label' => 'Produksi', 'url' => route('productions.produksi')],
+                ['label' => 'Produksi', 'url' => route('productions.index')],
                 ['label' => 'Riwayat', 'current' => true],
             ]
         );

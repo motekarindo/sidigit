@@ -2,14 +2,13 @@
 
 ## Modul Produksi
 - URL modul internal:
-  - `/productions/desain` (Kanban tahap Desain)
-  - `/productions/produksi` (Kanban tahap Produksi)
+  - `/productions` (Kanban gabungan Desain + Produksi)
   - `/productions/history` (Riwayat job produksi)
 - Konsep: 1 `production_job` untuk setiap `order_item` (bukan per invoice/order header).
 - Trigger pembuatan job:
   - saat status order menjadi `desain` => job tahap `desain`
   - saat status order menjadi `produksi` => job tahap `produksi`
-- Akses menu: `Transaksi -> Produksi -> Desain / Produksi Kanban / Riwayat Produksi`.
+- Akses menu: `Transaksi -> Produksi` (board kanban gabungan) dan `Riwayat Produksi`.
 - Parent menu `Produksi` sekarang mengarah ke `productions.index` (bukan `#`), tetap bisa expand submenu.
 
 ### Flow Produksi (Per Item)
@@ -18,10 +17,12 @@
 - Setiap transisi disimpan ke `production_job_logs` untuk jejak audit.
 
 ### Model Kanban
-- Board dipisah per tahap: `Desain` dan `Produksi`.
+- Board digabung menjadi satu halaman.
 - Tiap card adalah `1 item order`.
 - Ada mekanisme `Ambil Task` (claim) dan `Lepas`.
 - Card bisa dipindahkan antar kolom dengan drag-and-drop untuk transisi status.
+- Kolom board: `Antrian -> Desain -> In Progress -> Selesai -> QC -> Siap Diambil`.
+- Tahap `Desain` bersifat opsional: task bisa langsung dari `Antrian` ke `In Progress` (bypass desain).
 - Perubahan status di board mengikuti flow yang sama untuk menjaga konsistensi operasional.
 
 ### Sinkronisasi Status Order

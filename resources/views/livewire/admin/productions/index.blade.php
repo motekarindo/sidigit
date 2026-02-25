@@ -24,21 +24,13 @@
     <x-card>
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-                <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Produksi Kanban - {{ $this->stageLabel }}</h1>
+                <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Produksi Kanban</h1>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Alur: Antrian -> In Progress -> Selesai -> QC -> Siap Diambil.
+                    Alur: Antrian -> Desain -> In Progress -> Selesai -> QC -> Siap Diambil. Tahap desain opsional (bisa langsung ke In Progress).
                 </p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <button type="button" wire:click="goStage('desain')"
-                    class="btn {{ $stage === \App\Models\ProductionJob::STAGE_DESAIN ? 'btn-primary' : 'btn-secondary' }}">
-                    Desain
-                </button>
-                <button type="button" wire:click="goStage('produksi')"
-                    class="btn {{ $stage === \App\Models\ProductionJob::STAGE_PRODUKSI ? 'btn-primary' : 'btn-secondary' }}">
-                    Produksi
-                </button>
                 <a href="{{ route('productions.history') }}" class="btn btn-secondary inline-flex items-center gap-2">
                     <x-lucide-history class="h-4 w-4" />
                     <span>Riwayat</span>
@@ -55,23 +47,23 @@
         </div>
 
         <div class="mt-6 overflow-x-auto pb-2">
-            <div class="grid min-w-[1200px] grid-cols-5 gap-4">
-                @foreach ($this->columns as $status => $column)
+            <div class="grid min-w-[1400px] grid-cols-6 gap-4">
+                @foreach ($this->columns as $columnKey => $column)
                     <div class="flex min-h-[620px] flex-col rounded-2xl border bg-gray-50/60 {{ $column['accent'] }} transition dark:bg-gray-900/40"
-                        x-bind:class="overStatus === '{{ $status }}' ? 'ring-2 ring-brand-400/60' : ''"
-                        x-on:dragenter.prevent="overStatus = '{{ $status }}'"
+                        x-bind:class="overStatus === '{{ $columnKey }}' ? 'ring-2 ring-brand-400/60' : ''"
+                        x-on:dragenter.prevent="overStatus = '{{ $columnKey }}'"
                         x-on:dragover.prevent
-                        x-on:dragleave="if (overStatus === '{{ $status }}') overStatus = null"
-                        x-on:drop.prevent="dropTo('{{ $status }}')">
+                        x-on:dragleave="if (overStatus === '{{ $columnKey }}') overStatus = null"
+                        x-on:drop.prevent="dropTo('{{ $columnKey }}')">
                         <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
                             <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $column['label'] }}</h3>
                             <span class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-200">
-                                {{ count($this->groupedJobs[$status] ?? []) }}
+                                {{ count($this->groupedJobs[$columnKey] ?? []) }}
                             </span>
                         </div>
 
                         <div class="flex-1 space-y-3 overflow-y-auto p-3">
-                            @forelse (($this->groupedJobs[$status] ?? []) as $job)
+                            @forelse (($this->groupedJobs[$columnKey] ?? []) as $job)
                                 <article class="cursor-move rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900"
                                     draggable="true"
                                     x-on:dragstart="startDrag($event, {{ $job->id }}, '{{ $job->status }}')"
@@ -106,7 +98,7 @@
                                     </div>
 
                                     <div class="mt-3 flex flex-wrap gap-2">
-                                        @if ($status === \App\Models\ProductionJob::STATUS_ANTRIAN)
+                                        @if ($columnKey === \App\Models\ProductionJob::STATUS_ANTRIAN)
                                             @can('production.edit')
                                                 @if ($this->canClaim($job) && empty($job->claimed_by))
                                                     <button type="button" wire:click="claim({{ $job->id }})" class="btn btn-secondary text-xs">
@@ -114,20 +106,41 @@
                                                     </button>
                                                 @endif
                                                 @if ($this->canMove($job))
-                                                    <button type="button" wire:click="markInProgress({{ $job->id }})" class="btn btn-primary text-xs">
-                                                        Mulai
+                                                    <button type="button" wire:click="moveCard({{ $job->id }}, 'desain')" class="btn btn-secondary text-xs">
+                                                        Ke Desain
+                                                    </button>
+                                                    <button type="button" wire:click="moveCard({{ $job->id }}, 'in_progress')" class="btn btn-primary text-xs">
+                                                        Mulai Produksi
                                                     </button>
                                                 @endif
                                             @endcan
-                                        @elseif ($status === \App\Models\ProductionJob::STATUS_IN_PROGRESS)
+                                        @elseif ($columnKey === 'desain')
                                             @can('production.edit')
+                                                @if ($this->canClaim($job) && empty($job->claimed_by))
+                                                    <button type="button" wire:click="claim({{ $job->id }})" class="btn btn-secondary text-xs">
+                                                        Ambil Task
+                                                    </button>
+                                                @endif
+                                                @if ($this->canMove($job))
+                                                    <button type="button" wire:click="moveCard({{ $job->id }}, 'in_progress')" class="btn btn-primary text-xs">
+                                                        Lanjut Produksi
+                                                    </button>
+                                                @endif
+                                            @endcan
+                                        @elseif ($columnKey === \App\Models\ProductionJob::STATUS_IN_PROGRESS)
+                                            @can('production.edit')
+                                                @if ($this->canClaim($job) && empty($job->claimed_by))
+                                                    <button type="button" wire:click="claim({{ $job->id }})" class="btn btn-secondary text-xs">
+                                                        Ambil Task
+                                                    </button>
+                                                @endif
                                                 @if ($this->canMove($job))
                                                     <button type="button" wire:click="markSelesai({{ $job->id }})" class="btn btn-primary text-xs">
                                                         Selesai
                                                     </button>
                                                 @endif
                                             @endcan
-                                        @elseif ($status === \App\Models\ProductionJob::STATUS_SELESAI)
+                                        @elseif ($columnKey === \App\Models\ProductionJob::STATUS_SELESAI)
                                             @can('production.qc')
                                                 @if ($this->canMove($job))
                                                     <button type="button" wire:click="moveToQc({{ $job->id }})" class="btn btn-primary text-xs">
@@ -135,7 +148,7 @@
                                                     </button>
                                                 @endif
                                             @endcan
-                                        @elseif ($status === \App\Models\ProductionJob::STATUS_QC)
+                                        @elseif ($columnKey === \App\Models\ProductionJob::STATUS_QC)
                                             @can('production.qc')
                                                 @if ($this->canMove($job))
                                                     <button type="button" wire:click="qcPass({{ $job->id }})" class="btn btn-primary text-xs">
