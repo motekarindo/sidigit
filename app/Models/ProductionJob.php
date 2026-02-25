@@ -13,6 +13,9 @@ class ProductionJob extends Model
 {
     use HasFactory, LogsAllActivity, BranchScoped, BlameableTrait, SoftDeletes;
 
+    public const STAGE_DESAIN = 'desain';
+    public const STAGE_PRODUKSI = 'produksi';
+
     public const STATUS_ANTRIAN = 'antrian';
     public const STATUS_IN_PROGRESS = 'in_progress';
     public const STATUS_SELESAI = 'selesai';
@@ -25,10 +28,25 @@ class ProductionJob extends Model
         'branch_id',
         'order_id',
         'order_item_id',
+        'stage',
         'assigned_role_id',
+        'claimed_by',
+        'claimed_at',
         'status',
         'notes',
     ];
+
+    protected $casts = [
+        'claimed_at' => 'datetime',
+    ];
+
+    public static function stageOptions(): array
+    {
+        return [
+            self::STAGE_DESAIN => 'Desain',
+            self::STAGE_PRODUKSI => 'Produksi',
+        ];
+    }
 
     public static function statusOptions(): array
     {
@@ -54,6 +72,11 @@ class ProductionJob extends Model
     public function assignedRole()
     {
         return $this->belongsTo(Role::class, 'assigned_role_id');
+    }
+
+    public function claimedByUser()
+    {
+        return $this->belongsTo(User::class, 'claimed_by');
     }
 
     public function logs()

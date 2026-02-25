@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\ProductionJob;
 use App\Models\ProductionJobLog;
 use App\Models\Role;
+use App\Models\User;
 use App\Repositories\ProductionJobRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -28,7 +29,33 @@ class ProductionJobService
                 'orderItem:id,order_id,product_id,qty',
                 'orderItem.product:id,name',
                 'assignedRole:id,name,slug',
+                'claimedByUser:id,name',
             ]);
+    }
+
+    public function kanbanQuery(string $stage, ?string $search = null): Builder
+    {
+        $query = $this->query()->where('stage', $stage);
+
+        if (filled($search)) {
+            $keyword = trim((string) $search);
+            $query->where(function (Builder $q) use ($keyword) {
+                $q->whereHas('order', fn (Builder $orderQuery) => $orderQuery->where('order_no', 'like', "%{$keyword}%"))
+                    ->orWhereHas('orderItem.product', fn (Builder $productQuery) => $productQuery->where('name', 'like', "%{$keyword}%"))
+                    ->orWhereHas('claimedByUser', fn (Builder $userQuery) => $userQuery->where('name', 'like', "%{$keyword}%"));
+            });
+        }
+
+        return $query
+            ->orderByRaw("CASE status
+                WHEN 'antrian' THEN 1
+                WHEN 'in_progress' THEN 2
+                WHEN 'selesai' THEN 3
+                WHEN 'qc' THEN 4
+                WHEN 'siap_diambil' THEN 5
+                ELSE 99
+            END")
+            ->orderByDesc('updated_at');
     }
 
     public function find(int $id): ProductionJob
@@ -38,9 +65,13 @@ class ProductionJobService
 
     public function syncByOrderStatus(Order $order): void
     {
-        if ((string) $order->status !== 'produksi') {
+        $targetStage = $this->resolveStageByOrderStatus((string) $order->status);
+        if (!$targetStage) {
             return;
         }
+
+        $targetRole = $this->resolveRoleForStage($targetStage);
+        $targetRoleId = $targetRole?->id;
 
         $order->loadMissing(['items.product']);
 
@@ -49,20 +80,155 @@ class ProductionJobService
                 ->where('order_item_id', $item->id)
                 ->first();
 
-            if ($job) {
+            if (!$job) {
+                $job = $this->repository->create([
+                    'branch_id' => $order->branch_id,
+                    'order_id' => $order->id,
+                    'order_item_id' => $item->id,
+                    'stage' => $targetStage,
+                    'assigned_role_id' => $targetRoleId,
+                    'claimed_by' => null,
+                    'claimed_at' => null,
+                    'status' => ProductionJob::STATUS_ANTRIAN,
+                    'notes' => 'Job produksi otomatis dibuat dari status order.',
+                ]);
+
+                $this->createLog(
+                    $job,
+                    'created',
+                    null,
+                    ProductionJob::STATUS_ANTRIAN,
+                    'Job dibuat otomatis untuk tahap ' . $this->stageLabel($targetStage) . '.'
+                );
+
+                if ($targetRoleId) {
+                    $this->createLog(
+                        $job,
+                        'auto_assigned',
+                        ProductionJob::STATUS_ANTRIAN,
+                        ProductionJob::STATUS_ANTRIAN,
+                        'Auto-assign ke role: ' . ($targetRole?->name ?? 'Role') . '.'
+                    );
+                }
+
                 continue;
             }
 
-            $job = $this->repository->create([
-                'branch_id' => $order->branch_id,
-                'order_id' => $order->id,
-                'order_item_id' => $item->id,
-                'status' => ProductionJob::STATUS_ANTRIAN,
-                'notes' => 'Job produksi otomatis dibuat dari order status Produksi.',
-            ]);
+            $fromStatus = (string) $job->status;
+            $updates = [];
+            $stageChanged = false;
+            $roleChanged = false;
 
-            $this->createLog($job, 'created', null, ProductionJob::STATUS_ANTRIAN, 'Job produksi dibuat otomatis.');
+            if ((string) $job->stage !== $targetStage) {
+                $updates['stage'] = $targetStage;
+                $updates['status'] = ProductionJob::STATUS_ANTRIAN;
+                $updates['claimed_by'] = null;
+                $updates['claimed_at'] = null;
+                $stageChanged = true;
+            }
+
+            if ($targetRoleId && (int) $job->assigned_role_id !== (int) $targetRoleId) {
+                $updates['assigned_role_id'] = $targetRoleId;
+                $roleChanged = true;
+            }
+
+            if (empty($updates)) {
+                continue;
+            }
+
+            $this->repository->update($job, $updates);
+            $job->refresh();
+
+            if ($stageChanged) {
+                $this->createLog(
+                    $job,
+                    'stage_switched',
+                    $fromStatus,
+                    (string) $job->status,
+                    'Tahap job dipindahkan ke ' . $this->stageLabel($targetStage) . ' dari perubahan status order.'
+                );
+            }
+
+            if ($roleChanged) {
+                $this->createLog(
+                    $job,
+                    'auto_assigned',
+                    (string) $job->status,
+                    (string) $job->status,
+                    'Auto-assign ke role: ' . ($targetRole?->name ?? 'Role') . '.'
+                );
+            }
         }
+    }
+
+    public function claimJob(int $jobId, User $actor): ProductionJob
+    {
+        $job = $this->repository->query()->with('assignedRole')->findOrFail($jobId);
+
+        if (!$this->canUserHandleJobRole($actor, $job)) {
+            throw ValidationException::withMessages([
+                'claim' => 'Anda tidak memiliki role yang sesuai untuk mengambil task ini.',
+            ]);
+        }
+
+        if (!empty($job->claimed_by) && (int) $job->claimed_by !== (int) $actor->id) {
+            throw ValidationException::withMessages([
+                'claim' => 'Task sudah diambil oleh user lain.',
+            ]);
+        }
+
+        if ((int) ($job->claimed_by ?? 0) === (int) $actor->id) {
+            return $job->fresh(['assignedRole', 'claimedByUser', 'order', 'orderItem.product']);
+        }
+
+        $this->repository->update($job, [
+            'claimed_by' => $actor->id,
+            'claimed_at' => now(),
+        ]);
+
+        $job->refresh();
+
+        $this->createLog(
+            $job,
+            'claimed',
+            (string) $job->status,
+            (string) $job->status,
+            'Task diambil oleh ' . $actor->name . '.'
+        );
+
+        return $job->fresh(['assignedRole', 'claimedByUser', 'order', 'orderItem.product']);
+    }
+
+    public function releaseJob(int $jobId, User $actor): ProductionJob
+    {
+        $job = $this->repository->query()->findOrFail($jobId);
+
+        if (empty($job->claimed_by)) {
+            return $job->fresh(['assignedRole', 'claimedByUser', 'order', 'orderItem.product']);
+        }
+
+        if (!$this->isManager($actor) && (int) $job->claimed_by !== (int) $actor->id) {
+            throw ValidationException::withMessages([
+                'release' => 'Task ini bukan claim Anda.',
+            ]);
+        }
+
+        $this->repository->update($job, [
+            'claimed_by' => null,
+            'claimed_at' => null,
+        ]);
+
+        $job->refresh();
+
+        $this->createLog(
+            $job,
+            'released',
+            (string) $job->status,
+            (string) $job->status,
+            'Claim task dilepas oleh ' . $actor->name . '.'
+        );
+
+        return $job->fresh(['assignedRole', 'claimedByUser', 'order', 'orderItem.product']);
     }
 
     public function assignRole(int $jobId, ?int $roleId): ProductionJob
@@ -71,7 +237,7 @@ class ProductionJobService
 
         if ($roleId !== null) {
             $roleExists = Role::query()->where('id', $roleId)->exists();
-            if (! $roleExists) {
+            if (!$roleExists) {
                 throw ValidationException::withMessages([
                     'assign_role_id' => 'Role penanggung jawab tidak valid.',
                 ]);
@@ -80,17 +246,28 @@ class ProductionJobService
 
         $this->repository->update($job, [
             'assigned_role_id' => $roleId,
+            'claimed_by' => null,
+            'claimed_at' => null,
         ]);
 
         $roleName = $roleId ? (Role::query()->find($roleId)?->name ?? 'Role') : 'Tanpa role';
-        $this->createLog($job, 'assigned', $job->status, $job->status, 'Assign role: ' . $roleName);
+        $this->createLog($job, 'assigned', $job->status, $job->status, 'Assign role: ' . $roleName . '.');
 
-        return $job->fresh(['assignedRole']);
+        return $job->fresh(['assignedRole', 'claimedByUser']);
     }
 
-    public function markInProgress(int $jobId, ?string $note = null): ProductionJob
+    public function markInProgress(int $jobId, ?string $note = null, ?User $actor = null): ProductionJob
     {
         $job = $this->repository->findOrFail($jobId);
+
+        if ($actor && empty($job->claimed_by)) {
+            $this->claimJob($jobId, $actor);
+            $job = $this->repository->findOrFail($jobId);
+        }
+
+        if ($actor) {
+            $this->ensureActorCanMove($actor, $job);
+        }
 
         $this->ensureTransitionAllowed($job->status, [
             ProductionJob::STATUS_ANTRIAN,
@@ -100,36 +277,52 @@ class ProductionJobService
         return $this->transition($job, ProductionJob::STATUS_IN_PROGRESS, 'in_progress', $note ?: 'Job diproses.');
     }
 
-    public function markSelesai(int $jobId, ?string $note = null): ProductionJob
+    public function markSelesai(int $jobId, ?string $note = null, ?User $actor = null): ProductionJob
     {
         $job = $this->repository->findOrFail($jobId);
+
+        if ($actor) {
+            $this->ensureActorCanMove($actor, $job);
+        }
 
         $this->ensureTransitionAllowed($job->status, [ProductionJob::STATUS_IN_PROGRESS]);
 
         return $this->transition($job, ProductionJob::STATUS_SELESAI, 'finished', $note ?: 'Produksi item selesai.');
     }
 
-    public function moveToQc(int $jobId, ?string $note = null): ProductionJob
+    public function moveToQc(int $jobId, ?string $note = null, ?User $actor = null): ProductionJob
     {
         $job = $this->repository->findOrFail($jobId);
+
+        if ($actor) {
+            $this->ensureActorCanMove($actor, $job);
+        }
 
         $this->ensureTransitionAllowed($job->status, [ProductionJob::STATUS_SELESAI]);
 
         return $this->transition($job, ProductionJob::STATUS_QC, 'to_qc', $note ?: 'Item masuk tahap QC.');
     }
 
-    public function qcPass(int $jobId, ?string $note = null): ProductionJob
+    public function qcPass(int $jobId, ?string $note = null, ?User $actor = null): ProductionJob
     {
         $job = $this->repository->findOrFail($jobId);
+
+        if ($actor) {
+            $this->ensureActorCanMove($actor, $job);
+        }
 
         $this->ensureTransitionAllowed($job->status, [ProductionJob::STATUS_QC]);
 
         return $this->transition($job, ProductionJob::STATUS_SIAP_DIAMBIL, 'qc_pass', $note ?: 'QC lulus.');
     }
 
-    public function qcFail(int $jobId, ?string $note = null): ProductionJob
+    public function qcFail(int $jobId, ?string $note = null, ?User $actor = null): ProductionJob
     {
         $job = $this->repository->findOrFail($jobId);
+
+        if ($actor) {
+            $this->ensureActorCanMove($actor, $job);
+        }
 
         $this->ensureTransitionAllowed($job->status, [ProductionJob::STATUS_QC]);
 
@@ -150,23 +343,35 @@ class ProductionJobService
     {
         $fromStatus = (string) $job->status;
 
-        $this->repository->update($job, [
+        $updates = [
             'status' => $toStatus,
             'notes' => $note ?: $job->notes,
-        ]);
+        ];
+
+        if ($toStatus === ProductionJob::STATUS_SIAP_DIAMBIL) {
+            $updates['claimed_by'] = null;
+            $updates['claimed_at'] = null;
+        }
+
+        $this->repository->update($job, $updates);
 
         $job->refresh();
 
         $this->createLog($job, $event, $fromStatus, $toStatus, $note);
         $this->syncOrderStatusFromJobs($job->order()->firstOrFail());
 
-        return $job->fresh(['order', 'assignedRole', 'orderItem.product']);
+        return $job->fresh(['order', 'assignedRole', 'claimedByUser', 'orderItem.product']);
     }
 
     protected function syncOrderStatusFromJobs(Order $order): void
     {
+        if (!in_array((string) $order->status, ['produksi', 'qc', 'siap'], true)) {
+            return;
+        }
+
         $statuses = $this->repository->query()
             ->where('order_id', $order->id)
+            ->where('stage', ProductionJob::STAGE_PRODUKSI)
             ->pluck('status');
 
         if ($statuses->isEmpty()) {
@@ -193,6 +398,82 @@ class ProductionJobService
             'changed_by' => auth()->id(),
             'note' => "Status sinkron dari progres produksi ({$oldStatus} -> {$targetStatus}).",
         ]);
+    }
+
+    protected function resolveStageByOrderStatus(string $orderStatus): ?string
+    {
+        return match ($orderStatus) {
+            'desain' => ProductionJob::STAGE_DESAIN,
+            'produksi' => ProductionJob::STAGE_PRODUKSI,
+            default => null,
+        };
+    }
+
+    protected function resolveRoleForStage(string $stage): ?Role
+    {
+        $slugCandidates = $stage === ProductionJob::STAGE_DESAIN
+            ? ['desainer', 'designer']
+            : ['operator', 'produksi-operator'];
+
+        $role = Role::query()->whereIn('slug', $slugCandidates)->first();
+        if ($role) {
+            return $role;
+        }
+
+        $nameCandidates = $stage === ProductionJob::STAGE_DESAIN
+            ? ['Desainer', 'Designer']
+            : ['Operator'];
+
+        return Role::query()->whereIn('name', $nameCandidates)->first();
+    }
+
+    protected function ensureActorCanMove(User $actor, ProductionJob $job): void
+    {
+        if ($this->isManager($actor)) {
+            return;
+        }
+
+        if ((int) ($job->claimed_by ?? 0) === (int) $actor->id) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'claim' => 'Ambil task ini terlebih dahulu sebelum mengubah status.',
+        ]);
+    }
+
+    protected function canUserHandleJobRole(User $actor, ProductionJob $job): bool
+    {
+        if ($this->isManager($actor)) {
+            return true;
+        }
+
+        $assignedRole = $job->assignedRole;
+        if (!$assignedRole) {
+            return true;
+        }
+
+        if (!filled($assignedRole->slug)) {
+            return true;
+        }
+
+        return $actor->hasRoleSlug([$assignedRole->slug]);
+    }
+
+    protected function isManager(User $actor): bool
+    {
+        if ($actor->hasRoleSlug(['owner', 'superadmin', 'administrator', 'admin'])) {
+            return true;
+        }
+
+        return $actor->can('production.assign');
+    }
+
+    protected function stageLabel(string $stage): string
+    {
+        $labels = ProductionJob::stageOptions();
+
+        return $labels[$stage] ?? ucfirst($stage);
     }
 
     protected function createLog(ProductionJob $job, string $event, ?string $fromStatus, ?string $toStatus, ?string $note = null): void

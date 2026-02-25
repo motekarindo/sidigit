@@ -1,5 +1,14 @@
 <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-    <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+        <div>
+            <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Tahap</label>
+            <select wire:model.live="filters.stage" class="form-input mt-2">
+                @foreach ($this->stageOptions as $option)
+                    <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
+                @endforeach
+            </select>
+        </div>
+
         <div>
             <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</label>
             <select wire:model.live="filters.status" class="form-input mt-2">

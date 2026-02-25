@@ -1,24 +1,39 @@
 # sidigit
 
 ## Modul Produksi
-- URL modul internal: `/productions`
+- URL modul internal:
+  - `/productions/desain` (Kanban tahap Desain)
+  - `/productions/produksi` (Kanban tahap Produksi)
+  - `/productions/history` (Riwayat job produksi)
 - Konsep: 1 `production_job` untuk setiap `order_item` (bukan per invoice/order header).
-- Trigger pembuatan job: saat status order menjadi `produksi`.
-- Akses menu: `Transaksi -> Produksi`.
+- Trigger pembuatan job:
+  - saat status order menjadi `desain` => job tahap `desain`
+  - saat status order menjadi `produksi` => job tahap `produksi`
+- Akses menu: `Transaksi -> Produksi -> Desain / Produksi Kanban / Riwayat Produksi`.
 
 ### Flow Produksi (Per Item)
 - `antrian -> in_progress -> selesai -> qc -> siap_diambil`
 - Jika QC gagal: `qc -> in_progress` (kembali ke Produksi).
 - Setiap transisi disimpan ke `production_job_logs` untuk jejak audit.
 
+### Model Kanban
+- Board dipisah per tahap: `Desain` dan `Produksi`.
+- Tiap card adalah `1 item order`.
+- Ada mekanisme `Ambil Task` (claim) dan `Lepas`.
+- Perubahan status di board mengikuti flow yang sama untuk menjaga konsistensi operasional.
+
 ### Sinkronisasi Status Order
+- Sinkron status order otomatis hanya dihitung dari job tahap `produksi`.
 - Seluruh item `siap_diambil` -> order otomatis `siap`.
 - Seluruh item sudah masuk `qc`/`siap_diambil` -> order otomatis `qc`.
 - Selain kondisi di atas -> order berada di `produksi`.
 
 ### Assignment Role
-- Job bisa di-assign ke role (contoh: Operator, Finishing, dll).
-- Assignment berbasis role, bukan user langsung, agar fleksibel untuk pembagian tim.
+- Auto-assign berbasis status order:
+  - status order `desain` -> role `Desainer`
+  - status order `produksi` -> role `Operator`
+- User dengan role terkait dapat mengambil task tanpa assign manual satu-per-satu.
+- Assign manual tetap tersedia sebagai override operasional.
 
 ### Permission Produksi
 - `production.view`

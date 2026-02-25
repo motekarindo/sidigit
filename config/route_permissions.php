@@ -46,6 +46,10 @@ return [
         'orders.quotation' => 'order.view',
         'orders.quotation.pdf' => 'order.view',
         'orders.payments.create' => 'order.edit',
+        'productions.index' => 'production.view',
+        'productions.desain' => 'production.view',
+        'productions.produksi' => 'production.view',
+        'productions.history' => 'production.view',
 
         'reports.sales' => 'report.sales.view',
         'reports.expenses' => 'report.expense.view',

@@ -19,6 +19,7 @@ class Table extends BaseTable
     public string $sortDirection = 'desc';
 
     public array $filters = [
+        'stage' => 'all',
         'status' => 'all',
         'assigned_role_id' => null,
     ];
@@ -53,6 +54,11 @@ class Table extends BaseTable
             $query->where('production_jobs.status', $status);
         }
 
+        $stage = $this->filters['stage'] ?? 'all';
+        if ($stage !== 'all') {
+            $query->where('production_jobs.stage', $stage);
+        }
+
         $assignedRoleId = $this->filters['assigned_role_id'] ?? null;
         if (!empty($assignedRoleId)) {
             $query->where('production_jobs.assigned_role_id', (int) $assignedRoleId);
@@ -83,6 +89,20 @@ class Table extends BaseTable
         $options = [['value' => 'all', 'label' => 'Semua Status']];
 
         foreach (ProductionJob::statusOptions() as $value => $label) {
+            $options[] = [
+                'value' => $value,
+                'label' => $label,
+            ];
+        }
+
+        return $options;
+    }
+
+    public function getStageOptionsProperty(): array
+    {
+        $options = [['value' => 'all', 'label' => 'Semua Tahap']];
+
+        foreach (ProductionJob::stageOptions() as $value => $label) {
             $options[] = [
                 'value' => $value,
                 'label' => $label,
@@ -279,6 +299,7 @@ class Table extends BaseTable
     public function resetFilters(): void
     {
         $this->filters = [
+            'stage' => 'all',
             'status' => 'all',
             'assigned_role_id' => null,
         ];
@@ -364,6 +385,12 @@ class Table extends BaseTable
     {
         return [
             ['label' => 'Order No', 'view' => 'livewire.admin.productions.columns.order-link', 'sortable' => false],
+            [
+                'label' => 'Tahap',
+                'field' => 'stage',
+                'sortable' => false,
+                'format' => fn ($row) => ProductionJob::stageOptions()[(string) ($row->stage ?? '')] ?? '-',
+            ],
             [
                 'label' => 'Item',
                 'field' => 'product_name',

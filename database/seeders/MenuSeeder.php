@@ -18,7 +18,22 @@ class MenuSeeder extends Seeder
         // --- TRANSAKSI ---
         $transactions = Menu::updateOrCreate(['name' => 'Transaksi'], ['icon' => 'bi bi-receipt', 'order' => 3]);
         Menu::updateOrCreate(['route_name' => 'orders.index'], ['parent_id' => $transactions->id, 'name' => 'Order', 'order' => 1]);
-        Menu::updateOrCreate(['route_name' => 'productions.index'], ['parent_id' => $transactions->id, 'name' => 'Produksi', 'order' => 2]);
+        $productionMenu = Menu::updateOrCreate(
+            ['name' => 'Produksi', 'parent_id' => $transactions->id],
+            ['route_name' => null, 'icon' => 'bi bi-kanban', 'order' => 2]
+        );
+        Menu::updateOrCreate(
+            ['route_name' => 'productions.desain'],
+            ['parent_id' => $productionMenu->id, 'name' => 'Desain', 'order' => 1]
+        );
+        Menu::updateOrCreate(
+            ['route_name' => 'productions.produksi'],
+            ['parent_id' => $productionMenu->id, 'name' => 'Produksi Kanban', 'order' => 2]
+        );
+        Menu::updateOrCreate(
+            ['route_name' => 'productions.history'],
+            ['parent_id' => $productionMenu->id, 'name' => 'Riwayat Produksi', 'order' => 3]
+        );
 
         // --- MANAJEMEN PRODUK ---
         $productManagement = Menu::updateOrCreate(['name' => 'Manajemen Produk'], ['icon' => 'bi bi-box-seam-fill', 'order' => 4]);

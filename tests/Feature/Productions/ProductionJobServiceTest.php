@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductionJob;
+use App\Models\Role;
 use App\Models\Unit;
 use App\Services\ProductionJobService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,6 +34,31 @@ class ProductionJobServiceTest extends TestCase
         // idempotent: sync ulang tidak boleh duplikasi
         $service->syncByOrderStatus($orderProduksi);
         $this->assertSame(2, ProductionJob::query()->where('order_id', $orderProduksi->id)->count());
+    }
+
+    public function test_jobs_auto_assign_role_by_stage_desain_and_produksi(): void
+    {
+        Role::query()->updateOrCreate(['name' => 'Desainer'], ['name' => 'Desainer']);
+        Role::query()->updateOrCreate(['name' => 'Operator'], ['name' => 'Operator']);
+
+        [$order] = $this->createOrderWithItems('desain', 2);
+        $service = app(ProductionJobService::class);
+
+        $service->syncByOrderStatus($order);
+
+        $desainJobs = ProductionJob::query()->where('order_id', $order->id)->get();
+        $this->assertCount(2, $desainJobs);
+        $this->assertTrue($desainJobs->every(fn ($job) => $job->stage === ProductionJob::STAGE_DESAIN));
+        $this->assertTrue($desainJobs->every(fn ($job) => $job->assignedRole?->slug === 'desainer'));
+
+        $order->update(['status' => 'produksi']);
+        $service->syncByOrderStatus($order->fresh());
+
+        $produksiJobs = ProductionJob::query()->where('order_id', $order->id)->get();
+        $this->assertCount(2, $produksiJobs);
+        $this->assertTrue($produksiJobs->every(fn ($job) => $job->stage === ProductionJob::STAGE_PRODUKSI));
+        $this->assertTrue($produksiJobs->every(fn ($job) => $job->status === ProductionJob::STATUS_ANTRIAN));
+        $this->assertTrue($produksiJobs->every(fn ($job) => $job->assignedRole?->slug === 'operator'));
     }
 
     public function test_qc_fail_returns_job_and_order_to_produksi(): void

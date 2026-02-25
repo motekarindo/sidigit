@@ -27,7 +27,7 @@ class RolePermissionSeeder extends Seeder
         $kasirMenu = Menu::whereIn('name', [
             'Dashboard',
             'Customer',
-            'Transaksi', 'Order', 'Produksi',
+            'Transaksi', 'Order', 'Produksi', 'Desain', 'Produksi Kanban', 'Riwayat Produksi',
             'Manajemen Produk', 'Produk', 'Bahan', 'Kategori',
             'Stok', 'Stok Masuk', 'Stok Keluar', 'Stok Opname', 'Reservasi Stok',
             'Pengeluaran', 'Expense Bahan','Expense Umum',

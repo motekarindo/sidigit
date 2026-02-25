@@ -48,6 +48,7 @@ use App\Livewire\Admin\Reports\ExpenseReport as ExpenseReport;
 use App\Livewire\Admin\Reports\BranchReport as BranchReport;
 use App\Livewire\Admin\Orders\AddPayment as OrderAddPayment;
 use App\Livewire\Admin\Productions\Index as ProductionsIndex;
+use App\Livewire\Admin\Productions\HistoryIndex as ProductionsHistoryIndex;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -78,7 +79,12 @@ Route::middleware('guest')->group(function () {
         });
 
     Route::prefix('productions')->name('productions.')->group(function () {
-        Route::get('/', ProductionsIndex::class)->name('index');
+        Route::get('/', function () {
+            return redirect()->route('productions.produksi');
+        })->name('index');
+        Route::get('/desain', ProductionsIndex::class)->name('desain')->defaults('stage', 'desain');
+        Route::get('/produksi', ProductionsIndex::class)->name('produksi')->defaults('stage', 'produksi');
+        Route::get('/history', ProductionsHistoryIndex::class)->name('history');
     });
 
     Route::prefix('stocks')->group(function () {
