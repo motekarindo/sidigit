@@ -6,9 +6,11 @@ use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductionJob;
 use App\Models\Role;
+use App\Models\StockMovement;
 use App\Models\Unit;
 use App\Services\ProductionJobService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -145,7 +147,45 @@ class ProductionJobServiceTest extends TestCase
         $this->assertSame('produksi', (string) $order->status);
     }
 
-    protected function createOrderWithItems(string $status, int $itemCount): array
+    public function test_moving_card_to_produksi_triggers_stock_out_sync(): void
+    {
+        [$order] = $this->createOrderWithItems('desain', 1, true);
+        $service = app(ProductionJobService::class);
+        $service->syncByOrderStatus($order);
+
+        $job = ProductionJob::query()->where('order_id', $order->id)->firstOrFail();
+
+        $this->assertDatabaseMissing('stock_movements', [
+            'ref_type' => 'order',
+            'ref_id' => $order->id,
+            'type' => 'out',
+        ]);
+
+        // Item keluar dari tahap desain lalu mulai produksi.
+        $service->switchStage($job->id, ProductionJob::STAGE_PRODUKSI, 'Desain selesai.');
+        $service->markInProgress($job->id);
+
+        $order->refresh();
+        $this->assertSame('produksi', (string) $order->status);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'ref_type' => 'order',
+            'ref_id' => $order->id,
+            'type' => 'out',
+            'material_id' => $job->orderItem->material_id,
+        ]);
+
+        $this->assertGreaterThan(
+            0,
+            (float) StockMovement::query()
+                ->where('ref_type', 'order')
+                ->where('ref_id', $order->id)
+                ->where('type', 'out')
+                ->sum('qty')
+        );
+    }
+
+    protected function createOrderWithItems(string $status, int $itemCount, bool $withMaterial = false): array
     {
         Branch::query()->updateOrCreate(
             ['id' => 1],
@@ -167,6 +207,20 @@ class ProductionJobServiceTest extends TestCase
             ['name' => 'Cetak'],
             ['branch_id' => 1]
         );
+
+        $material = null;
+        if ($withMaterial) {
+            $material = Material::query()->create([
+                'name' => 'Flexi Test ' . now()->format('Hisv') . '-' . rand(100, 999),
+                'category_id' => $category->id,
+                'unit_id' => $unit->id,
+                'cost_price' => 10000,
+                'conversion_qty' => 1,
+                'roll_width_cm' => 320,
+                'roll_waste_percent' => 3,
+                'branch_id' => 1,
+            ]);
+        }
 
         $order = Order::query()->create([
             'order_no' => 'ORD-TST-' . now()->format('YmdHisv') . '-' . rand(10, 99),
@@ -192,8 +246,11 @@ class ProductionJobServiceTest extends TestCase
             $items[] = OrderItem::query()->create([
                 'order_id' => $order->id,
                 'product_id' => $product->id,
+                'material_id' => $material?->id,
                 'unit_id' => $unit->id,
                 'qty' => 1,
+                'length_cm' => $withMaterial ? 100 : null,
+                'width_cm' => $withMaterial ? 100 : null,
                 'price' => 1500,
                 'total' => 1500,
             ]);

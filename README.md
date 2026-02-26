@@ -55,6 +55,7 @@
 - Jika seluruh item `siap_diambil` -> order otomatis `siap`.
 - Jika seluruh item sudah masuk `qc`/`siap_diambil` -> order otomatis `qc`.
 - Selain kondisi di atas (tidak ada item di desain) -> order otomatis `produksi`.
+- Saat sinkron status dari board membuat order masuk ke `produksi`, sistem otomatis sinkron pergerakan stok order menjadi `stock out` (ref_type `order`) agar pemakaian bahan tercatat.
 
 ### Assignment Role
 - Auto-assign berbasis status order:

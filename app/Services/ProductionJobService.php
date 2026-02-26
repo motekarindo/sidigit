@@ -15,10 +15,12 @@ use Illuminate\Validation\ValidationException;
 class ProductionJobService
 {
     protected ProductionJobRepository $repository;
+    protected OrderStockService $orderStockService;
 
-    public function __construct(ProductionJobRepository $repository)
+    public function __construct(ProductionJobRepository $repository, OrderStockService $orderStockService)
     {
         $this->repository = $repository;
+        $this->orderStockService = $orderStockService;
     }
 
     public function query(): Builder
@@ -451,6 +453,9 @@ class ProductionJobService
             'changed_by' => auth()->id(),
             'note' => "Status sinkron dari progres produksi ({$oldStatus} -> {$targetStatus}).",
         ]);
+
+        // Perubahan status dari board produksi juga harus sinkron ke pergerakan stok order.
+        $this->orderStockService->syncByStatus($order);
     }
 
     protected function resolveStageByOrderStatus(string $orderStatus): ?string
