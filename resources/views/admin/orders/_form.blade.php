@@ -162,7 +162,8 @@
                         <div>
                             <div class="{{ $labelRowClass }}">
                                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Bahan @if ($materialRequired)
+                                    Bahan
+                                    @if ($materialRequired)
                                         <span class="text-red-500">*</span>
                                     @endif
                                 </label>
