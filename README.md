@@ -250,6 +250,7 @@
 - Untuk environment `http` (non-HTTPS), salin link tetap dicoba otomatis via fallback `execCommand('copy')`; prompt manual hanya muncul jika browser menolak semua metode copy.
 - Status `dibatalkan` sekarang diperlakukan sebagai status **locked/read-only** seperti `approval` ke atas.
 - Pada status locked (termasuk `dibatalkan`), update dari halaman Edit Order hanya mengizinkan perubahan status via aksi daftar order; field lain tidak diproses.
+- Label tombol aksi bawah pada halaman edit order diubah dari `Batal` menjadi `Kembali` agar konsisten dengan navigasi halaman lain.
 - Opsi status `dibatalkan` tetap tersedia di UI perubahan status untuk kasus order batal (mis. Draft/Quotation tidak jadi lanjut).
 - Key status order dinormalisasi dari `menunggu-dp` menjadi `pembayaran` (UI + value).
 - Status `finishing` dihapus dari list flow order (diasumsikan masuk ke fase `produksi`).
