@@ -18,7 +18,6 @@ class ProductionJob extends Model
 
     public const STATUS_ANTRIAN = 'antrian';
     public const STATUS_IN_PROGRESS = 'in_progress';
-    public const STATUS_SELESAI = 'selesai';
     public const STATUS_QC = 'qc';
     public const STATUS_SIAP_DIAMBIL = 'siap_diambil';
 
@@ -52,8 +51,7 @@ class ProductionJob extends Model
     {
         return [
             self::STATUS_ANTRIAN => 'Antrian',
-            self::STATUS_IN_PROGRESS => 'In Progress',
-            self::STATUS_SELESAI => 'Selesai',
+            self::STATUS_IN_PROGRESS => 'Produksi',
             self::STATUS_QC => 'QC',
             self::STATUS_SIAP_DIAMBIL => 'Siap Diambil',
         ];

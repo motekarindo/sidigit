@@ -215,7 +215,7 @@ class Table extends BaseTable
         $this->modalActionLabel = 'Tutup';
         $this->modalActionMethod = 'closeModal';
         $this->modalCancelLabel = 'Kembali';
-        $this->modalMaxWidth = '3xl';
+        $this->modalMaxWidth = '2xl';
     }
 
     public function saveModal(): void
@@ -255,23 +255,7 @@ class Table extends BaseTable
 
         try {
             $this->service->markInProgress($id);
-            $this->dispatch('toast', message: 'Job dipindahkan ke In Progress.', type: 'success');
-        } catch (ValidationException $e) {
-            $this->toastValidation($e);
-            throw $e;
-        } catch (\Throwable $e) {
-            report($e);
-            $this->toastError($e, 'Gagal mengubah status job.');
-        }
-    }
-
-    public function markSelesai(int $id): void
-    {
-        $this->authorize('production.edit');
-
-        try {
-            $this->service->markSelesai($id);
-            $this->dispatch('toast', message: 'Job dipindahkan ke Selesai.', type: 'success');
+            $this->dispatch('toast', message: 'Job dipindahkan ke Produksi.', type: 'success');
         } catch (ValidationException $e) {
             $this->toastValidation($e);
             throw $e;
@@ -355,7 +339,7 @@ class Table extends BaseTable
                 'visible' => fn ($row) => auth()->user()?->can('production.assign') ?? false,
             ],
             [
-                'label' => 'Start',
+                'label' => 'Mulai Produksi',
                 'method' => 'markInProgress',
                 'class' => 'text-indigo-600',
                 'icon' => 'play',
@@ -363,19 +347,11 @@ class Table extends BaseTable
                     && (auth()->user()?->can('production.edit') ?? false),
             ],
             [
-                'label' => 'Selesai',
-                'method' => 'markSelesai',
-                'class' => 'text-emerald-600',
-                'icon' => 'check-check',
-                'visible' => fn ($row) => ($row->status === ProductionJob::STATUS_IN_PROGRESS)
-                    && (auth()->user()?->can('production.edit') ?? false),
-            ],
-            [
                 'label' => 'Kirim QC',
                 'method' => 'moveToQc',
                 'class' => 'text-sky-600',
                 'icon' => 'shield-check',
-                'visible' => fn ($row) => ($row->status === ProductionJob::STATUS_SELESAI)
+                'visible' => fn ($row) => ($row->status === ProductionJob::STATUS_IN_PROGRESS)
                     && (auth()->user()?->can('production.qc') ?? false),
             ],
             [
@@ -453,7 +429,7 @@ class Table extends BaseTable
             'created' => 'Job Dibuat',
             'claimed' => 'Task Diambil',
             'released' => 'Task Dilepas',
-            'in_progress' => 'In Progress',
+            'in_progress' => 'Masuk Produksi',
             'finished' => 'Selesai Produksi',
             'to_qc' => 'Masuk QC',
             'qc_pass' => 'Siap Diambil',
@@ -486,7 +462,6 @@ class Table extends BaseTable
         return match ($status) {
             ProductionJob::STATUS_ANTRIAN => 'clock-3',
             ProductionJob::STATUS_IN_PROGRESS => 'play',
-            ProductionJob::STATUS_SELESAI => 'check-check',
             ProductionJob::STATUS_QC => 'shield-check',
             ProductionJob::STATUS_SIAP_DIAMBIL => 'package-check',
             default => 'circle',
@@ -498,7 +473,6 @@ class Table extends BaseTable
         return match ($status) {
             ProductionJob::STATUS_SIAP_DIAMBIL => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
             ProductionJob::STATUS_QC => 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-            ProductionJob::STATUS_SELESAI => 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
             ProductionJob::STATUS_IN_PROGRESS => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
             default => 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
         };

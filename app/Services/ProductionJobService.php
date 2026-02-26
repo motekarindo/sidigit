@@ -54,9 +54,8 @@ class ProductionJobService
             ->orderByRaw("CASE status
                 WHEN 'antrian' THEN 1
                 WHEN 'in_progress' THEN 2
-                WHEN 'selesai' THEN 3
-                WHEN 'qc' THEN 4
-                WHEN 'siap_diambil' THEN 5
+                WHEN 'qc' THEN 3
+                WHEN 'siap_diambil' THEN 4
                 ELSE 99
             END")
             ->orderByDesc('updated_at');
@@ -333,19 +332,6 @@ class ProductionJobService
         return $this->transition($job, ProductionJob::STATUS_IN_PROGRESS, 'in_progress', $note ?: 'Job diproses.');
     }
 
-    public function markSelesai(int $jobId, ?string $note = null, ?User $actor = null): ProductionJob
-    {
-        $job = $this->repository->findOrFail($jobId);
-
-        if ($actor) {
-            $this->ensureActorCanMove($actor, $job);
-        }
-
-        $this->ensureTransitionAllowed($job->status, [ProductionJob::STATUS_IN_PROGRESS]);
-
-        return $this->transition($job, ProductionJob::STATUS_SELESAI, 'finished', $note ?: 'Produksi item selesai.');
-    }
-
     public function moveToQc(int $jobId, ?string $note = null, ?User $actor = null): ProductionJob
     {
         $job = $this->repository->findOrFail($jobId);
@@ -354,7 +340,7 @@ class ProductionJobService
             $this->ensureActorCanMove($actor, $job);
         }
 
-        $this->ensureTransitionAllowed($job->status, [ProductionJob::STATUS_SELESAI]);
+        $this->ensureTransitionAllowed($job->status, [ProductionJob::STATUS_IN_PROGRESS]);
 
         return $this->transition($job, ProductionJob::STATUS_QC, 'to_qc', $note ?: 'Item masuk tahap QC.');
     }

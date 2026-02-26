@@ -70,7 +70,6 @@ class ProductionJobServiceTest extends TestCase
         $job = ProductionJob::query()->where('order_id', $order->id)->firstOrFail();
 
         $service->markInProgress($job->id);
-        $service->markSelesai($job->id);
         $service->moveToQc($job->id);
 
         $order->refresh();
@@ -100,7 +99,6 @@ class ProductionJobServiceTest extends TestCase
         $jobs = ProductionJob::query()->where('order_id', $order->id)->get();
         foreach ($jobs as $job) {
             $service->markInProgress($job->id);
-            $service->markSelesai($job->id);
             $service->moveToQc($job->id);
         }
 
@@ -135,7 +133,6 @@ class ProductionJobServiceTest extends TestCase
         // Item 1 selesai produksi, item 2 masih di tahap desain.
         $service->switchStage($job1->id, ProductionJob::STAGE_PRODUKSI, 'Desain item 1 selesai.');
         $service->markInProgress($job1->id);
-        $service->markSelesai($job1->id);
 
         $order->refresh();
         $this->assertSame('desain', (string) $order->status);

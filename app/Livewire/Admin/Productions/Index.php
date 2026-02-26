@@ -59,8 +59,7 @@ class Index extends Component
         return [
             ProductionJob::STATUS_ANTRIAN => ['label' => 'Antrian', 'accent' => 'border-gray-200 dark:border-gray-800'],
             self::COLUMN_DESAIN => ['label' => 'Desain', 'accent' => 'border-cyan-200 dark:border-cyan-900/50'],
-            ProductionJob::STATUS_IN_PROGRESS => ['label' => 'In Progress', 'accent' => 'border-blue-200 dark:border-blue-900/50'],
-            ProductionJob::STATUS_SELESAI => ['label' => 'Selesai', 'accent' => 'border-emerald-200 dark:border-emerald-900/50'],
+            ProductionJob::STATUS_IN_PROGRESS => ['label' => 'Produksi', 'accent' => 'border-blue-200 dark:border-blue-900/50'],
             ProductionJob::STATUS_QC => ['label' => 'QC', 'accent' => 'border-amber-200 dark:border-amber-900/50'],
             ProductionJob::STATUS_SIAP_DIAMBIL => ['label' => 'Siap Diambil', 'accent' => 'border-violet-200 dark:border-violet-900/50'],
         ];
@@ -136,34 +135,13 @@ class Index extends Component
             }
 
             $this->service->markInProgress($jobId, null, $actor);
-            $this->dispatch('toast', message: 'Task dipindahkan ke In Progress.', type: 'success');
+            $this->dispatch('toast', message: 'Task dipindahkan ke Produksi.', type: 'success');
         } catch (ValidationException $e) {
             $this->toastValidation($e);
             throw $e;
         } catch (\Throwable $e) {
             report($e);
             $this->toastError($e, 'Gagal memulai task.');
-        }
-    }
-
-    public function markSelesai(int $jobId): void
-    {
-        $this->authorize('production.edit');
-
-        try {
-            $actor = auth()->user();
-            if (!$actor instanceof User) {
-                abort(403);
-            }
-
-            $this->service->markSelesai($jobId, null, $actor);
-            $this->dispatch('toast', message: 'Task dipindahkan ke Selesai.', type: 'success');
-        } catch (ValidationException $e) {
-            $this->toastValidation($e);
-            throw $e;
-        } catch (\Throwable $e) {
-            report($e);
-            $this->toastError($e, 'Gagal mengubah status task.');
         }
     }
 
@@ -220,7 +198,6 @@ class Index extends Component
             ProductionJob::STATUS_ANTRIAN,
             self::COLUMN_DESAIN,
             ProductionJob::STATUS_IN_PROGRESS,
-            ProductionJob::STATUS_SELESAI,
             ProductionJob::STATUS_QC,
             ProductionJob::STATUS_SIAP_DIAMBIL,
         ];
@@ -263,30 +240,34 @@ class Index extends Component
 
                     if ($this->canHandleRole($jobAfterSwitch)) {
                         $this->service->markInProgress($jobId, null, $actor);
-                        $this->dispatch('toast', message: 'Task dipindahkan ke In Progress.', type: 'success');
+                        $this->dispatch('toast', message: 'Task dipindahkan ke Produksi.', type: 'success');
                         return;
                     }
 
-                    $this->dispatch('toast', message: 'Task dipindahkan ke In Progress. Menunggu operator mengambil task.', type: 'success');
+                    $this->dispatch('toast', message: 'Task dipindahkan ke Produksi. Menunggu operator mengambil task.', type: 'success');
                     return;
                 }
 
                 if ($fromColumn === ProductionJob::STATUS_ANTRIAN) {
                     $this->service->switchStage($jobId, ProductionJob::STAGE_PRODUKSI, 'Bypass desain. Langsung ke produksi.');
+                } elseif ($fromColumn !== ProductionJob::STATUS_IN_PROGRESS) {
+                    throw ValidationException::withMessages([
+                        'status' => 'Task hanya bisa masuk Produksi dari Antrian atau Desain.',
+                    ]);
                 }
 
                 $this->service->markInProgress($jobId, null, $actor);
-                $this->dispatch('toast', message: 'Task dipindahkan ke In Progress.', type: 'success');
-                return;
-            }
-
-            if ($toColumn === ProductionJob::STATUS_SELESAI) {
-                $this->service->markSelesai($jobId, null, $actor);
-                $this->dispatch('toast', message: 'Task dipindahkan ke Selesai.', type: 'success');
+                $this->dispatch('toast', message: 'Task dipindahkan ke Produksi.', type: 'success');
                 return;
             }
 
             if ($toColumn === ProductionJob::STATUS_QC) {
+                if ($fromColumn !== ProductionJob::STATUS_IN_PROGRESS) {
+                    throw ValidationException::withMessages([
+                        'status' => 'Task hanya bisa masuk QC dari Produksi.',
+                    ]);
+                }
+
                 $this->service->moveToQc($jobId, null, $actor);
                 $this->dispatch('toast', message: 'Task dipindahkan ke QC.', type: 'success');
                 return;
@@ -341,7 +322,7 @@ class Index extends Component
             }
 
             $this->service->qcFail($this->qcFailJobId, $validated['qcFailNote'], $actor);
-            $this->dispatch('toast', message: 'QC gagal, task kembali ke In Progress.', type: 'warning');
+            $this->dispatch('toast', message: 'QC gagal, task kembali ke Produksi.', type: 'warning');
             $this->closeModal();
         } catch (ValidationException $e) {
             $this->toastValidation($e);

@@ -26,7 +26,7 @@
             <div>
                 <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Produksi Kanban</h1>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Alur: Antrian -> Desain -> In Progress -> Selesai -> QC -> Siap Diambil. Tahap desain opsional (bisa langsung ke In Progress).
+                    Alur: Antrian -> Desain -> Produksi -> QC -> Siap Diambil. Tahap desain opsional (bisa langsung ke Produksi).
                 </p>
             </div>
 
@@ -46,8 +46,8 @@
             </p>
         </div>
 
-        <div class="mt-6 overflow-x-auto pb-2">
-            <div class="grid min-w-[1400px] grid-cols-6 gap-4">
+        <div class="mt-6 overflow-x-auto pb-3">
+            <div class="grid min-w-max grid-flow-col auto-cols-[22rem] gap-5 xl:auto-cols-[23rem]">
                 @foreach ($this->columns as $columnKey => $column)
                     <div class="flex min-h-[620px] flex-col rounded-2xl border bg-gray-50/60 {{ $column['accent'] }} transition dark:bg-gray-900/40"
                         x-bind:class="overStatus === '{{ $columnKey }}' ? 'ring-2 ring-brand-400/60' : ''"
@@ -134,13 +134,7 @@
                                                         Ambil Task
                                                     </button>
                                                 @endif
-                                                @if ($this->canMove($job))
-                                                    <button type="button" wire:click="markSelesai({{ $job->id }})" class="btn btn-primary text-xs">
-                                                        Selesai
-                                                    </button>
-                                                @endif
                                             @endcan
-                                        @elseif ($columnKey === \App\Models\ProductionJob::STATUS_SELESAI)
                                             @can('production.qc')
                                                 @if ($this->canMove($job))
                                                     <button type="button" wire:click="moveToQc({{ $job->id }})" class="btn btn-primary text-xs">

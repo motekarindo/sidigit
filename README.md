@@ -12,7 +12,7 @@
 - Parent menu `Produksi` sekarang mengarah ke `productions.index` (bukan `#`), tetap bisa expand submenu.
 
 ### Flow Produksi (Per Item)
-- `antrian -> in_progress -> selesai -> qc -> siap_diambil`
+- `antrian -> in_progress -> qc -> siap_diambil`
 - Jika QC gagal: `qc -> in_progress` (kembali ke Produksi).
 - Setiap transisi disimpan ke `production_job_logs` untuk jejak audit.
 
@@ -21,15 +21,19 @@
 - Tiap card adalah `1 item order`.
 - Ada mekanisme `Ambil Task` (claim) dan `Lepas`.
 - Card bisa dipindahkan antar kolom dengan drag-and-drop untuk transisi status.
-- Kolom board: `Antrian -> Desain -> In Progress -> Selesai -> QC -> Siap Diambil`.
-- Tahap `Desain` bersifat opsional: task bisa langsung dari `Antrian` ke `In Progress` (bypass desain).
+- Kolom board: `Antrian -> Desain -> Produksi -> QC -> Siap Diambil`.
+- Tahap `Desain` bersifat opsional: task bisa langsung dari `Antrian` ke `Produksi` (bypass desain).
+- Tahap `Finishing` tidak dipisah sebagai kolom; aktivitas finishing dianggap bagian dari tahap `Produksi`.
+- Tahap `Selesai` tidak digunakan pada board; perpindahan produksi langsung ke `QC`.
 - Perubahan status di board mengikuti flow yang sama untuk menjaga konsistensi operasional.
+- Kolom board dibuat lebih lebar agar informasi card lebih mudah dibaca pada monitor desktop tanpa mengorbankan kerapian.
 
 ### Riwayat Produksi
 - Halaman `/productions/history` tetap menggunakan list/tabel riwayat produksi.
 - Aksi `Riwayat` pada tiap baris menampilkan popup detail dengan tampilan card timeline (inspirasi TailAdmin Logistics):
   - menampilkan `Tracking ID`, badge status terkini, dan urutan event produksi per item.
   - setiap event menampilkan pelaku perubahan (user) untuk tracing, bukan hanya role.
+- Ukuran modal riwayat diperkecil agar lebih proporsional, dengan tipografi timeline yang lebih compact dan area isi scrollable.
 - Styling popup riwayat diperhalus: ukuran jam diperkecil, angka memakai `tabular-nums`, dan spacing timeline dirapikan agar lebih nyaman dibaca.
 - Tipografi popup disetel ulang agar lebih proporsional: hierarki ukuran teks `tracking/date/title/subtitle/time` dibuat lebih seimbang dan mudah dipindai.
 
