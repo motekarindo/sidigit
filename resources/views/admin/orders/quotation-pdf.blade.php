@@ -43,7 +43,6 @@
             'pembayaran' => 'Pembayaran',
             'desain' => 'Desain',
             'produksi' => 'Produksi',
-            'finishing' => 'Produksi',
             'qc' => 'QC',
             'siap' => 'Siap Diambil/Dikirim',
             'selesai' => 'Selesai',
