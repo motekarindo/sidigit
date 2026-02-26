@@ -44,6 +44,11 @@
             <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 Drag card ke kolom berikutnya untuk ubah status. QC gagal tetap melalui tombol agar alasan revisi tercatat.
             </p>
+            @if ($this->roleScopeLabel())
+                <p class="mt-1 text-xs font-medium text-brand-600 dark:text-brand-300">
+                    {{ $this->roleScopeLabel() }}
+                </p>
+            @endif
         </div>
 
         <div class="mt-6 overflow-x-auto pb-3">
@@ -64,11 +69,15 @@
 
                         <div class="flex-1 space-y-3 overflow-y-auto p-3">
                             @forelse (($this->groupedJobs[$columnKey] ?? []) as $job)
+                                @php
+                                    $priority = $this->priorityMeta($job);
+                                    $claim = $this->claimMeta($job);
+                                @endphp
                                 <article class="cursor-move rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900"
                                     draggable="true"
                                     x-on:dragstart="startDrag($event, {{ $job->id }}, '{{ $job->status }}')"
                                     x-on:dragend="endDrag()">
-                                    <div class="mb-3 flex items-start justify-between gap-2">
+                                    <div class="mb-2 flex items-start justify-between gap-2">
                                         <div>
                                             <a href="{{ route('orders.edit', ['order' => $job->order_id]) }}"
                                                 class="text-sm font-semibold text-brand-600 hover:underline">
@@ -79,19 +88,45 @@
                                                 · Qty {{ number_format((float) ($job->orderItem?->qty ?? 0), 0, ',', '.') }}
                                             </p>
                                         </div>
-                                        <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                                            {{ \App\Models\ProductionJob::stageOptions()[$job->stage] ?? ucfirst($job->stage) }}
-                                        </span>
+                                        <div class="flex flex-col items-end gap-1">
+                                            <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $priority['class'] }}">
+                                                {{ $priority['label'] }}
+                                            </span>
+                                            <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                                {{ \App\Models\ProductionJob::stageOptions()[$job->stage] ?? ucfirst($job->stage) }}
+                                            </span>
+                                        </div>
                                     </div>
 
-                                    <div class="space-y-1 text-xs text-gray-500 dark:text-gray-400">
-                                        <div>
-                                            Role: <span class="font-medium text-gray-700 dark:text-gray-200">{{ $job->assignedRole?->name ?? '-' }}</span>
+                                    <div class="space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span>Deadline</span>
+                                            <span class="font-medium text-gray-700 dark:text-gray-200">
+                                                {{ $this->deadlineDisplay($job) }}
+                                            </span>
                                         </div>
-                                        <div>
-                                            Claim:
-                                            <span class="font-medium {{ $this->isMine($job) ? 'text-emerald-600 dark:text-emerald-300' : 'text-gray-700 dark:text-gray-200' }}">
-                                                {{ $job->claimedByUser?->name ?? '-' }}
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span>Countdown</span>
+                                            <span class="font-medium {{ $priority['label'] === 'Urgent' ? 'text-red-600 dark:text-red-300' : 'text-gray-700 dark:text-gray-200' }}">
+                                                {{ $this->deadlineCountdown($job) }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span>Bahan</span>
+                                            <span class="truncate font-medium text-gray-700 dark:text-gray-200">{{ $job->orderItem?->material?->name ?? '-' }}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span>Ukuran</span>
+                                            <span class="font-medium text-gray-700 dark:text-gray-200">{{ $this->sizeLabel($job) }}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span>Role</span>
+                                            <span class="font-medium text-gray-700 dark:text-gray-200">{{ $job->assignedRole?->name ?? '-' }}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span>PIC</span>
+                                            <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $claim['class'] }}">
+                                                {{ $claim['label'] }}
                                             </span>
                                         </div>
                                         <div>Update: {{ $job->updated_at?->format('d M H:i') ?? '-' }}</div>
@@ -104,13 +139,9 @@
                                                     <button type="button" wire:click="claim({{ $job->id }})" class="btn btn-secondary text-xs">
                                                         Ambil Task
                                                     </button>
-                                                @endif
-                                                @if ($this->canMove($job))
-                                                    <button type="button" wire:click="moveCard({{ $job->id }}, 'desain')" class="btn btn-secondary text-xs">
-                                                        Ke Desain
-                                                    </button>
-                                                    <button type="button" wire:click="moveCard({{ $job->id }}, 'in_progress')" class="btn btn-primary text-xs">
-                                                        Mulai Produksi
+                                                @elseif ($this->canStartFromQueue($job))
+                                                    <button type="button" wire:click="moveCard({{ $job->id }}, '{{ $this->queueStartTarget($job) }}')" class="btn btn-primary text-xs">
+                                                        {{ $this->queueStartLabel($job) }}
                                                     </button>
                                                 @endif
                                             @endcan
@@ -121,7 +152,7 @@
                                                         Ambil Task
                                                     </button>
                                                 @endif
-                                                @if ($this->canMove($job))
+                                                @if (!empty($job->claimed_by) && $this->canMove($job))
                                                     <button type="button" wire:click="moveCard({{ $job->id }}, 'in_progress')" class="btn btn-primary text-xs">
                                                         Lanjut Produksi
                                                     </button>
@@ -136,7 +167,7 @@
                                                 @endif
                                             @endcan
                                             @can('production.qc')
-                                                @if ($this->canMove($job))
+                                                @if (!empty($job->claimed_by) && $this->canMove($job))
                                                     <button type="button" wire:click="moveToQc({{ $job->id }})" class="btn btn-primary text-xs">
                                                         Kirim QC
                                                     </button>
@@ -163,6 +194,9 @@
                                             @endif
                                         @endcan
 
+                                        <button type="button" wire:click="openTaskDetail({{ $job->id }})" class="btn btn-secondary text-xs">
+                                            Detail
+                                        </button>
                                         <a href="{{ route('orders.edit', ['order' => $job->order_id]) }}" class="btn btn-secondary text-xs">
                                             Lihat Order
                                         </a>
@@ -194,6 +228,85 @@
         <x-slot name="footer">
             <button type="button" wire:click="closeModal" class="btn btn-secondary">Batal</button>
             <button type="button" wire:click="saveQcFail" class="btn btn-primary">Kembalikan ke Produksi</button>
+        </x-slot>
+    </x-modal>
+
+    <x-modal wire:model="showTaskDetailModal" maxWidth="2xl">
+        <x-slot name="header">Detail Task Produksi</x-slot>
+
+        @php
+            $detail = $taskDetail ?? [];
+        @endphp
+
+        <div class="space-y-4">
+            <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900/60">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Tracking ID</p>
+                        <p class="mt-1 text-xl font-bold text-gray-900 dark:text-white">{{ $detail['tracking_id'] ?? '-' }}</p>
+                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ $detail['order_no'] ?? '-' }} · {{ $detail['customer_name'] ?? '-' }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Status Board</p>
+                        <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{{ $detail['status'] ?? '-' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div class="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900/40">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Produk</p>
+                    <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{{ $detail['product_name'] ?? '-' }}</p>
+                    <p class="mt-2 text-xs text-gray-600 dark:text-gray-300">Qty: {{ $detail['qty'] ?? '-' }}</p>
+                    <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">Bahan: {{ $detail['material'] ?? '-' }}</p>
+                    <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">Ukuran: {{ $detail['size'] ?? '-' }}</p>
+                </div>
+
+                <div class="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900/40">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Prioritas</p>
+                    <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{{ $detail['priority'] ?? '-' }}</p>
+                    <p class="mt-2 text-xs text-gray-600 dark:text-gray-300">Deadline: {{ $detail['deadline'] ?? '-' }}</p>
+                    <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">{{ $detail['deadline_countdown'] ?? '-' }}</p>
+                    <p class="mt-1 text-xs text-gray-600 dark:text-gray-300">PIC: {{ $detail['claim'] ?? '-' }}</p>
+                </div>
+            </div>
+
+            <div class="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900/40">
+                <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Finishing</p>
+                @if (!empty($detail['finishes'] ?? []))
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        @foreach (($detail['finishes'] ?? []) as $finishName)
+                            <span class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
+                                {{ $finishName }}
+                            </span>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Tidak ada finishing.</p>
+                @endif
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div class="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900/40">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Catatan Order</p>
+                    <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ ($detail['order_notes'] ?? null) ?: '-' }}</p>
+                </div>
+                <div class="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900/40">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Catatan Produksi</p>
+                    <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ ($detail['job_notes'] ?? null) ?: '-' }}</p>
+                </div>
+            </div>
+
+            <div class="rounded-xl border border-dashed border-gray-300 bg-white p-3 dark:border-gray-700 dark:bg-gray-900/40">
+                <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Lampiran File</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Belum ada lampiran file pada task ini. Untuk sementara cek file referensi pada detail order.
+                </p>
+            </div>
+        </div>
+
+        <x-slot name="footer">
+            <button type="button" wire:click="closeTaskDetail" class="btn btn-secondary">Tutup</button>
         </x-slot>
     </x-modal>
 </div>

@@ -25,9 +25,13 @@ class ProductionJobService
     {
         return $this->repository->query()
             ->with([
-                'order:id,order_no,status',
-                'orderItem:id,order_id,product_id,qty',
+                'order:id,order_no,status,deadline,customer_id,notes',
+                'order.customer:id,name,phone_number',
+                'orderItem:id,order_id,product_id,material_id,qty,length_cm,width_cm',
                 'orderItem.product:id,name',
+                'orderItem.material:id,name',
+                'orderItem.finishes:id,order_item_id,finish_id,price',
+                'orderItem.finishes.finish:id,name',
                 'assignedRole:id,name,slug',
                 'claimedByUser:id,name',
             ]);

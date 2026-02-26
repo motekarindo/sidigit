@@ -27,6 +27,18 @@
 - Tahap `Selesai` tidak digunakan pada board; perpindahan produksi langsung ke `QC`.
 - Perubahan status di board mengikuti flow yang sama untuk menjaga konsistensi operasional.
 - Kolom board dibuat lebih lebar agar informasi card lebih mudah dibaca pada monitor desktop tanpa mengorbankan kerapian.
+- View board berbasis role operasional:
+  - user role `Desainer` fokus menampilkan task tahap desain.
+  - user role `Operator` fokus menampilkan task tahap produksi.
+  - owner/superadmin/manager tetap melihat semua task.
+- Kartu kanban diperkaya informasi: deadline + countdown, bahan, ukuran, prioritas, dan status claim PIC.
+- Prioritas task otomatis (`Urgent`, `Today`, `Normal`) dan urutan card mengutamakan prioritas + deadline terdekat.
+- Aksi per state disederhanakan:
+  - `Antrian`: `Ambil Task` lalu tombol start tunggal (`Mulai Desain`/`Mulai Produksi`) sesuai tahap.
+  - `Desain`: `Lanjut Produksi`.
+  - `Produksi`: `Kirim QC`.
+- Ditambahkan modal **Detail Task Produksi** untuk melihat spek lengkap (produk, qty, bahan, ukuran, finishing, deadline, catatan) + placeholder lampiran file.
+- Perbaikan stabilitas: render modal **Detail Task Produksi** dibuat null-safe agar halaman `/productions` tidak error 500 saat `taskDetail` belum terisi (state awal Livewire).
 
 ### Riwayat Produksi
 - Halaman `/productions/history` tetap menggunakan list/tabel riwayat produksi.
