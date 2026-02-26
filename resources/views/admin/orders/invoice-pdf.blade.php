@@ -47,10 +47,17 @@
         $status = $order->status ?? 'draft';
         $statusLabel = [
             'draft' => 'Draft',
+            'quotation' => 'Quotation',
+            'approval' => 'Approved',
+            'pembayaran' => 'Pembayaran',
             'desain' => 'Desain',
             'produksi' => 'Produksi',
+            'finishing' => 'Produksi',
+            'qc' => 'QC',
+            'siap' => 'Siap Diambil/Dikirim',
             'diambil' => 'Diambil',
             'selesai' => 'Selesai',
+            'dibatalkan' => 'Dibatalkan',
         ][$status] ?? ucfirst($status);
         $paidAmount = (float) ($order->paid_amount ?? 0);
         $grandTotal = (float) ($order->grand_total ?? 0);

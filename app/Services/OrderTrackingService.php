@@ -43,10 +43,10 @@ class OrderTrackingService
             'draft' => 'Draft',
             'quotation' => 'Quotation',
             'approval' => 'Approval Customer',
-            'menunggu-dp' => 'Menunggu DP',
+            'pembayaran' => 'Pembayaran',
             'desain' => 'Desain',
             'produksi' => 'Produksi',
-            'finishing' => 'Finishing',
+            'finishing' => 'Produksi',
             'qc' => 'QC',
             'siap' => 'Siap Diambil / Dikirim',
             'diambil' => 'Diambil',
@@ -84,4 +84,3 @@ class OrderTrackingService
         ]);
     }
 }
-

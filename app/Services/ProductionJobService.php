@@ -109,6 +109,8 @@ class ProductionJobService
             );
         }
 
+        $this->syncOrderStatusFromJobs($job->order()->firstOrFail());
+
         return $job->fresh(['order', 'assignedRole', 'claimedByUser', 'orderItem.product']);
     }
 
@@ -419,25 +421,32 @@ class ProductionJobService
 
     protected function syncOrderStatusFromJobs(Order $order): void
     {
-        if (!in_array((string) $order->status, ['produksi', 'qc', 'siap'], true)) {
+        if (!in_array((string) $order->status, ['desain', 'produksi', 'qc', 'siap'], true)) {
             return;
         }
 
-        $statuses = $this->repository->query()
+        $jobs = $this->repository->query()
             ->where('order_id', $order->id)
-            ->where('stage', ProductionJob::STAGE_PRODUKSI)
-            ->pluck('status');
+            ->get(['stage', 'status']);
 
-        if ($statuses->isEmpty()) {
+        if ($jobs->isEmpty()) {
             return;
         }
 
         $targetStatus = 'produksi';
 
-        if ($statuses->every(fn ($status) => $status === ProductionJob::STATUS_SIAP_DIAMBIL)) {
-            $targetStatus = 'siap';
-        } elseif ($statuses->every(fn ($status) => in_array($status, [ProductionJob::STATUS_QC, ProductionJob::STATUS_SIAP_DIAMBIL], true))) {
-            $targetStatus = 'qc';
+        if ($jobs->contains(fn ($job) => (string) $job->stage === ProductionJob::STAGE_DESAIN)) {
+            $targetStatus = 'desain';
+        } else {
+            $statuses = $jobs->pluck('status');
+
+            if ($statuses->every(fn ($status) => $status === ProductionJob::STATUS_SIAP_DIAMBIL)) {
+                $targetStatus = 'siap';
+            } elseif ($statuses->every(fn ($status) => in_array($status, [ProductionJob::STATUS_QC, ProductionJob::STATUS_SIAP_DIAMBIL], true))) {
+                $targetStatus = 'qc';
+            } else {
+                $targetStatus = 'produksi';
+            }
         }
 
         if ((string) $order->status === $targetStatus) {

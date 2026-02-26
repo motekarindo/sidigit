@@ -197,7 +197,10 @@ class Table extends BaseTable
             $lastIndex = $logs->count() - 1;
             $this->historyLogs = $logs->map(fn ($log, $index) => [
                 'label' => $this->historyEventLabel((string) $log->event, (string) ($log->to_status ?? '')),
-                'subtitle' => $log->note ?: ('Oleh ' . ($log->changedByUser?->name ?? 'Sistem')),
+                'subtitle' => trim(
+                    ($log->note ? $log->note . ' ' : '')
+                    . '(oleh ' . ($log->changedByUser?->name ?? 'Sistem') . ')'
+                ),
                 'date' => $log->created_at?->format('d M Y') ?? '-',
                 'time' => $log->created_at?->format('H:i') ?? '--:--',
                 'icon' => $this->historyIconByEvent((string) $log->event, (string) ($log->to_status ?? '')),

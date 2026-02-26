@@ -220,10 +220,9 @@ class Edit extends Component
     {
         return in_array($status, [
             'approval',
-            'menunggu-dp',
+            'pembayaran',
             'desain',
             'produksi',
-            'finishing',
             'qc',
             'siap',
             'diambil',

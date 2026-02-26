@@ -115,6 +115,39 @@ class ProductionJobServiceTest extends TestCase
         $this->assertSame('siap', (string) $order->status);
     }
 
+    public function test_order_status_stays_desain_until_all_items_leave_desain_stage(): void
+    {
+        Role::query()->updateOrCreate(['name' => 'Desainer'], ['name' => 'Desainer']);
+        Role::query()->updateOrCreate(['name' => 'Operator'], ['name' => 'Operator']);
+
+        [$order] = $this->createOrderWithItems('desain', 2);
+        $service = app(ProductionJobService::class);
+        $service->syncByOrderStatus($order);
+
+        $jobs = ProductionJob::query()
+            ->where('order_id', $order->id)
+            ->orderBy('id')
+            ->get();
+
+        $job1 = $jobs->get(0);
+        $job2 = $jobs->get(1);
+
+        // Item 1 selesai produksi, item 2 masih di tahap desain.
+        $service->switchStage($job1->id, ProductionJob::STAGE_PRODUKSI, 'Desain item 1 selesai.');
+        $service->markInProgress($job1->id);
+        $service->markSelesai($job1->id);
+
+        $order->refresh();
+        $this->assertSame('desain', (string) $order->status);
+
+        // Setelah item terakhir keluar dari tahap desain, order pindah ke produksi.
+        $service->switchStage($job2->id, ProductionJob::STAGE_PRODUKSI, 'Desain item 2 selesai.');
+        $service->markInProgress($job2->id);
+
+        $order->refresh();
+        $this->assertSame('produksi', (string) $order->status);
+    }
+
     protected function createOrderWithItems(string $status, int $itemCount): array
     {
         Branch::query()->updateOrCreate(

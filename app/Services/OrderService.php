@@ -527,7 +527,7 @@ class OrderService
 
         $status = $order->status;
         $reserveStatuses = ['approval'];
-        $outStatuses = ['produksi', 'finishing', 'qc', 'siap', 'diambil', 'selesai'];
+        $outStatuses = ['produksi', 'qc', 'siap', 'diambil', 'selesai'];
 
         $type = null;
         $note = null;
@@ -588,10 +588,9 @@ class OrderService
     {
         return in_array($status, [
             'approval',
-            'menunggu-dp',
+            'pembayaran',
             'desain',
             'produksi',
-            'finishing',
             'qc',
             'siap',
             'diambil',
@@ -606,14 +605,13 @@ class OrderService
             'draft' => 10,
             'quotation' => 20,
             'approval' => 30,
-            'menunggu-dp' => 40,
+            'pembayaran' => 40,
             'desain' => 50,
             'produksi' => 60,
-            'finishing' => 70,
-            'qc' => 80,
-            'siap' => 90,
-            'diambil' => 100,
-            'selesai' => 110,
+            'qc' => 70,
+            'siap' => 80,
+            'diambil' => 90,
+            'selesai' => 100,
             default => null,
         };
     }

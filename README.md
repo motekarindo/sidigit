@@ -29,14 +29,16 @@
 - Halaman `/productions/history` tetap menggunakan list/tabel riwayat produksi.
 - Aksi `Riwayat` pada tiap baris menampilkan popup detail dengan tampilan card timeline (inspirasi TailAdmin Logistics):
   - menampilkan `Tracking ID`, badge status terkini, dan urutan event produksi per item.
+  - setiap event menampilkan pelaku perubahan (user) untuk tracing, bukan hanya role.
 - Styling popup riwayat diperhalus: ukuran jam diperkecil, angka memakai `tabular-nums`, dan spacing timeline dirapikan agar lebih nyaman dibaca.
 - Tipografi popup disetel ulang agar lebih proporsional: hierarki ukuran teks `tracking/date/title/subtitle/time` dibuat lebih seimbang dan mudah dipindai.
 
 ### Sinkronisasi Status Order
-- Sinkron status order otomatis hanya dihitung dari job tahap `produksi`.
-- Seluruh item `siap_diambil` -> order otomatis `siap`.
-- Seluruh item sudah masuk `qc`/`siap_diambil` -> order otomatis `qc`.
-- Selain kondisi di atas -> order berada di `produksi`.
+- Sinkron status order dihitung dari seluruh job item produksi (tahap desain + produksi).
+- Jika masih ada item yang berada di tahap `desain`, status order tetap `desain`.
+- Jika seluruh item `siap_diambil` -> order otomatis `siap`.
+- Jika seluruh item sudah masuk `qc`/`siap_diambil` -> order otomatis `qc`.
+- Selain kondisi di atas (tidak ada item di desain) -> order otomatis `produksi`.
 
 ### Assignment Role
 - Auto-assign berbasis status order:
@@ -50,6 +52,18 @@
 - `production.edit`
 - `production.assign`
 - `production.qc`
+
+### Preset Role Produksi & Stok
+- `RolePermissionSeeder` menambahkan preset akses role berikut:
+  - `Desainer`: menu `Transaksi -> Produksi` dan `Stok` beserta seluruh submenu.
+  - `Operator`: menu `Transaksi -> Produksi` dan `Stok` beserta seluruh submenu.
+- Permission default:
+  - `Desainer`: `production.view`, `production.edit`, lalu seluruh permission stok:
+    - `stock-in.(view|create|edit|delete)`
+    - `stock-out.(view|create|edit|delete)`
+    - `stock-opname.(view|create|edit|delete)`
+    - `stock-balance.view`, `stock-reservation.view`
+  - `Operator`: sama seperti `Desainer` + `production.qc`.
 
 ### Catatan Simplifikasi
 - Tidak ada scheduling mesin/jam produksi.
@@ -221,6 +235,10 @@
 - Status `dibatalkan` sekarang diperlakukan sebagai status **locked/read-only** seperti `approval` ke atas.
 - Pada status locked (termasuk `dibatalkan`), update dari halaman Edit Order hanya mengizinkan perubahan status via aksi daftar order; field lain tidak diproses.
 - Opsi status `dibatalkan` tetap tersedia di UI perubahan status untuk kasus order batal (mis. Draft/Quotation tidak jadi lanjut).
+- Key status order dinormalisasi dari `menunggu-dp` menjadi `pembayaran` (UI + value).
+- Status `finishing` dihapus dari list flow order (diasumsikan masuk ke fase `produksi`).
+- Ditambahkan migrasi normalisasi data existing: `finishing -> produksi` pada tabel `orders` dan `order_status_logs`.
+- Ditambahkan migrasi normalisasi data existing: `menunggu-dp -> pembayaran` pada tabel `orders` dan `order_status_logs`.
 
 ## Testing
 - Ditambahkan regression test untuk flow lock status `dibatalkan`:
