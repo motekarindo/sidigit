@@ -235,6 +235,7 @@
     - Expense material: Debit Persediaan Bahan (`1201`), Kredit Kas/Bank
     - Expense umum: Debit Beban Operasional (`6001`), Kredit Kas/Bank
   - Expense `update/delete` akan sinkron/hapus jurnal sumber terkait (`source_type=expense`).
+  - Perbaikan stabilitas nomor jurnal: generator nomor jurnal (`AUTOYYYYMMDD-XXXX` dan `JUYYYYMMDD-XXXX`) kini aman dari error cast `Stringable` saat membaca nomor terakhir pada tanggal yang sama.
 - RBAC akuntansi:
   - permission baru: `accounting-overview.view`, `cashflow.view`, `account.*`, `journal.view`, `journal.create`
   - menu baru: **Akuntansi** -> **Dashboard Akuntansi**, **Arus Kas**, **Chart of Accounts**, **Jurnal Umum**
