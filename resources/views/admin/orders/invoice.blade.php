@@ -117,7 +117,7 @@
         $branch = $order->branch;
         $qrisUrl = null;
         if (!empty($branch?->qris_path)) {
-            $disk = 'public';
+            $disk = \App\Support\UploadStorage::disk();
             try {
                 $storage = Storage::disk($disk);
                 $driver = config("filesystems.disks.{$disk}.driver");

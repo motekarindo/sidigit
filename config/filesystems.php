@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Upload Filesystem Disk
+    |--------------------------------------------------------------------------
+    |
+    | Disk khusus untuk upload user-generated files (logo, QRIS, foto, dst).
+    | Pisahkan dari "default" agar mudah diarahkan ke object storage.
+    |
+    */
+
+    'upload_disk' => env('UPLOAD_DISK', env('FILESYSTEM_DISK', 'public')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

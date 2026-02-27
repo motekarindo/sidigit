@@ -188,6 +188,23 @@
 - Aksi **Salin Link** menampilkan toast sukses.
 - Untuk environment `http` (non-HTTPS), salin link tetap dicoba otomatis via fallback `execCommand('copy')`; prompt manual hanya muncul jika browser menolak semua metode copy.
 
+## Storage Upload
+- Semua upload file operasional (logo cabang, QRIS, foto karyawan) sekarang menggunakan disk terpusat `filesystems.upload_disk`.
+- Disk upload diatur melalui env `UPLOAD_DISK` (default mengikuti `FILESYSTEM_DISK`).
+- Titik upload yang sudah mengikuti setting ini:
+  - `BranchService` (logo + QRIS)
+  - `EmployeeService` (foto)
+  - preview media di form/list employee, form branch, sidebar logo, invoice, dan invoice-pdf.
+- Ditambahkan helper `App\Support\UploadStorage::disk()`:
+  - jika konfigurasi S3 belum lengkap (key/secret/bucket kosong), sistem otomatis fallback ke `public` agar aplikasi tidak error.
+- Untuk S3 compatible (contoh NevaCloud), isi variabel:
+  - `UPLOAD_DISK=s3`
+  - `AWS_ACCESS_KEY_ID`
+  - `AWS_SECRET_ACCESS_KEY`
+  - `AWS_BUCKET`
+  - `AWS_ENDPOINT`
+  - `AWS_DEFAULT_REGION`
+
 ## UI Sidebar
 - Sidebar sekarang memakai map icon SVG bergaya TailAdmin dari `config/menu.php`.
 - Kompatibilitas icon lama tetap aman: nilai menu `bi bi-*` otomatis dikonversi ke SVG, jadi icon tetap muncul tanpa ubah data menu lama.

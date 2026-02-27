@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\EmployeeStatus;
 use App\Models\Employee;
 use App\Repositories\EmployeeRepository;
+use App\Support\UploadStorage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
@@ -48,7 +49,7 @@ class EmployeeService
         $employee = $this->repository->findOrFail($id);
 
         if ($employee->photo) {
-            $disk = config('filesystems.default', 'public');
+            $disk = UploadStorage::disk();
             Storage::disk($disk)->delete($employee->photo);
         }
 
@@ -65,7 +66,7 @@ class EmployeeService
         $employees = $this->repository->query()->whereIn('id', $ids)->get();
         foreach ($employees as $employee) {
             if ($employee->photo) {
-                $disk = config('filesystems.default', 'public');
+                $disk = UploadStorage::disk();
                 Storage::disk($disk)->delete($employee->photo);
             }
         }
@@ -89,7 +90,7 @@ class EmployeeService
     protected function preparePayload(array $data, ?Employee $employee = null): array
     {
         if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
-            $disk = config('filesystems.default', 'public');
+            $disk = UploadStorage::disk();
             $data['photo'] = $data['photo']->store('employee-photos', $disk);
 
             if ($employee && $employee->photo) {
