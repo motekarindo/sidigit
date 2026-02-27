@@ -40,6 +40,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | File Manager Cache TTL (Seconds)
+    |--------------------------------------------------------------------------
+    |
+    | Cache pendek untuk listing/storage details agar halaman File Manager
+    | tetap responsif pada bucket dengan file banyak.
+    |
+    */
+
+    'file_manager_cache_ttl_seconds' => (int) env('FILE_MANAGER_CACHE_TTL_SECONDS', 60),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

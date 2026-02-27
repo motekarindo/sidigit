@@ -7,6 +7,7 @@ use App\Support\UploadStorage;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -21,32 +22,34 @@ class FileManagerService
         int $page = 1
     ): LengthAwarePaginator {
         $disk = UploadStorage::disk();
-        $prefix = $this->buildPrefix($branchId, $folder);
-
-        $files = collect();
-
-        try {
-            $files = collect(Storage::disk($disk)->allFiles($prefix));
-        } catch (\Throwable $e) {
-            $files = collect();
-        }
+        $branchPrefix = UploadPath::branchPrefix($branchId);
+        $files = $this->listFiles($disk, $branchPrefix);
+        $files = $this->filterByFolder($files, $branchPrefix, $folder);
 
         if (filled($search)) {
             $needle = Str::lower($search);
             $files = $files->filter(fn (string $path) => Str::contains(Str::lower($path), $needle));
         }
 
-        $rows = $files
-            ->map(fn (string $path) => $this->toFileRow($disk, $branchId, $path))
-            ->filter()
+        $files = $files
             ->values()
-            ->sortBy('last_modified', SORT_NUMERIC, Str::lower($sortDirection) !== 'asc')
+            ->sort(fn (string $a, string $b) => strnatcasecmp($a, $b))
             ->values();
+
+        if (Str::lower($sortDirection) !== 'asc') {
+            $files = $files->reverse()->values();
+        }
 
         $perPage = max(10, min(100, $perPage));
         $page = max(1, $page);
-        $total = $rows->count();
-        $items = $rows->forPage($page, $perPage)->values();
+        $total = $files->count();
+        $pagePaths = $files->forPage($page, $perPage)->values();
+
+        // Optimasi: metadata (size/last_modified/url) hanya dihitung untuk item halaman aktif.
+        $items = $pagePaths
+            ->map(fn (string $path) => $this->toFileRow($disk, $branchId, $path))
+            ->filter()
+            ->values();
 
         return new LengthAwarePaginator(
             $items,
@@ -63,38 +66,42 @@ class FileManagerService
     public function folderOptions(int $branchId): Collection
     {
         $disk = UploadStorage::disk();
-        $prefix = UploadPath::branchPrefix($branchId);
+        $cacheKey = $this->cacheKey("folder-options:{$disk}:{$branchId}");
+        $seconds = $this->cacheTtlSeconds();
 
-        try {
-            $files = collect(Storage::disk($disk)->allFiles($prefix));
-        } catch (\Throwable $e) {
-            $files = collect();
-        }
+        $options = Cache::remember($cacheKey, now()->addSeconds($seconds), function () use ($disk, $branchId) {
+            $prefix = UploadPath::branchPrefix($branchId);
+            $files = $this->listFiles($disk, $prefix);
 
-        $detectedFolders = $files
-            ->map(function (string $path) use ($prefix) {
-                $relative = Str::after($path, $prefix);
-                $directory = trim(dirname($relative), './');
+            $detectedFolders = $files
+                ->map(function (string $path) use ($prefix) {
+                    $relative = Str::after($path, $prefix);
+                    $directory = trim(dirname($relative), './');
 
-                return $directory === '' ? null : $directory;
-            })
-            ->filter()
-            ->unique()
-            ->sort()
-            ->values();
+                    return $directory === '' ? null : $directory;
+                })
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
 
-        $defaults = collect([
-            'branches/logos',
-            'branches/qris',
-            'employees/photos',
-            'orders/attachments',
-        ]);
+            $defaults = [
+                'branches/logos',
+                'branches/qris',
+                'employees/photos',
+                'orders/attachments',
+            ];
 
-        return $defaults
-            ->merge($detectedFolders)
-            ->unique()
-            ->sort()
-            ->values();
+            return collect($defaults)
+                ->merge($detectedFolders)
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+        });
+
+        return collect($options);
     }
 
     public function deleteByBranch(int $branchId, string $path): void
@@ -109,6 +116,8 @@ class FileManagerService
         foreach (UploadStorage::deletionDisks() as $disk) {
             Storage::disk($disk)->delete($path);
         }
+
+        $this->forgetCacheForBranch($branchId);
     }
 
     public function temporaryUrl(string $path, int $minutes = 10): ?string
@@ -131,127 +140,40 @@ class FileManagerService
     public function storageDetails(int $branchId): array
     {
         $disk = UploadStorage::disk();
-        $prefix = UploadPath::branchPrefix($branchId);
-
-        try {
-            $paths = collect(Storage::disk($disk)->allFiles($prefix));
-        } catch (\Throwable $e) {
-            $paths = collect();
-        }
-
-        $clientPaths = $this->allClientUploadPaths($disk);
-
-        $branchTotalSize = 0;
-        $clientTotalSize = 0;
-        $imageCount = 0;
-        $documentCount = 0;
-        $otherCount = 0;
-        $byFolder = [];
-        $latest = [];
-
-        foreach ($paths as $path) {
-            $path = ltrim((string) $path, '/');
-            $relativePath = Str::after($path, $prefix);
-            $directory = trim(dirname($relativePath), './');
-            $folderKey = $directory === '' ? '(root)' : $directory;
-            $filename = basename($path);
-
-            try {
-                $size = (int) Storage::disk($disk)->size($path);
-            } catch (\Throwable $e) {
-                $size = 0;
-            }
-
-            try {
-                $mime = (string) (Storage::disk($disk)->mimeType($path) ?? 'application/octet-stream');
-            } catch (\Throwable $e) {
-                $mime = 'application/octet-stream';
-            }
-
-            try {
-                $lastModified = (int) Storage::disk($disk)->lastModified($path);
-            } catch (\Throwable $e) {
-                $lastModified = 0;
-            }
-
-            $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-            $isImage = Str::startsWith($mime, 'image/')
-                || in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'], true);
-
-            if ($isImage) {
-                $imageCount++;
-            } elseif ($this->isDocumentMime($mime, $extension)) {
-                $documentCount++;
-            } else {
-                $otherCount++;
-            }
-
-            $branchTotalSize += $size;
-
-            if (! array_key_exists($folderKey, $byFolder)) {
-                $byFolder[$folderKey] = ['folder' => $folderKey, 'files_count' => 0, 'size_total' => 0];
-            }
-            $byFolder[$folderKey]['files_count']++;
-            $byFolder[$folderKey]['size_total'] += $size;
-
-            $latest[] = [
-                'filename' => $filename,
-                'path' => $path,
-                'last_modified' => $lastModified,
-            ];
-        }
-
-        foreach ($clientPaths as $clientPath) {
-            try {
-                $clientTotalSize += (int) Storage::disk($disk)->size($clientPath);
-            } catch (\Throwable $e) {
-                // Abaikan file yang gagal dibaca untuk menjaga panel tetap berjalan.
-            }
-        }
+        $branchStats = $this->branchStorageStats($disk, $branchId);
+        $clientStats = $this->clientStorageStats($disk);
 
         $quotaBytes = max(0, (int) config('filesystems.upload_quota_bytes', 0));
-        $remainingBytes = $quotaBytes > 0 ? max(0, $quotaBytes - $clientTotalSize) : null;
-        $usedPercent = $quotaBytes > 0 ? round(min(100, ($clientTotalSize / $quotaBytes) * 100), 2) : null;
-
-        $folderUsage = collect($byFolder)
-            ->values()
-            ->sortByDesc('size_total')
-            ->values()
-            ->take(8)
-            ->all();
-
-        $latestFiles = collect($latest)
-            ->sortByDesc('last_modified')
-            ->values()
-            ->take(5)
-            ->all();
+        $remainingBytes = $quotaBytes > 0 ? max(0, $quotaBytes - $clientStats['client_total_size']) : null;
+        $usedPercent = $quotaBytes > 0 ? round(min(100, ($clientStats['client_total_size'] / $quotaBytes) * 100), 2) : null;
 
         return [
-            'total_files' => $paths->count(),
-            'total_size' => $branchTotalSize,
-            'branch_total_size' => $branchTotalSize,
-            'client_total_size' => $clientTotalSize,
-            'client_total_files' => $clientPaths->count(),
+            'total_files' => $branchStats['total_files'],
+            'total_size' => $branchStats['branch_total_size'],
+            'branch_total_size' => $branchStats['branch_total_size'],
+            'client_total_size' => $clientStats['client_total_size'],
+            'client_total_files' => $clientStats['client_total_files'],
             'quota_bytes' => $quotaBytes,
             'remaining_bytes' => $remainingBytes,
             'used_percent' => $usedPercent,
-            'image_count' => $imageCount,
-            'document_count' => $documentCount,
-            'other_count' => $otherCount,
-            'folder_usage' => $folderUsage,
-            'latest_files' => $latestFiles,
+            'image_count' => $branchStats['image_count'],
+            'document_count' => $branchStats['document_count'],
+            'other_count' => $branchStats['other_count'],
+            'folder_usage' => [],
+            'latest_files' => [],
         ];
     }
 
-    protected function buildPrefix(int $branchId, string $folder): string
+    public function forgetCacheForBranch(int $branchId): void
     {
-        $prefix = UploadPath::branchPrefix($branchId);
+        $disk = UploadStorage::disk();
+        $branchPrefix = UploadPath::branchPrefix($branchId);
 
-        if ($folder === '' || $folder === 'all') {
-            return $prefix;
-        }
-
-        return $prefix . trim($folder, '/') . '/';
+        Cache::forget($this->cacheKey("list:{$disk}:" . md5($branchPrefix)));
+        Cache::forget($this->cacheKey("folder-options:{$disk}:{$branchId}"));
+        Cache::forget($this->cacheKey("storage-details:branch:{$disk}:{$branchId}"));
+        Cache::forget($this->cacheKey("storage-details:client:{$disk}"));
+        Cache::forget($this->cacheKey("list:{$disk}:" . md5('')));
     }
 
     protected function toFileRow(string $disk, int $branchId, string $path): ?array
@@ -261,28 +183,12 @@ class FileManagerService
         $relativePath = Str::after($path, $branchPrefix);
         $filename = basename($path);
         $directory = trim(dirname($relativePath), './');
-
-        try {
-            $size = (int) Storage::disk($disk)->size($path);
-        } catch (\Throwable $e) {
-            $size = 0;
-        }
-
-        try {
-            $lastModified = (int) Storage::disk($disk)->lastModified($path);
-        } catch (\Throwable $e) {
-            $lastModified = 0;
-        }
-
-        try {
-            $mime = (string) (Storage::disk($disk)->mimeType($path) ?? 'application/octet-stream');
-        } catch (\Throwable $e) {
-            $mime = 'application/octet-stream';
-        }
-
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        $isImage = Str::startsWith($mime, 'image/')
-            || in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'], true);
+
+        $size = $this->safeFileSize($disk, $path);
+        $lastModified = $this->safeLastModified($disk, $path);
+        $isImage = $this->isImageExtension($extension);
+        $mime = $this->mimeFromExtension($extension);
 
         $url = $this->temporaryUrl($path, 15);
 
@@ -301,27 +207,101 @@ class FileManagerService
         ];
     }
 
-    protected function isDocumentMime(string $mime, string $extension): bool
+    protected function listFiles(string $disk, string $prefix): Collection
     {
-        if (Str::startsWith($mime, ['text/', 'application/pdf'])) {
-            return true;
+        $normalizedPrefix = ltrim($prefix, '/');
+        $cacheKey = $this->cacheKey("list:{$disk}:" . md5($normalizedPrefix));
+        $seconds = $this->cacheTtlSeconds();
+
+        $paths = Cache::remember($cacheKey, now()->addSeconds($seconds), function () use ($disk, $normalizedPrefix) {
+            try {
+                return collect(Storage::disk($disk)->allFiles($normalizedPrefix))
+                    ->map(fn (string $path) => ltrim($path, '/'))
+                    ->values()
+                    ->all();
+            } catch (\Throwable $e) {
+                return [];
+            }
+        });
+
+        return collect($paths);
+    }
+
+    protected function filterByFolder(Collection $files, string $branchPrefix, string $folder): Collection
+    {
+        if ($folder === '' || $folder === 'all') {
+            return $files;
         }
 
-        return in_array($extension, [
-            'txt', 'csv', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'json', 'xml', 'md',
-        ], true);
+        $folderPrefix = $branchPrefix . trim($folder, '/') . '/';
+
+        return $files->filter(fn (string $path) => Str::startsWith($path, $folderPrefix))->values();
+    }
+
+    protected function branchStorageStats(string $disk, int $branchId): array
+    {
+        $cacheKey = $this->cacheKey("storage-details:branch:{$disk}:{$branchId}");
+        $seconds = $this->cacheTtlSeconds();
+
+        return Cache::remember($cacheKey, now()->addSeconds($seconds), function () use ($disk, $branchId) {
+            $prefix = UploadPath::branchPrefix($branchId);
+            $paths = $this->listFiles($disk, $prefix);
+
+            $branchTotalSize = 0;
+            $imageCount = 0;
+            $documentCount = 0;
+            $otherCount = 0;
+
+            foreach ($paths as $path) {
+                $filename = basename((string) $path);
+                $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                $size = $this->safeFileSize($disk, (string) $path);
+                $branchTotalSize += $size;
+
+                if ($this->isImageExtension($extension)) {
+                    $imageCount++;
+                } elseif ($this->isDocumentExtension($extension)) {
+                    $documentCount++;
+                } else {
+                    $otherCount++;
+                }
+            }
+
+            return [
+                'total_files' => $paths->count(),
+                'branch_total_size' => $branchTotalSize,
+                'image_count' => $imageCount,
+                'document_count' => $documentCount,
+                'other_count' => $otherCount,
+            ];
+        });
+    }
+
+    protected function clientStorageStats(string $disk): array
+    {
+        $cacheKey = $this->cacheKey("storage-details:client:{$disk}");
+        $seconds = $this->cacheTtlSeconds();
+
+        return Cache::remember($cacheKey, now()->addSeconds($seconds), function () use ($disk) {
+            $paths = $this->allClientUploadPaths($disk);
+            $totalSize = 0;
+
+            foreach ($paths as $path) {
+                $totalSize += $this->safeFileSize($disk, (string) $path);
+            }
+
+            return [
+                'client_total_size' => $totalSize,
+                'client_total_files' => $paths->count(),
+            ];
+        });
     }
 
     protected function allClientUploadPaths(string $disk): Collection
     {
-        try {
-            $paths = collect(Storage::disk($disk)->allFiles(''));
-        } catch (\Throwable $e) {
-            return collect();
-        }
+        $paths = $this->listFiles($disk, '');
 
         return $paths
-            ->map(fn (string $path) => ltrim($path, '/'))
             ->filter(fn (string $path) => $this->isClientUploadPath($path))
             ->values();
     }
@@ -340,4 +320,74 @@ class FileManagerService
 
         return false;
     }
+
+    protected function safeFileSize(string $disk, string $path): int
+    {
+        try {
+            return max(0, (int) Storage::disk($disk)->size(ltrim($path, '/')));
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    protected function safeLastModified(string $disk, string $path): int
+    {
+        try {
+            return max(0, (int) Storage::disk($disk)->lastModified(ltrim($path, '/')));
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    protected function isImageExtension(string $extension): bool
+    {
+        return in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp'], true);
+    }
+
+    protected function isDocumentExtension(string $extension): bool
+    {
+        return in_array(strtolower($extension), [
+            'txt', 'csv', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'json', 'xml', 'md',
+        ], true);
+    }
+
+    protected function mimeFromExtension(string $extension): string
+    {
+        $extension = strtolower($extension);
+
+        $map = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+            'gif' => 'image/gif',
+            'svg' => 'image/svg+xml',
+            'bmp' => 'image/bmp',
+            'pdf' => 'application/pdf',
+            'txt' => 'text/plain',
+            'csv' => 'text/csv',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ppt' => 'application/vnd.ms-powerpoint',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'json' => 'application/json',
+            'xml' => 'application/xml',
+            'md' => 'text/markdown',
+        ];
+
+        return $map[$extension] ?? 'application/octet-stream';
+    }
+
+    protected function cacheTtlSeconds(): int
+    {
+        return max(10, (int) config('filesystems.file_manager_cache_ttl_seconds', 60));
+    }
+
+    protected function cacheKey(string $suffix): string
+    {
+        return 'file-manager:' . $suffix;
+    }
 }
+

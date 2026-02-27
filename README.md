@@ -230,6 +230,8 @@
   - list file per cabang + filter folder + search path/nama.
   - preview image, lihat file, download file, salin URL signed, dan hapus file.
   - pagination 20/50/100.
+  - optimasi performa: metadata file dihitung hanya untuk item pada halaman aktif (bukan seluruh list file).
+  - cache listing/folder/storage details untuk mengurangi beban scan object storage berulang.
   - panel **Storage Details**: used storage, quota/progress bar, dan komposisi tipe file.
   - warna progress quota bertingkat: hijau (`<70%`), kuning (`70-89%`), merah (`>=90%`).
   - perbaikan UI: tombol `Salin URL` dibuat `nowrap` agar tetap satu baris.
@@ -237,6 +239,7 @@
   - `UPLOAD_QUOTA_BYTES` (0 = tanpa batas)
   - progress kuota menggunakan total pemakaian global klien lintas cabang.
   - filter cabang tetap berlaku untuk list file dan ringkasan usage cabang aktif (sementara progress bar kuota tetap global).
+  - `FILE_MANAGER_CACHE_TTL_SECONDS` (default `60`)
 - Permission baru:
   - `file-manager.view`
   - `file-manager.delete`
