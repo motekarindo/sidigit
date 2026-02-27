@@ -48,6 +48,7 @@ use App\Livewire\Admin\Reports\ExpenseReport as ExpenseReport;
 use App\Livewire\Admin\Reports\BranchReport as BranchReport;
 use App\Livewire\Admin\Reports\ProductionReport as ProductionReport;
 use App\Livewire\Admin\Reports\FinancialReport as FinancialReport;
+use App\Livewire\Admin\FileManager\Index as FileManagerIndex;
 use App\Livewire\Admin\Orders\AddPayment as OrderAddPayment;
 use App\Livewire\Admin\Productions\Index as ProductionsIndex;
 use App\Livewire\Admin\Productions\HistoryIndex as ProductionsHistoryIndex;
@@ -55,6 +56,7 @@ use App\Livewire\Admin\Accounting\Overview\Index as AccountingOverviewIndex;
 use App\Livewire\Admin\Accounting\Accounts\Index as AccountingAccountsIndex;
 use App\Livewire\Admin\Accounting\Journals\Index as AccountingJournalsIndex;
 use App\Livewire\Admin\Accounting\Cashflows\Index as AccountingCashflowsIndex;
+use App\Http\Controllers\Admin\FileManagerController;
 use App\Http\Controllers\Tracking\OrderTrackingController;
 
 Route::get('/', function () {
@@ -190,6 +192,8 @@ Route::get('/track/order/{id_order_encrypted}', [OrderTrackingController::class,
     Route::get('accounting/journals', AccountingJournalsIndex::class)->name('journals.index');
 
     Route::get('audit-logs', AuditLogsIndex::class)->name('audit-logs.index');
+    Route::get('file-manager', FileManagerIndex::class)->name('file-manager.index');
+    Route::get('file-manager/download', [FileManagerController::class, 'download'])->name('file-manager.download');
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });

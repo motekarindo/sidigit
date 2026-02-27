@@ -87,6 +87,10 @@ class PermissionSeeder extends Seeder
             'bank-account.edit' => ['name' => 'Edit Rekening Bank', 'menu_id' => $menuId('Rekening Bank')],
             'bank-account.delete' => ['name' => 'Hapus Rekening Bank', 'menu_id' => $menuId('Rekening Bank')],
 
+            // File Manager
+            'file-manager.view' => ['name' => 'Lihat File Manager', 'menu_id' => $menuId('File Manager')],
+            'file-manager.delete' => ['name' => 'Hapus File Manager', 'menu_id' => $menuId('File Manager')],
+
             // Audit Log
             'audit-log.view' => ['name' => 'Lihat Audit Log', 'menu_id' => $menuId('Audit Logs')],
 

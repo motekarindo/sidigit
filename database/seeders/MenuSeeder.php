@@ -93,6 +93,7 @@ class MenuSeeder extends Seeder
         $settingData = Menu::updateOrCreate(['name' => 'Settings'], ['icon' => 'bi bi-layers', 'order' => 10]);
         Menu::updateOrCreate(['route_name' => 'bank-accounts.index'], ['parent_id' => $settingData->id, 'name' => 'Rekening Bank', 'order' => 5]);
         Menu::updateOrCreate(['route_name' => 'branches.index'], ['parent_id' => $settingData->id, 'name' => 'Cabang', 'order' => 9]);
+        Menu::updateOrCreate(['route_name' => 'file-manager.index'], ['parent_id' => $settingData->id, 'name' => 'File Manager', 'order' => 10]);
 
 
         // --- RBAC ---

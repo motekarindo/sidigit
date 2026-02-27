@@ -195,8 +195,20 @@
   - `BranchService` (logo + QRIS)
   - `EmployeeService` (foto)
   - preview media di form/list employee, form branch, sidebar logo, invoice, dan invoice-pdf.
+- Struktur object key upload sekarang berbasis cabang:
+  - `{branch_id}/branches/logos/{uuid}.{ext}`
+  - `{branch_id}/branches/qris/{uuid}.{ext}`
+  - `{branch_id}/employees/photos/{uuid}.{ext}`
+  - (siap dipakai) `{branch_id}/orders/attachments/{order_id}/{uuid}.{ext}`
+- Ditambahkan util path terpusat:
+  - `App\Support\BranchContext` untuk resolve cabang aktif.
+  - `App\Support\UploadPath` untuk generate key object konsisten.
 - Ditambahkan helper `App\Support\UploadStorage::disk()`:
   - jika konfigurasi S3 belum lengkap (key/secret/bucket kosong), sistem otomatis fallback ke `public` agar aplikasi tidak error.
+  - `UploadStorage::deletionDisks()` untuk cleanup kompatibilitas data lama (disk upload aktif + `public`).
+- Command migrasi path lama ke struktur branch:
+  - simulasi: `php artisan uploads:migrate-branch-prefix --dry-run`
+  - eksekusi: `php artisan uploads:migrate-branch-prefix`
 - Untuk S3 compatible (contoh NevaCloud), isi variabel:
   - `UPLOAD_DISK=s3`
   - `AWS_ACCESS_KEY_ID`
@@ -204,6 +216,21 @@
   - `AWS_BUCKET`
   - `AWS_ENDPOINT`
   - `AWS_DEFAULT_REGION`
+
+## File Manager
+- Ditambahkan modul **File Manager** untuk kelola asset upload di object storage.
+- URL: `/file-manager` (menu: `Settings -> File Manager`).
+- Scope listing dibatasi prefix cabang aktif: `/{branch_id}/...`.
+- Fitur inti:
+  - list file per cabang + filter folder + search path/nama.
+  - preview image, lihat file, download file, salin URL signed, dan hapus file.
+  - pagination 20/50/100.
+  - perbaikan UI: tombol `Salin URL` dibuat `nowrap` agar tetap satu baris.
+- Permission baru:
+  - `file-manager.view`
+  - `file-manager.delete`
+- Mapping route permission:
+  - `file-manager.index` -> `file-manager.view`
 
 ## UI Sidebar
 - Sidebar sekarang memakai map icon SVG bergaya TailAdmin dari `config/menu.php`.
