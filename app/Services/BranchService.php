@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Branch;
 use App\Repositories\BranchRepository;
+use App\Support\UploadStorage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
@@ -102,7 +103,7 @@ class BranchService
 
     protected function preparePayload(array $data, ?Branch $branch = null): array
     {
-        $disk = 'public';
+        $disk = UploadStorage::disk();
 
         if (isset($data['logo']) && $data['logo'] instanceof UploadedFile) {
             $data['logo_path'] = $data['logo']->store('branch-logos', $disk);
@@ -125,7 +126,7 @@ class BranchService
 
     protected function deleteMedia(Branch $branch): void
     {
-        $disk = 'public';
+        $disk = UploadStorage::disk();
         if ($branch->logo_path) {
             Storage::disk($disk)->delete($branch->logo_path);
         }

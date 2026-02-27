@@ -66,12 +66,12 @@
         $branch = $order->branch;
         $qrisUrl = null;
         if (!empty($branch?->qris_path)) {
-            $disk = 'public';
+            $disk = \App\Support\UploadStorage::disk();
             try {
                 $storage = Storage::disk($disk);
                 $driver = config("filesystems.disks.{$disk}.driver");
-                if ($driver === 'local') {
-                    $qrisUrl = public_path('storage/' . $branch->qris_path);
+                if (in_array($driver, ['local'], true)) {
+                    $qrisUrl = $storage->path($branch->qris_path);
                 } elseif ($driver === 's3') {
                     $qrisUrl = $storage->temporaryUrl($branch->qris_path, now()->addMinutes(10));
                 } else {
