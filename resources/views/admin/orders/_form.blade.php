@@ -48,10 +48,9 @@
                         ['value' => 'draft', 'label' => 'Draft'],
                         ['value' => 'quotation', 'label' => 'Quotation'],
                         ['value' => 'approval', 'label' => 'Approval Customer'],
-                        ['value' => 'menunggu-dp', 'label' => 'Menunggu DP'],
+                        ['value' => 'pembayaran', 'label' => 'Pembayaran'],
                         ['value' => 'desain', 'label' => 'Desain'],
                         ['value' => 'produksi', 'label' => 'Produksi'],
-                        ['value' => 'finishing', 'label' => 'Finishing'],
                         ['value' => 'qc', 'label' => 'QC'],
                         ['value' => 'siap', 'label' => 'Siap Diambil/Dikirim'],
                         ['value' => 'diambil', 'label' => 'Diambil'],
@@ -163,7 +162,8 @@
                         <div>
                             <div class="{{ $labelRowClass }}">
                                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Bahan @if ($materialRequired)
+                                    Bahan
+                                    @if ($materialRequired)
                                         <span class="text-red-500">*</span>
                                     @endif
                                 </label>

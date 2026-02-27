@@ -20,16 +20,22 @@ class OrderService
 {
     protected OrderRepository $repository;
     protected OrderMaterialUsageService $materialUsageService;
+    protected ProductionJobService $productionJobService;
+    protected OrderStockService $orderStockService;
     protected AccountingAutoPostingService $autoPostingService;
 
     public function __construct(
         OrderRepository $repository,
         OrderMaterialUsageService $materialUsageService,
+        ProductionJobService $productionJobService,
+        OrderStockService $orderStockService,
         AccountingAutoPostingService $autoPostingService
     )
     {
         $this->repository = $repository;
         $this->materialUsageService = $materialUsageService;
+        $this->productionJobService = $productionJobService;
+        $this->orderStockService = $orderStockService;
         $this->autoPostingService = $autoPostingService;
     }
 
@@ -62,8 +68,10 @@ class OrderService
             $this->syncPayments($order, $payments);
             $this->recalculateTotals($order);
             $this->syncAutoPostingPayments($order);
-            $this->syncStockByStatus($order);
-            $this->autoPostingService->syncOrderAccrual($order->refresh());
+            $this->orderStockService->syncByStatus($order);
+            $freshOrder = $order->refresh();
+            $this->productionJobService->syncByOrderStatus($freshOrder);
+            $this->autoPostingService->syncOrderAccrual($freshOrder);
             $order->statusLogs()->create([
                 'status' => $order->status,
                 'changed_by' => auth()->id(),
@@ -102,8 +110,10 @@ class OrderService
                     ]);
                 }
 
-                $this->syncStockByStatus($order);
-                $this->autoPostingService->syncOrderAccrual($order->refresh());
+                $this->orderStockService->syncByStatus($order);
+                $freshOrder = $order->refresh();
+                $this->productionJobService->syncByOrderStatus($freshOrder);
+                $this->autoPostingService->syncOrderAccrual($freshOrder);
 
                 return $order->fresh(['customer', 'items']);
             }
@@ -117,8 +127,10 @@ class OrderService
 
             $this->recalculateTotals($order);
             $this->syncAutoPostingPayments($order);
-            $this->syncStockByStatus($order);
-            $this->autoPostingService->syncOrderAccrual($order->refresh());
+            $this->orderStockService->syncByStatus($order);
+            $freshOrder = $order->refresh();
+            $this->productionJobService->syncByOrderStatus($freshOrder);
+            $this->autoPostingService->syncOrderAccrual($freshOrder);
 
             if ($oldStatus !== $order->status) {
                 $order->statusLogs()->create([
@@ -252,8 +264,10 @@ class OrderService
                 ]);
             }
 
-            $this->syncStockByStatus($order);
-            $this->autoPostingService->syncOrderAccrual($order->refresh());
+            $this->orderStockService->syncByStatus($order);
+            $freshOrder = $order->refresh();
+            $this->productionJobService->syncByOrderStatus($freshOrder);
+            $this->autoPostingService->syncOrderAccrual($freshOrder);
 
             return $order->fresh(['customer', 'items']);
         });
@@ -338,6 +352,7 @@ class OrderService
             ->where('ref_type', 'order')
             ->where('ref_id', $order->id)
             ->delete();
+        $order->productionJobs()->delete();
     }
 
     protected function syncFinishes(OrderItem $orderItem, array $finishIds): void
@@ -476,71 +491,6 @@ class OrderService
         return 0;
     }
 
-    protected function createStockMovement(OrderItem $orderItem, ?Material $material, string $type, string $note): void
-    {
-        if (!$material) {
-            return;
-        }
-
-        $qty = (float) $orderItem->qty;
-        $lengthCm = $orderItem->length_cm !== null ? (float) $orderItem->length_cm : null;
-        $widthCm = $orderItem->width_cm !== null ? (float) $orderItem->width_cm : null;
-
-        $usage = $this->materialUsageService->calculate(
-            $qty,
-            $lengthCm,
-            $widthCm,
-            $material->roll_width_cm !== null ? (float) $material->roll_width_cm : null,
-            $material->roll_waste_percent !== null ? (float) $material->roll_waste_percent : 0
-        );
-
-        app(StockMovementService::class)->store([
-            'material_id' => $material->id,
-            'type' => $type,
-            'qty' => $usage,
-            'unit_id' => $material->unit_id,
-            'ref_type' => 'order',
-            'ref_id' => $orderItem->order_id,
-            'notes' => $note,
-            'branch_id' => $orderItem->order?->branch_id,
-        ]);
-    }
-
-    protected function syncStockByStatus(Order $order): void
-    {
-        StockMovement::query()
-            ->where('ref_type', 'order')
-            ->where('ref_id', $order->id)
-            ->delete();
-
-        $status = $order->status;
-        $reserveStatuses = ['approval'];
-        $outStatuses = ['produksi', 'finishing', 'qc', 'siap', 'diambil', 'selesai'];
-
-        $type = null;
-        $note = null;
-
-        if (in_array($status, $reserveStatuses, true)) {
-            $type = 'reserve';
-            $note = 'Reservasi bahan untuk order';
-        } elseif (in_array($status, $outStatuses, true)) {
-            $type = 'out';
-            $note = 'Pemakaian bahan untuk order';
-        } else {
-            return;
-        }
-
-        $order->loadMissing('items.material');
-        foreach ($order->items as $orderItem) {
-            $material = $orderItem->material ?: ($orderItem->material_id ? Material::find($orderItem->material_id) : null);
-            if (!$material) {
-                continue;
-            }
-
-            $this->createStockMovement($orderItem, $material, $type, $note);
-        }
-    }
-
     protected function recalculateTotals(Order $order): void
     {
         $order->refresh();
@@ -576,10 +526,9 @@ class OrderService
     {
         return in_array($status, [
             'approval',
-            'menunggu-dp',
+            'pembayaran',
             'desain',
             'produksi',
-            'finishing',
             'qc',
             'siap',
             'diambil',
@@ -594,14 +543,13 @@ class OrderService
             'draft' => 10,
             'quotation' => 20,
             'approval' => 30,
-            'menunggu-dp' => 40,
+            'pembayaran' => 40,
             'desain' => 50,
             'produksi' => 60,
-            'finishing' => 70,
-            'qc' => 80,
-            'siap' => 90,
-            'diambil' => 100,
-            'selesai' => 110,
+            'qc' => 70,
+            'siap' => 80,
+            'diambil' => 90,
+            'selesai' => 100,
             default => null,
         };
     }

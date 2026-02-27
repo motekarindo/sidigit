@@ -18,6 +18,16 @@ class MenuSeeder extends Seeder
         // --- TRANSAKSI ---
         $transactions = Menu::updateOrCreate(['name' => 'Transaksi'], ['icon' => 'bi bi-receipt', 'order' => 3]);
         Menu::updateOrCreate(['route_name' => 'orders.index'], ['parent_id' => $transactions->id, 'name' => 'Order', 'order' => 1]);
+        $productionMenu = Menu::updateOrCreate(
+            ['name' => 'Produksi', 'parent_id' => $transactions->id],
+            ['route_name' => 'productions.index', 'icon' => 'bi bi-kanban', 'order' => 2]
+        );
+        // Board desain + produksi kini digabung di /productions.
+        Menu::whereIn('route_name', ['productions.desain', 'productions.produksi'])->delete();
+        Menu::updateOrCreate(
+            ['route_name' => 'productions.history'],
+            ['parent_id' => $productionMenu->id, 'name' => 'Riwayat Produksi', 'order' => 1]
+        );
 
         // --- MANAJEMEN PRODUK ---
         $productManagement = Menu::updateOrCreate(['name' => 'Manajemen Produk'], ['icon' => 'bi bi-box-seam-fill', 'order' => 4]);
@@ -58,7 +68,9 @@ class MenuSeeder extends Seeder
         $reportMenu = Menu::updateOrCreate(['name' => 'Laporan'], ['icon' => 'bi bi-graph-up', 'order' => 7]);
         Menu::updateOrCreate(['route_name' => 'reports.sales'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Penjualan', 'order' => 1]);
         Menu::updateOrCreate(['route_name' => 'reports.expenses'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Pengeluaran', 'order' => 2]);
-        Menu::updateOrCreate(['route_name' => 'reports.branches'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Per Cabang', 'order' => 3]);
+        Menu::updateOrCreate(['route_name' => 'reports.production'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Produksi', 'order' => 3]);
+        Menu::updateOrCreate(['route_name' => 'reports.financial'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Keuangan', 'order' => 4]);
+        Menu::updateOrCreate(['route_name' => 'reports.branches'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Per Cabang', 'order' => 5]);
 
         // --- AKUNTANSI ---
         $accountingMenu = Menu::updateOrCreate(['name' => 'Akuntansi'], ['icon' => 'bi bi-journal-text', 'order' => 8]);

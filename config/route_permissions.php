@@ -3,6 +3,7 @@
 return [
     'resource_prefixes' => [
         'orders' => 'order',
+        'productions' => 'production',
         'customers' => 'customer',
         'employees' => 'employee',
         'users' => 'users',
@@ -48,9 +49,15 @@ return [
         'orders.quotation' => 'order.view',
         'orders.quotation.pdf' => 'order.view',
         'orders.payments.create' => 'order.edit',
+        'productions.index' => 'production.view',
+        'productions.desain' => 'production.view',
+        'productions.produksi' => 'production.view',
+        'productions.history' => 'production.view',
 
         'reports.sales' => 'report.sales.view',
         'reports.expenses' => 'report.expense.view',
+        'reports.production' => 'report.production.view',
+        'reports.financial' => 'report.finance.view',
         'reports.branches' => 'report.branch.view',
         'accounting.overview' => 'accounting-overview.view',
 

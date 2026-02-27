@@ -1,5 +1,92 @@
 # sidigit
 
+## Modul Produksi
+- URL modul internal:
+  - `/productions` (Kanban gabungan Desain + Produksi)
+  - `/productions/history` (Riwayat job produksi)
+- Konsep: 1 `production_job` untuk setiap `order_item` (bukan per invoice/order header).
+- Trigger pembuatan job:
+  - saat status order menjadi `desain` => job tahap `desain`
+  - saat status order menjadi `produksi` => job tahap `produksi`
+- Akses menu: `Transaksi -> Produksi` (board kanban gabungan) dan `Riwayat Produksi`.
+- Parent menu `Produksi` sekarang mengarah ke `productions.index` (bukan `#`), tetap bisa expand submenu.
+
+### Flow Produksi (Per Item)
+- `antrian -> in_progress -> qc -> siap_diambil`
+- Jika QC gagal: `qc -> in_progress` (kembali ke Produksi).
+- Setiap transisi disimpan ke `production_job_logs` untuk jejak audit.
+
+### Model Kanban
+- Board digabung menjadi satu halaman.
+- Tiap card adalah `1 item order`.
+- Ada mekanisme `Ambil Task` (claim) dan `Lepas`.
+- Card bisa dipindahkan antar kolom dengan drag-and-drop untuk transisi status.
+- Kolom board: `Antrian -> Desain -> Produksi -> QC -> Siap Diambil`.
+- Tahap `Desain` bersifat opsional: task bisa langsung dari `Antrian` ke `Produksi` (bypass desain).
+- Tahap `Finishing` tidak dipisah sebagai kolom; aktivitas finishing dianggap bagian dari tahap `Produksi`.
+- Tahap `Selesai` tidak digunakan pada board; perpindahan produksi langsung ke `QC`.
+- Perubahan status di board mengikuti flow yang sama untuk menjaga konsistensi operasional.
+- Kolom board dibuat lebih lebar agar informasi card lebih mudah dibaca pada monitor desktop tanpa mengorbankan kerapian.
+- View board berbasis role operasional:
+  - user role `Desainer` fokus menampilkan task tahap desain.
+  - user role `Operator` fokus menampilkan task tahap produksi.
+  - owner/superadmin/manager tetap melihat semua task.
+- Kartu kanban diperkaya informasi: deadline + countdown, bahan, ukuran, prioritas, dan status claim PIC.
+- Prioritas task otomatis (`Urgent`, `Today`, `Normal`) dan urutan card mengutamakan prioritas + deadline terdekat.
+- Aksi per state disederhanakan:
+  - `Antrian`: `Ambil Task` lalu tombol start tunggal (`Mulai Desain`/`Mulai Produksi`) sesuai tahap.
+  - `Desain`: `Lanjut Produksi`.
+  - `Produksi`: `Kirim QC`.
+- Ditambahkan modal **Detail Task Produksi** untuk melihat spek lengkap (produk, qty, bahan, ukuran, finishing, deadline, catatan) + placeholder lampiran file.
+- Perbaikan stabilitas: render modal **Detail Task Produksi** dibuat null-safe agar halaman `/productions` tidak error 500 saat `taskDetail` belum terisi (state awal Livewire).
+
+### Riwayat Produksi
+- Halaman `/productions/history` tetap menggunakan list/tabel riwayat produksi.
+- Aksi `Riwayat` pada tiap baris menampilkan popup detail dengan tampilan card timeline (inspirasi TailAdmin Logistics):
+  - menampilkan `Tracking ID`, badge status terkini, dan urutan event produksi per item.
+  - setiap event menampilkan pelaku perubahan (user) untuk tracing, bukan hanya role.
+- Ukuran modal riwayat diperkecil agar lebih proporsional, dengan tipografi timeline yang lebih compact dan area isi scrollable.
+- Styling popup riwayat diperhalus: ukuran jam diperkecil, angka memakai `tabular-nums`, dan spacing timeline dirapikan agar lebih nyaman dibaca.
+- Tipografi popup disetel ulang agar lebih proporsional: hierarki ukuran teks `tracking/date/title/subtitle/time` dibuat lebih seimbang dan mudah dipindai.
+
+### Sinkronisasi Status Order
+- Sinkron status order dihitung dari seluruh job item produksi (tahap desain + produksi).
+- Jika masih ada item yang berada di tahap `desain`, status order tetap `desain`.
+- Jika seluruh item `siap_diambil` -> order otomatis `siap`.
+- Jika seluruh item sudah masuk `qc`/`siap_diambil` -> order otomatis `qc`.
+- Selain kondisi di atas (tidak ada item di desain) -> order otomatis `produksi`.
+- Saat sinkron status dari board membuat order masuk ke `produksi`, sistem otomatis sinkron pergerakan stok order menjadi `stock out` (ref_type `order`) agar pemakaian bahan tercatat.
+
+### Assignment Role
+- Auto-assign berbasis status order:
+  - status order `desain` -> role `Desainer`
+  - status order `produksi` -> role `Operator`
+- User dengan role terkait dapat mengambil task tanpa assign manual satu-per-satu.
+- Assign manual tetap tersedia sebagai override operasional.
+
+### Permission Produksi
+- `production.view`
+- `production.edit`
+- `production.assign`
+- `production.qc`
+
+### Preset Role Produksi & Stok
+- `RolePermissionSeeder` menambahkan preset akses role berikut:
+  - `Desainer`: menu `Transaksi -> Produksi` dan `Stok` beserta seluruh submenu.
+  - `Operator`: menu `Transaksi -> Produksi` dan `Stok` beserta seluruh submenu.
+- Permission default:
+  - `Desainer`: `production.view`, `production.edit`, lalu seluruh permission stok:
+    - `stock-in.(view|create|edit|delete)`
+    - `stock-out.(view|create|edit|delete)`
+    - `stock-opname.(view|create|edit|delete)`
+    - `stock-balance.view`, `stock-reservation.view`
+  - `Operator`: sama seperti `Desainer` + `production.qc`.
+
+### Catatan Simplifikasi
+- Tidak ada scheduling mesin/jam produksi.
+- Tidak ada splitting job ke multi-step internal.
+- Tidak ada kapasitas planning otomatis.
+
 ## Dockerized workflows
 
 ### Local development
@@ -65,6 +152,10 @@
   - `username`: `owner`
   - `email`: `owner@gmail.com`
   - `password`: `password`
+- Seeder default juga membuat akun operasional berikut (otomatis terhubung ke data karyawan via `employee_id`):
+  - `desainer` (`desainer@gmail.com`) dengan role `Desainer`
+  - `operator` (`operator@gmail.com`) dengan role `Operator`
+  - password default: `password`
 - Permission override workflow yang ditambahkan:
   - `workflow.override.status`
   - `workflow.override.actor`
@@ -144,9 +235,37 @@
     - Expense material: Debit Persediaan Bahan (`1201`), Kredit Kas/Bank
     - Expense umum: Debit Beban Operasional (`6001`), Kredit Kas/Bank
   - Expense `update/delete` akan sinkron/hapus jurnal sumber terkait (`source_type=expense`).
+  - Perbaikan stabilitas nomor jurnal: generator nomor jurnal (`AUTOYYYYMMDD-XXXX` dan `JUYYYYMMDD-XXXX`) kini aman dari error cast `Stringable` saat membaca nomor terakhir pada tanggal yang sama.
 - RBAC akuntansi:
   - permission baru: `accounting-overview.view`, `cashflow.view`, `account.*`, `journal.view`, `journal.create`
-  - menu baru: **Akuntansi** -> **Dashboard Akuntansi**, **Arus Kas**, **Chart of Accounts**, **Jurnal Umum**
+  - menu baru: **Akuntansi** -> **Dashboard Akuntansi**, **Chart of Accounts**, **Jurnal Umum**
+
+## Laporan
+- Ditambahkan **Laporan Produksi** di `/reports/production`:
+  - ringkasan job masuk/selesai, WIP, QC pass/fail, rata-rata lead time, on-time vs terlambat.
+  - distribusi status board saat ini, workload per role, dan top produk produksi.
+- Ditambahkan **Laporan Keuangan** di `/reports/financial`:
+  - menggabungkan **Arus Kas**, **Laba Rugi Sederhana**, dan **Neraca Sederhana** dalam satu halaman.
+  - filter periode (`harian`, `bulanan`, `custom`) + filter sumber/metode arus kas.
+- Permission laporan baru:
+  - `report.production.view`
+  - `report.finance.view`
+- Route permission baru:
+  - `reports.production` -> `report.production.view`
+  - `reports.financial` -> `report.finance.view`
+
+## Struktur Menu
+- Menu **Laporan** sekarang menjadi pintu utama untuk kebutuhan analitik operasional:
+  - `Laporan Penjualan`
+  - `Laporan Pengeluaran`
+  - `Laporan Produksi`
+  - `Laporan Keuangan`
+  - `Laporan Per Cabang`
+- Menu **Akuntansi** difokuskan untuk back-office:
+  - `Dashboard Akuntansi`
+  - `Arus Kas`
+  - `Chart of Accounts`
+  - `Jurnal Umum`
 ## Order
 - Ditambahkan modul **Tracking Order Publik** dengan URL: `/track/order/{id_order_encrypted}`.
 - Link tracking bersifat **public**: siapa pun yang memiliki URL dapat melihat progres order.
@@ -160,7 +279,12 @@
 - Untuk environment `http` (non-HTTPS), salin link tetap dicoba otomatis via fallback `execCommand('copy')`; prompt manual hanya muncul jika browser menolak semua metode copy.
 - Status `dibatalkan` sekarang diperlakukan sebagai status **locked/read-only** seperti `approval` ke atas.
 - Pada status locked (termasuk `dibatalkan`), update dari halaman Edit Order hanya mengizinkan perubahan status via aksi daftar order; field lain tidak diproses.
+- Label tombol aksi bawah pada halaman edit order diubah dari `Batal` menjadi `Kembali` agar konsisten dengan navigasi halaman lain.
 - Opsi status `dibatalkan` tetap tersedia di UI perubahan status untuk kasus order batal (mis. Draft/Quotation tidak jadi lanjut).
+- Key status order dinormalisasi dari `menunggu-dp` menjadi `pembayaran` (UI + value).
+- Status `finishing` dihapus dari list flow order (diasumsikan masuk ke fase `produksi`).
+- Ditambahkan migrasi normalisasi data existing: `finishing -> produksi` pada tabel `orders` dan `order_status_logs`.
+- Ditambahkan migrasi normalisasi data existing: `menunggu-dp -> pembayaran` pada tabel `orders` dan `order_status_logs`.
 
 ## Testing
 - Ditambahkan regression test untuk flow lock status `dibatalkan`:
@@ -170,3 +294,19 @@
     - update non-status diabaikan untuk user tanpa override `workflow.override.locked-order`
     - opsi `dibatalkan` tampil di modal ubah status (daftar order)
 - `AuthServiceProvider` ditambah guard `Schema::hasTable('permissions')` agar test environment tidak gagal saat bootstrap sebelum migrasi selesai.
+
+# Next Project
+- Web COmpany Profile
+- Web COmpany Profile - Ecommerce
+- WhatsApp Blast
+- WhatsApp Bot
+
+# Nevacloud Object Storage
+- Access Key : 
+``` 
+FXKGU1KENOES0RGWIFPQ 
+```
+- Secret Key : 
+```
+mGBYXExsmAW2aQY1fQ83YjDibovcjUXkHSG6WvVV
+```

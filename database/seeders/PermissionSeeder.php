@@ -104,6 +104,12 @@ class PermissionSeeder extends Seeder
             'workflow.override.actor' => ['name' => 'Override PIC Workflow', 'menu_id' => $menuId('Order')],
             'workflow.override.locked-order' => ['name' => 'Override Edit Order Terkunci', 'menu_id' => $menuId('Order')],
 
+            // Produksi
+            'production.view' => ['name' => 'Lihat Produksi', 'menu_id' => $menuId('Produksi')],
+            'production.edit' => ['name' => 'Update Status Produksi', 'menu_id' => $menuId('Produksi')],
+            'production.assign' => ['name' => 'Assign Role Produksi', 'menu_id' => $menuId('Produksi')],
+            'production.qc' => ['name' => 'QC Produksi', 'menu_id' => $menuId('Produksi')],
+
             // Finishing
             'finish.view' => ['name' => 'Lihat Finishing', 'menu_id' => $menuId('Finishing')],
             'finish.create' => ['name' => 'Tambah Finishing', 'menu_id' => $menuId('Finishing')],
@@ -179,6 +185,8 @@ class PermissionSeeder extends Seeder
             // Laporan
             'report.sales.view' => ['name' => 'Lihat Laporan Penjualan', 'menu_id' => $menuId('Laporan Penjualan')],
             'report.expense.view' => ['name' => 'Lihat Laporan Pengeluaran', 'menu_id' => $menuId('Laporan Pengeluaran')],
+            'report.production.view' => ['name' => 'Lihat Laporan Produksi', 'menu_id' => $menuId('Laporan Produksi')],
+            'report.finance.view' => ['name' => 'Lihat Laporan Keuangan', 'menu_id' => $menuId('Laporan Keuangan')],
             'report.branch.view' => ['name' => 'Lihat Laporan Per Cabang', 'menu_id' => $menuId('Laporan Per Cabang')],
         ];
 

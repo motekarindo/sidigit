@@ -194,7 +194,7 @@ class AccountingJournalService
 
         $nextSequence = 1;
         if (filled($lastNo) && str_contains((string) $lastNo, '-')) {
-            $lastSequence = (int) str($lastNo)->afterLast('-');
+            $lastSequence = (int) ((string) str($lastNo)->afterLast('-'));
             $nextSequence = $lastSequence + 1;
         }
 
