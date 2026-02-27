@@ -238,7 +238,34 @@
   - Perbaikan stabilitas nomor jurnal: generator nomor jurnal (`AUTOYYYYMMDD-XXXX` dan `JUYYYYMMDD-XXXX`) kini aman dari error cast `Stringable` saat membaca nomor terakhir pada tanggal yang sama.
 - RBAC akuntansi:
   - permission baru: `accounting-overview.view`, `cashflow.view`, `account.*`, `journal.view`, `journal.create`
-  - menu baru: **Akuntansi** -> **Dashboard Akuntansi**, **Arus Kas**, **Chart of Accounts**, **Jurnal Umum**
+  - menu baru: **Akuntansi** -> **Dashboard Akuntansi**, **Chart of Accounts**, **Jurnal Umum**
+
+## Laporan
+- Ditambahkan **Laporan Produksi** di `/reports/production`:
+  - ringkasan job masuk/selesai, WIP, QC pass/fail, rata-rata lead time, on-time vs terlambat.
+  - distribusi status board saat ini, workload per role, dan top produk produksi.
+- Ditambahkan **Laporan Keuangan** di `/reports/financial`:
+  - menggabungkan **Arus Kas**, **Laba Rugi Sederhana**, dan **Neraca Sederhana** dalam satu halaman.
+  - filter periode (`harian`, `bulanan`, `custom`) + filter sumber/metode arus kas.
+- Permission laporan baru:
+  - `report.production.view`
+  - `report.finance.view`
+- Route permission baru:
+  - `reports.production` -> `report.production.view`
+  - `reports.financial` -> `report.finance.view`
+
+## Struktur Menu
+- Menu **Laporan** sekarang menjadi pintu utama untuk kebutuhan analitik operasional:
+  - `Laporan Penjualan`
+  - `Laporan Pengeluaran`
+  - `Laporan Produksi`
+  - `Laporan Keuangan`
+  - `Laporan Per Cabang`
+- Menu **Akuntansi** difokuskan untuk back-office:
+  - `Dashboard Akuntansi`
+  - `Arus Kas`
+  - `Chart of Accounts`
+  - `Jurnal Umum`
 ## Order
 - Ditambahkan modul **Tracking Order Publik** dengan URL: `/track/order/{id_order_encrypted}`.
 - Link tracking bersifat **public**: siapa pun yang memiliki URL dapat melihat progres order.
@@ -267,3 +294,19 @@
     - update non-status diabaikan untuk user tanpa override `workflow.override.locked-order`
     - opsi `dibatalkan` tampil di modal ubah status (daftar order)
 - `AuthServiceProvider` ditambah guard `Schema::hasTable('permissions')` agar test environment tidak gagal saat bootstrap sebelum migrasi selesai.
+
+# Next Project
+- Web COmpany Profile
+- Web COmpany Profile - Ecommerce
+- WhatsApp Blast
+- WhatsApp Bot
+
+# Nevacloud Object Storage
+- Access Key : 
+``` 
+FXKGU1KENOES0RGWIFPQ 
+```
+- Secret Key : 
+```
+mGBYXExsmAW2aQY1fQ83YjDibovcjUXkHSG6WvVV
+```

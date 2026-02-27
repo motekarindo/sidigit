@@ -68,7 +68,9 @@ class MenuSeeder extends Seeder
         $reportMenu = Menu::updateOrCreate(['name' => 'Laporan'], ['icon' => 'bi bi-graph-up', 'order' => 7]);
         Menu::updateOrCreate(['route_name' => 'reports.sales'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Penjualan', 'order' => 1]);
         Menu::updateOrCreate(['route_name' => 'reports.expenses'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Pengeluaran', 'order' => 2]);
-        Menu::updateOrCreate(['route_name' => 'reports.branches'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Per Cabang', 'order' => 3]);
+        Menu::updateOrCreate(['route_name' => 'reports.production'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Produksi', 'order' => 3]);
+        Menu::updateOrCreate(['route_name' => 'reports.financial'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Keuangan', 'order' => 4]);
+        Menu::updateOrCreate(['route_name' => 'reports.branches'], ['parent_id' => $reportMenu->id, 'name' => 'Laporan Per Cabang', 'order' => 5]);
 
         // --- AKUNTANSI ---
         $accountingMenu = Menu::updateOrCreate(['name' => 'Akuntansi'], ['icon' => 'bi bi-journal-text', 'order' => 8]);

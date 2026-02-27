@@ -56,6 +56,8 @@ return [
 
         'reports.sales' => 'report.sales.view',
         'reports.expenses' => 'report.expense.view',
+        'reports.production' => 'report.production.view',
+        'reports.financial' => 'report.finance.view',
         'reports.branches' => 'report.branch.view',
         'accounting.overview' => 'accounting-overview.view',
 

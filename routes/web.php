@@ -46,6 +46,8 @@ use App\Livewire\Admin\EmployeeLoans\Index as EmployeeLoansIndex;
 use App\Livewire\Admin\Reports\SalesReport as SalesReport;
 use App\Livewire\Admin\Reports\ExpenseReport as ExpenseReport;
 use App\Livewire\Admin\Reports\BranchReport as BranchReport;
+use App\Livewire\Admin\Reports\ProductionReport as ProductionReport;
+use App\Livewire\Admin\Reports\FinancialReport as FinancialReport;
 use App\Livewire\Admin\Orders\AddPayment as OrderAddPayment;
 use App\Livewire\Admin\Productions\Index as ProductionsIndex;
 use App\Livewire\Admin\Productions\HistoryIndex as ProductionsHistoryIndex;
@@ -179,6 +181,8 @@ Route::get('/track/order/{id_order_encrypted}', [OrderTrackingController::class,
 
     Route::get('reports/sales', SalesReport::class)->name('reports.sales');
     Route::get('reports/expenses', ExpenseReport::class)->name('reports.expenses');
+    Route::get('reports/production', ProductionReport::class)->name('reports.production');
+    Route::get('reports/financial', FinancialReport::class)->name('reports.financial');
     Route::get('reports/branches', BranchReport::class)->name('reports.branches');
     Route::get('accounting/overview', AccountingOverviewIndex::class)->name('accounting.overview');
     Route::get('accounting/cashflows', AccountingCashflowsIndex::class)->name('cashflows.index');

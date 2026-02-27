@@ -54,6 +54,8 @@ class RolePermissionSeeder extends Seeder
                 'Laporan',
                 'Laporan Penjualan',
                 'Laporan Pengeluaran',
+                'Laporan Produksi',
+                'Laporan Keuangan',
                 'Laporan Per Cabang',
                 'Master',
                 'Supplier',
@@ -110,7 +112,7 @@ class RolePermissionSeeder extends Seeder
                 'supplier.view', 'supplier.create', 'supplier.edit', 'supplier.delete',
                 'warehouse.view', 'warehouse.create', 'warehouse.edit', 'warehouse.delete',
                 'finish.view', 'finish.create', 'finish.edit', 'finish.delete',
-                'report.sales.view', 'report.expense.view', 'report.branch.view',
+                'report.sales.view', 'report.expense.view', 'report.production.view', 'report.finance.view', 'report.branch.view',
             ])->pluck('id');
 
             $kasirRole->permissions()->sync($kasirPermissions);
