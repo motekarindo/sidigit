@@ -122,6 +122,21 @@ class Index extends Component
     {
         $folderOptions = collect();
         $files = $this->emptyPaginator();
+        $storageDetails = [
+            'total_files' => 0,
+            'total_size' => 0,
+            'branch_total_size' => 0,
+            'client_total_size' => 0,
+            'client_total_files' => 0,
+            'quota_bytes' => 0,
+            'remaining_bytes' => null,
+            'used_percent' => null,
+            'image_count' => 0,
+            'document_count' => 0,
+            'other_count' => 0,
+            'folder_usage' => [],
+            'latest_files' => [],
+        ];
 
         if (! empty($this->branch_id)) {
             $folderOptions = $this->service->folderOptions((int) $this->branch_id);
@@ -133,11 +148,13 @@ class Index extends Component
                 $this->perPage,
                 $this->getPage()
             );
+            $storageDetails = $this->service->storageDetails((int) $this->branch_id);
         }
 
         return view('livewire.admin.file-manager.index', [
             'files' => $files,
             'folderOptions' => $folderOptions,
+            'storageDetails' => $storageDetails,
         ]);
     }
 
@@ -184,4 +201,3 @@ class Index extends Component
         );
     }
 }
-

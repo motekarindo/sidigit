@@ -17,9 +17,12 @@ use Illuminate\Support\Facades\Storage;
 class EmployeeService
 {
     protected $repository;
-    public function __construct(EmployeeRepository $repository)
+    protected UploadQuotaService $uploadQuotaService;
+
+    public function __construct(EmployeeRepository $repository, UploadQuotaService $uploadQuotaService)
     {
         $this->repository = $repository;
+        $this->uploadQuotaService = $uploadQuotaService;
     }
 
     public function getPaginated(): LengthAwarePaginator
@@ -101,6 +104,10 @@ class EmployeeService
         if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
             $disk = UploadStorage::disk();
             $branchId = $this->resolveBranchId($employee, $data);
+            $this->uploadQuotaService->assertCanUpload(
+                $data['photo'],
+                $employee?->photo
+            );
             $newPath = UploadPath::employeePhoto($branchId, $data['photo']);
             $storedPath = $data['photo']->storeAs(dirname($newPath), basename($newPath), $disk);
 

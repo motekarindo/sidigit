@@ -206,6 +206,11 @@
 - Ditambahkan helper `App\Support\UploadStorage::disk()`:
   - jika konfigurasi S3 belum lengkap (key/secret/bucket kosong), sistem otomatis fallback ke `public` agar aplikasi tidak error.
   - `UploadStorage::deletionDisks()` untuk cleanup kompatibilitas data lama (disk upload aktif + `public`).
+- Ditambahkan validasi kuota upload terpusat via `App\Services\UploadQuotaService`:
+  - upload logo cabang, QRIS, dan foto karyawan otomatis ditolak jika melebihi `UPLOAD_QUOTA_BYTES`.
+  - kuota dihitung global level klien (akumulasi semua cabang), bukan kuota per cabang.
+  - skenario replace file tetap diperhitungkan (ukuran file lama dikompensasi dulu), jadi update file tetap bisa selama total akhir masih dalam batas kuota.
+  - pesan error upload menampilkan ringkasan kuota, sisa, dan ukuran file agar user tahu penyebab gagal.
 - Command migrasi path lama ke struktur branch:
   - simulasi: `php artisan uploads:migrate-branch-prefix --dry-run`
   - eksekusi: `php artisan uploads:migrate-branch-prefix`
@@ -225,7 +230,13 @@
   - list file per cabang + filter folder + search path/nama.
   - preview image, lihat file, download file, salin URL signed, dan hapus file.
   - pagination 20/50/100.
+  - panel **Storage Details**: used storage, quota/progress bar, dan komposisi tipe file.
+  - warna progress quota bertingkat: hijau (`<70%`), kuning (`70-89%`), merah (`>=90%`).
   - perbaikan UI: tombol `Salin URL` dibuat `nowrap` agar tetap satu baris.
+- Quota untuk panel diatur lewat env:
+  - `UPLOAD_QUOTA_BYTES` (0 = tanpa batas)
+  - progress kuota menggunakan total pemakaian global klien lintas cabang.
+  - filter cabang tetap berlaku untuk list file dan ringkasan usage cabang aktif (sementara progress bar kuota tetap global).
 - Permission baru:
   - `file-manager.view`
   - `file-manager.delete`

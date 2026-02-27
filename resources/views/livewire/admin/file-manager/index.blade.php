@@ -10,6 +10,21 @@
 
         return number_format($value, $power === 0 ? 0 : 2, ',', '.') . ' ' . $units[$power];
     };
+
+    $usedPercent = is_null($storageDetails['used_percent'] ?? null)
+        ? null
+        : (float) ($storageDetails['used_percent'] ?? 0);
+
+    $progressBarClass = 'bg-brand-500';
+    if (!is_null($usedPercent)) {
+        if ($usedPercent >= 90) {
+            $progressBarClass = 'bg-red-500';
+        } elseif ($usedPercent >= 70) {
+            $progressBarClass = 'bg-amber-500';
+        } else {
+            $progressBarClass = 'bg-emerald-500';
+        }
+    }
 @endphp
 
 <div class="space-y-6">
@@ -62,6 +77,64 @@
                 </span>
                 · Total file:
                 <span class="font-semibold text-gray-900 dark:text-white">{{ $files->total() }}</span>
+            </div>
+
+            <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950/20">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">Storage Details</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Kuota global klien (akumulasi semua cabang).</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Used Storage (Global)</p>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ $formatBytes((int) ($storageDetails['client_total_size'] ?? 0)) }}
+                            @if ((int) $storageDetails['quota_bytes'] > 0)
+                                / {{ $formatBytes((int) $storageDetails['quota_bytes']) }}
+                            @endif
+                        </p>
+                        <p class="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+                            Cabang aktif: {{ $formatBytes((int) ($storageDetails['branch_total_size'] ?? 0)) }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+                    <div class="h-full rounded-full transition-all {{ $progressBarClass }}"
+                        style="width: {{ $storageDetails['used_percent'] ?? 0 }}%"></div>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>
+                        @if (!is_null($storageDetails['used_percent']))
+                            {{ number_format((float) $storageDetails['used_percent'], 2, ',', '.') }}% terpakai
+                        @else
+                            Quota belum diatur (`UPLOAD_QUOTA_BYTES=0`)
+                        @endif
+                    </span>
+                    @if (!is_null($storageDetails['remaining_bytes']))
+                        <span>Sisa: {{ $formatBytes((int) $storageDetails['remaining_bytes']) }}</span>
+                    @endif
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
+                    <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Total File</p>
+                        <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{{ number_format((int) $storageDetails['total_files'], 0, ',', '.') }}</p>
+                    </div>
+                    <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Gambar</p>
+                        <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{{ number_format((int) $storageDetails['image_count'], 0, ',', '.') }}</p>
+                    </div>
+                    <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Dokumen</p>
+                        <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{{ number_format((int) $storageDetails['document_count'], 0, ',', '.') }}</p>
+                    </div>
+                    <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Lainnya</p>
+                        <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{{ number_format((int) $storageDetails['other_count'], 0, ',', '.') }}</p>
+                    </div>
+                </div>
+
             </div>
 
             <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">

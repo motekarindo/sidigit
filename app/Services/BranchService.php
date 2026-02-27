@@ -15,10 +15,12 @@ use Illuminate\Support\Facades\Storage;
 class BranchService
 {
     protected BranchRepository $repository;
+    protected UploadQuotaService $uploadQuotaService;
 
-    public function __construct(BranchRepository $repository)
+    public function __construct(BranchRepository $repository, UploadQuotaService $uploadQuotaService)
     {
         $this->repository = $repository;
+        $this->uploadQuotaService = $uploadQuotaService;
     }
 
     public function query(): Builder
@@ -127,6 +129,10 @@ class BranchService
         $updates = [];
 
         if (($media['logo'] ?? null) instanceof UploadedFile) {
+            $this->uploadQuotaService->assertCanUpload(
+                $media['logo'],
+                $branch->logo_path
+            );
             $newPath = UploadPath::branchLogo((int) $branch->id, $media['logo']);
             $storedPath = $media['logo']->storeAs(dirname($newPath), basename($newPath), $disk);
             if ($storedPath === false) {
@@ -142,6 +148,10 @@ class BranchService
         }
 
         if (($media['qris'] ?? null) instanceof UploadedFile) {
+            $this->uploadQuotaService->assertCanUpload(
+                $media['qris'],
+                $branch->qris_path
+            );
             $newPath = UploadPath::branchQris((int) $branch->id, $media['qris']);
             $storedPath = $media['qris']->storeAs(dirname($newPath), basename($newPath), $disk);
             if ($storedPath === false) {
