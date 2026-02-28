@@ -229,12 +229,14 @@
 - Fitur inti:
   - list file per cabang + filter folder + search path/nama.
   - preview image, lihat file, download file, salin URL signed, dan hapus file.
+  - preview list menggunakan thumbnail terkompresi (`/file-manager/thumbnail`), bukan file asli, untuk menekan bandwidth browser.
   - pagination 20/50/100.
   - optimasi performa: metadata file dihitung hanya untuk item pada halaman aktif (bukan seluruh list file).
   - cache listing/folder/storage details untuk mengurangi beban scan object storage berulang.
   - panel **Storage Details**: used storage, quota/progress bar, dan komposisi tipe file.
   - warna progress quota bertingkat: hijau (`<70%`), kuning (`70-89%`), merah (`>=90%`).
   - perbaikan UI: tombol `Salin URL` dibuat `nowrap` agar tetap satu baris.
+  - catatan: thumbnail preview membutuhkan ekstensi PHP GD.
 - Quota untuk panel diatur lewat env:
   - `UPLOAD_QUOTA_BYTES` (0 = tanpa batas)
   - progress kuota menggunakan total pemakaian global klien lintas cabang.

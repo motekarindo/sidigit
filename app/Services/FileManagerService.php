@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\FileManagerThumbnail;
 use App\Support\UploadPath;
 use App\Support\UploadStorage;
 use Carbon\Carbon;
@@ -116,6 +117,7 @@ class FileManagerService
         foreach (UploadStorage::deletionDisks() as $disk) {
             Storage::disk($disk)->delete($path);
         }
+        Storage::disk('public')->delete(FileManagerThumbnail::relativePath($path));
 
         $this->forgetCacheForBranch($branchId);
     }
@@ -189,8 +191,12 @@ class FileManagerService
         $lastModified = $this->safeLastModified($disk, $path);
         $isImage = $this->isImageExtension($extension);
         $mime = $this->mimeFromExtension($extension);
+        $canGenerateThumbnail = function_exists('imagecreatefromstring') && function_exists('imagejpeg');
 
         $url = $this->temporaryUrl($path, 15);
+        $previewUrl = ($isImage && $canGenerateThumbnail)
+            ? route('file-manager.thumbnail', ['path' => base64_encode($path)])
+            : null;
 
         return [
             'path' => $path,
@@ -203,7 +209,7 @@ class FileManagerService
             'updated_at' => $lastModified > 0 ? Carbon::createFromTimestamp($lastModified) : null,
             'is_image' => $isImage,
             'url' => $url,
-            'preview_url' => $isImage ? $url : null,
+            'preview_url' => $previewUrl,
         ];
     }
 
@@ -390,4 +396,3 @@ class FileManagerService
         return 'file-manager:' . $suffix;
     }
 }
-

@@ -63,6 +63,7 @@ return [
         'accounting.overview' => 'accounting-overview.view',
         'file-manager.index' => 'file-manager.view',
         'file-manager.download' => 'file-manager.view',
+        'file-manager.thumbnail' => 'file-manager.view',
 
         'dashboard' => null,
         'profile.edit' => null,

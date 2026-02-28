@@ -156,6 +156,7 @@
                                     <div class="flex items-center gap-3">
                                         @if (!empty($file['is_image']) && !empty($file['preview_url']))
                                             <img src="{{ $file['preview_url'] }}" alt="{{ $file['filename'] }}"
+                                                loading="lazy" decoding="async"
                                                 class="h-9 w-9 rounded-lg object-cover ring-1 ring-gray-200 dark:ring-gray-700">
                                         @else
                                             <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-[10px] font-semibold uppercase text-gray-600 ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-700">

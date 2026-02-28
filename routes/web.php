@@ -194,6 +194,7 @@ Route::get('/track/order/{id_order_encrypted}', [OrderTrackingController::class,
     Route::get('audit-logs', AuditLogsIndex::class)->name('audit-logs.index');
     Route::get('file-manager', FileManagerIndex::class)->name('file-manager.index');
     Route::get('file-manager/download', [FileManagerController::class, 'download'])->name('file-manager.download');
+    Route::get('file-manager/thumbnail', [FileManagerController::class, 'thumbnail'])->name('file-manager.thumbnail');
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });
