@@ -56,6 +56,7 @@ use App\Livewire\Admin\Accounting\Overview\Index as AccountingOverviewIndex;
 use App\Livewire\Admin\Accounting\Accounts\Index as AccountingAccountsIndex;
 use App\Livewire\Admin\Accounting\Journals\Index as AccountingJournalsIndex;
 use App\Livewire\Admin\Accounting\Cashflows\Index as AccountingCashflowsIndex;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\FileManagerController;
 use App\Http\Controllers\Tracking\OrderTrackingController;
 
@@ -108,9 +109,7 @@ Route::get('/track/order/{id_order_encrypted}', [OrderTrackingController::class,
 
     Route::get('expenses/materials', MaterialExpenseIndex::class)->name('expenses.materials.index');
     Route::get('expenses/general', GeneralExpenseIndex::class)->name('expenses.general.index');
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('bank-accounts', BankAccountsIndex::class)->name('bank-accounts.index');
     Route::prefix('customers')->name('customers.')->group(function () {

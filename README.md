@@ -477,6 +477,37 @@
 - Aksi **Salin Link** menampilkan toast sukses.
 - Untuk environment `http` (non-HTTPS), salin link tetap dicoba otomatis via fallback `execCommand('copy')`; prompt manual hanya muncul jika browser menolak semua metode copy.
 
+## Dashboard
+- Dashboard `/dashboard` dirapikan menjadi command center operasional dengan data real-time (bukan dummy card).
+- Data dashboard dipindahkan ke `DashboardController` + `DashboardService` agar query/aggregasi tetap modular.
+- Filter periode ditambahkan:
+  - `Hari Ini`
+  - `7 Hari`
+  - `Bulan Ini`
+  - `Custom` (`from`/`to`)
+- KPI utama:
+  - order hari ini
+  - omzet hari ini
+  - piutang aktif
+  - job produksi aktif
+  - order overdue
+  - jumlah bahan menipis
+- Section operasional:
+  - pipeline order per status
+  - tabel **Perlu Tindakan Sekarang**
+  - snapshot produksi per kolom
+  - daftar job produksi urgent
+  - top piutang
+  - stok menipis
+  - aktivitas terbaru (order status, pembayaran, produksi)
+- Quick action di header dashboard ditambahkan untuk akses cepat ke:
+  - tambah order
+  - daftar order
+  - board produksi
+  - reservasi stok
+  - laporan sales
+  - overview akuntansi
+
 ## Storage Upload
 - Semua upload file operasional (logo cabang, QRIS, foto karyawan) sekarang menggunakan disk terpusat `filesystems.upload_disk`.
 - Disk upload diatur melalui env `UPLOAD_DISK` (default mengikuti `FILESYSTEM_DISK`).
