@@ -138,6 +138,295 @@
   - fase 1: kontrol menu + route middleware berbasis fitur
   - fase 2: guard fitur di service/action agar tidak bisa bypass API/livewire
 
+## Blueprint Integrasi Web Publik
+### Target Arsitektur
+- `sidigit-core` (aplikasi ini): backoffice POS/ERP, sumber data utama order, pembayaran, stok, produksi, akuntansi.
+- `sidigit-web` (project terpisah): website company profile + storefront ecommerce (public traffic).
+- Integrasi antar app menggunakan API internal tenant-aware (bukan akses DB langsung antar project).
+
+### Kenapa Dipisah
+- Isolasi beban traffic publik agar tidak mengganggu operasional kasir/backoffice.
+- SEO, caching, dan UX web publik bisa dioptimasi tanpa risiko regression ke modul internal.
+- Deployment storefront dapat lebih sering tanpa menyentuh release cycle core.
+- Batas keamanan lebih jelas: admin/backoffice tidak diekspos ke permukaan publik.
+
+### Batas Tanggung Jawab Data
+1. Master data produk, harga, stok, status order tetap authoritative di `sidigit-core`.
+2. `sidigit-web` hanya menyimpan cache/read model untuk kebutuhan tampilan katalog.
+3. Pembuatan order final tetap melalui API `sidigit-core`.
+4. Tracking order publik membaca status dari `sidigit-core` (token tracking terenkripsi).
+
+### Domain dan Routing Tenant
+1. Backoffice: `app.client.com` atau `client.posklien.com`.
+2. Website profile: `client.com`.
+3. Storefront ecommerce: `shop.client.com` atau path `client.com/shop`.
+4. Tenant mapping direkomendasikan via tabel/domain mapping di `sidigit-web`, dengan `tenant_key` yang sama dengan `sidigit-core`.
+
+### Kontrak API Minimum (`sidigit-core`)
+1. `GET /api/public/profile` untuk data company profile (about, contact, lokasi, logo).
+2. `GET /api/public/catalog/products` untuk list produk aktif yang boleh dijual online.
+3. `GET /api/public/catalog/products/{slug}` untuk detail produk, harga, opsi bahan/finishing.
+4. `POST /api/public/checkout/quotes` untuk simulasi harga (opsional, sebelum checkout).
+5. `POST /api/public/checkout/orders` untuk membuat order dari web ke status awal (`draft`/`quotation` sesuai flow).
+6. `GET /api/public/checkout/orders/{public_token}` untuk melihat status checkout customer.
+7. `GET /api/public/tracking/{token}` untuk tracking produksi/pesanan publik.
+
+### API Contract (Tanpa Versioning URL)
+- Prinsip endpoint publik: tidak memakai prefix versi seperti `/v1`.
+- Base URL:
+  - production: `https://{domain-backoffice}`
+  - staging: `https://staging.{domain-backoffice}`
+- Prefix API publik: `/api/public/*`
+
+#### Format Response Standar
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": {},
+  "meta": {}
+}
+```
+
+#### Format Error Standar
+```json
+{
+  "success": false,
+  "message": "Validation error",
+  "errors": {
+    "field_name": ["Pesan error"]
+  },
+  "code": "VALIDATION_ERROR"
+}
+```
+
+#### 1) GET `/api/public/profile`
+- Tujuan: data website company profile tenant.
+- Auth: public (rate-limited).
+- Query opsional: `tenant_key` (jika tidak pakai domain mapping).
+- Contoh response `data`:
+```json
+{
+  "company_name": "Motekarindo Printing",
+  "tagline": "Digital Printing Cepat",
+  "description": "Layanan cetak untuk bisnis dan personal.",
+  "logo_url": "https://cdn.example.com/logo.png",
+  "phone": "08123456789",
+  "email": "hello@motekarindo.com",
+  "address": "Jl. Contoh No. 1",
+  "maps_url": "https://maps.google.com/...",
+  "socials": {
+    "instagram": "https://instagram.com/motekarindo",
+    "whatsapp": "https://wa.me/628123456789"
+  }
+}
+```
+
+#### 2) GET `/api/public/catalog/products`
+- Tujuan: list produk yang publish ke web.
+- Auth: public (rate-limited).
+- Query:
+  - `search` (string)
+  - `category` (slug/id)
+  - `page` (int)
+  - `per_page` (int)
+  - `sort` (`latest|name|price_low|price_high`)
+- Contoh item:
+```json
+{
+  "id": 10,
+  "slug": "banner-flexy-280",
+  "name": "Banner Flexy China 280",
+  "category": "Banner",
+  "thumbnail_url": "https://cdn.example.com/p/banner.jpg",
+  "price_from": 25000,
+  "unit_label": "m2",
+  "is_service": false,
+  "is_available": true
+}
+```
+
+#### 3) GET `/api/public/catalog/products/{slug}`
+- Tujuan: detail produk untuk halaman detail + configurator.
+- Auth: public (rate-limited).
+- Contoh response `data`:
+```json
+{
+  "id": 10,
+  "slug": "banner-flexy-280",
+  "name": "Banner Flexy China 280",
+  "description": "Cocok untuk indoor/outdoor.",
+  "images": [
+    "https://cdn.example.com/p/banner-1.jpg"
+  ],
+  "price": {
+    "base_price": 25000,
+    "unit_label": "m2",
+    "minimum_billable_area_m2": 1
+  },
+  "materials": [
+    {
+      "id": 3,
+      "name": "Flexy China 280 GSM"
+    }
+  ],
+  "finishes": [
+    {
+      "id": 2,
+      "name": "Mata Ayam"
+    }
+  ],
+  "rules": {
+    "requires_material": true,
+    "supports_dimension_cm": true
+  }
+}
+```
+
+#### 4) POST `/api/public/checkout/quotes`
+- Tujuan: simulasi harga sebelum order.
+- Auth: signed request per tenant.
+- Header wajib:
+  - `X-Tenant-Key`
+  - `X-Timestamp` (epoch detik)
+  - `X-Signature` (HMAC SHA-256 dari `timestamp + body`)
+- Body minimal:
+```json
+{
+  "items": [
+    {
+      "product_id": 10,
+      "qty": 1,
+      "material_id": 3,
+      "panjang_cm": 100,
+      "lebar_cm": 100,
+      "finish_ids": [2]
+    }
+  ],
+  "discount": 0
+}
+```
+- Contoh response `data`:
+```json
+{
+  "subtotal": 25000,
+  "discount": 0,
+  "grand_total": 25000,
+  "lines": [
+    {
+      "item_index": 0,
+      "area_m2": 1,
+      "price_per_m2": 25000,
+      "line_total": 25000
+    }
+  ]
+}
+```
+
+#### 5) POST `/api/public/checkout/orders`
+- Tujuan: membuat order dari web (masuk pipeline backoffice).
+- Auth: signed request per tenant (header sama seperti endpoint quotes).
+- Body minimal:
+```json
+{
+  "customer": {
+    "name": "Budi",
+    "phone": "08123456789",
+    "email": "budi@gmail.com"
+  },
+  "source": "web",
+  "items": [
+    {
+      "product_id": 10,
+      "qty": 1,
+      "material_id": 3,
+      "panjang_cm": 100,
+      "lebar_cm": 100
+    }
+  ],
+  "notes": "Mohon cepat"
+}
+```
+- Contoh response `data`:
+```json
+{
+  "order_id": 123,
+  "order_no": "ORD-20260228-0001",
+  "status": "quotation",
+  "grand_total": 25000,
+  "public_token": "ord_pub_xxx",
+  "tracking_url": "https://app.client.com/track/order/xxxxx"
+}
+```
+
+#### 6) GET `/api/public/checkout/orders/{public_token}`
+- Tujuan: cek status order dari proses checkout web.
+- Auth: token-based (path token), rate-limited.
+- Contoh response `data`:
+```json
+{
+  "order_no": "ORD-20260228-0001",
+  "status": "produksi",
+  "payment_status": "partial",
+  "grand_total": 25000,
+  "paid_total": 10000,
+  "remaining_total": 15000
+}
+```
+
+#### 7) GET `/api/public/tracking/{token}`
+- Tujuan: tracking progres produksi/order publik.
+- Auth: token-based (path token), rate-limited.
+- Contoh response `data`:
+```json
+{
+  "order_no": "ORD-20260228-0001",
+  "status": "produksi",
+  "updated_at": "2026-02-28 20:00:00",
+  "timeline": [
+    {
+      "status": "quotation",
+      "label": "Quotation",
+      "time": "2026-02-28 09:00:00"
+    },
+    {
+      "status": "approval",
+      "label": "Disetujui",
+      "time": "2026-02-28 10:00:00"
+    },
+    {
+      "status": "produksi",
+      "label": "Produksi",
+      "time": "2026-02-28 13:00:00"
+    }
+  ]
+}
+```
+
+### Auth dan Security
+1. Public read endpoint pakai rate limit + IP throttling.
+2. Endpoint create order pakai signed API key per tenant (`X-Tenant-Key`, `X-Signature`, timestamp).
+3. Semua token order publik harus opaque/encrypted, tidak pernah expose ID integer.
+4. Webhook pembayaran (jika ada) masuk ke `sidigit-core`, lalu status disinkronkan kembali ke web.
+
+### Feature Gate Paket
+1. `web.company_profile` untuk fitur website profile.
+2. `web.ecommerce` untuk katalog + checkout.
+3. `web.ecommerce.payment_gateway` untuk integrasi pembayaran online.
+4. Gate dicek di menu admin, route API publik, dan service action checkout.
+
+### Alur Sinkronisasi Data
+1. Perubahan produk/harga/stok di `sidigit-core` memicu job publish ke endpoint sync `sidigit-web`.
+2. `sidigit-web` menyimpan cache katalog terindeks cepat (read optimized).
+3. Checkout di `sidigit-web` memanggil API order di `sidigit-core`.
+4. Perubahan status order di `sidigit-core` otomatis tercermin pada halaman tracking publik.
+
+### Tahap Implementasi Praktis
+1. Tahap 1: company profile public (tanpa checkout), aktifkan `web.company_profile`.
+2. Tahap 2: katalog produk + inquiry/quotation request, aktifkan `web.ecommerce`.
+3. Tahap 3: checkout penuh + pembayaran online + notifikasi order.
+4. Tahap 4: optimasi SEO, analytics, dan campaign landing per tenant.
+
 ## Role Owner (Override)
 - Role sistem utama diganti dari `Administrator` menjadi `Superadmin`.
 - Seeder default membuat akun superadmin:
