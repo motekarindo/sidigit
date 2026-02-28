@@ -28,5 +28,15 @@ class UploadStorage
 
         return $disk;
     }
-}
 
+    public static function deletionDisks(): array
+    {
+        $disk = self::disk();
+
+        return collect([$disk, 'public'])
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+}

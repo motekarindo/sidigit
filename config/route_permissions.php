@@ -25,6 +25,7 @@ return [
         'accounts' => 'account',
         'journals' => 'journal',
         'cashflows' => 'cashflow',
+        'file-manager' => 'file-manager',
     ],
 
     'resource_actions' => [
@@ -60,6 +61,9 @@ return [
         'reports.financial' => 'report.finance.view',
         'reports.branches' => 'report.branch.view',
         'accounting.overview' => 'accounting-overview.view',
+        'file-manager.index' => 'file-manager.view',
+        'file-manager.download' => 'file-manager.view',
+        'file-manager.thumbnail' => 'file-manager.view',
 
         'dashboard' => null,
         'profile.edit' => null,
